@@ -87,18 +87,18 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, cha
     };
 
     const showMob = !isBattling || config.id !== 'memory';
-    const topSectionClass = config.id === 'memory' && isBattling ? 'hidden' : `h-[55%] relative flex items-center justify-center overflow-hidden bg-gradient-to-b ${config.color} rounded-t-sm`;
+    const topSectionBaseClass = config.id === 'memory' && isBattling ? 'hidden' : 'h-[55%] relative flex items-center justify-center overflow-hidden rounded-t-sm';
     const bottomSectionClass = config.id === 'memory' && isBattling ? 'h-full bg-[#3a3a3a] p-4 flex flex-col relative rounded-lg' : 'flex-1 bg-[#3a3a3a] p-4 flex flex-col relative rounded-b-sm';
 
     return (
         <div className={`relative w-[300px] h-[600px] bg-[#2b2b2b] border-4 rounded-lg overflow-visible flex flex-col transition-colors duration-500 ${isCenter ? `selected-card-glow ${borderClass}` : 'border-stone-700'}`}>
             {isCenter && data.level >= PRESTIGE_LEVEL_THRESHOLD && <div className="gem-socket"><div className="gem-stone" style={gemStyle}></div></div>}
-            <div className={topSectionClass}>
+            <div className={topSectionBaseClass} style={config.colorStyle}>
                 <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                 <div className="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-white border border-white/20 z-20"><div className="text-xs text-gray-400 uppercase">{skillName}</div><div className="text-lg leading-none">{config.fantasyName}</div></div>
                 <div className="absolute top-2 right-2 z-20"><div className={`bg-black/60 px-3 py-1 rounded border border-white/20 text-3xl font-bold ${levelTextColor}`}>Lvl {data.level}</div></div>
-                {showMob && <div className="relative z-10"><SafeImage key={mobName} src={mobSrc} alt={mobName} className={`w-40 h-40 object-contain drop-shadow-[4px_4px_0_rgba(0,0,0,0.5)] transition-transform duration-100 ${isHit ? 'animate-knockback' : 'animate-bob'}`} />{damageNumbers.map(dmg => (<div key={dmg.id} className="absolute text-5xl font-bold text-red-500 animate-bounce pointer-events-none whitespace-nowrap" style={{ left: `calc(50% + ${dmg.x}px)`, top: `calc(50% + ${dmg.y}px)`, textShadow: '2px 2px 0 #000' }}>-{dmg.val}</div>))}</div>}
-                {config.id !== 'memory' && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 px-6 py-2 rounded-full text-white border-2 border-white/30 text-xl font-bold tracking-wide z-10 shadow-lg">{mobName} HP: {displayHP}</div>}
+                {showMob && <div className="relative z-10 flex items-center justify-center h-full max-h-[200px]"><SafeImage key={mobName} src={mobSrc} alt={mobName} className={`max-w-[160px] max-h-[160px] w-auto h-auto object-contain drop-shadow-[4px_4px_0_rgba(0,0,0,0.5)] transition-transform duration-100 ${isHit ? 'animate-knockback' : 'animate-bob'}`} />{damageNumbers.map(dmg => (<div key={dmg.id} className="absolute text-5xl font-bold text-red-500 animate-bounce pointer-events-none whitespace-nowrap" style={{ left: `calc(50% + ${dmg.x}px)`, top: `calc(50% + ${dmg.y}px)`, textShadow: '2px 2px 0 #000' }}>-{dmg.val}</div>))}</div>}
+                {config.id !== 'memory' && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 px-6 py-2 rounded-full text-white border-2 border-white/30 text-xl font-bold tracking-wide z-10 shadow-lg">{mobName}</div>}
             </div>
             {(!isBattling || config.id !== 'memory') && <div className="bg-[#1a1a1a] p-2 border-t-4 border-b-4 border-black relative"><div className="flex justify-between text-gray-400 text-xs mb-1 uppercase"><span>HP</span><span>{hpPercent}%</span></div><div className="w-full h-6 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative"><div className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-200" style={{ width: `${hpPercent}%` }}></div></div><div className="absolute -bottom-10 left-0 w-full flex justify-center items-center gap-2 z-20"><button onClick={() => setDifficulty(Math.max(1, difficulty - 1))} className="bg-stone-700 text-white rounded p-1 border border-stone-500 hover:bg-stone-600"><Minus size={16} /></button><span className="text-yellow-400 font-bold bg-black/80 px-2 rounded border border-yellow-500 text-sm">Diff: {difficulty}</span><button onClick={() => setDifficulty(Math.min(unlockedDifficulty, difficulty + 1))} className="bg-stone-700 text-white rounded p-1 border border-stone-500 hover:bg-stone-600"><Plus size={16} /></button></div></div>}
             <div className={bottomSectionClass}>
@@ -142,8 +142,8 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, cha
                     </div>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center">
-                        <button onClick={onStartBattle} className="w-full bg-gradient-to-b from-green-500 to-green-700 text-white text-3xl font-bold py-6 rounded-lg shadow-[0_6px_0_#166534] active:shadow-none active:translate-y-[6px] transition-all border-2 border-green-400 uppercase tracking-wider hover:from-green-400 hover:to-green-600">
-                            Start!
+                        <button onClick={onStartBattle} className={`w-full bg-gradient-to-b from-purple-500 to-purple-700 text-white text-3xl font-bold py-6 rounded-lg shadow-[0_6px_0_#581c87] active:shadow-none active:translate-y-[6px] transition-all border-2 border-purple-400 uppercase tracking-wider hover:from-purple-400 hover:to-purple-600`}>
+                            {config.actionName}
                         </button>
                     </div>
                 )}

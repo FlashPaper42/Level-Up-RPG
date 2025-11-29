@@ -89,6 +89,19 @@ const GlobalStyles = () => (
         box-shadow: inset 2px 2px 4px rgba(255,255,255,0.7), inset -2px -2px 4px rgba(0,0,0,0.5), 0 0 4px currentColor;
         border: 1px solid rgba(0,0,0,0.5);
     }
+    
+    /* Card glow and border styles */
+    .selected-card-glow {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3);
+    }
+    
+    .border-wood { border-color: #8B4513 !important; }
+    .border-stone { border-color: #808080 !important; }
+    .border-gold { border-color: #FFD700 !important; }
+    .border-iron { border-color: #C0C0C0 !important; }
+    .border-emerald { border-color: #50C878 !important; }
+    .border-diamond { border-color: #00CED1 !important; }
+    .border-netherite { border-color: #4A4A4A !important; }
   `}</style>
 );
 
