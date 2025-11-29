@@ -9,7 +9,7 @@ const SettingsDrawer = ({ isOpen, onClose, activeTheme, setActiveTheme, onReset,
         className={`fixed h-full w-[85%] md:w-[60%] bg-[#0f172a]/95 backdrop-blur-xl z-50 border-r-4 border-slate-700 shadow-2xl transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ top: 0, left: 0 }}
     >
-        <div className="!p-6 h-full flex flex-col justify-evenly gap-6 overflow-y-auto scrollbar-hide text-slate-200 font-sans">
+        <div className="p-6 h-full flex flex-col justify-evenly gap-6 overflow-y-auto scrollbar-hide text-slate-200 font-sans">
             <div className="flex justify-between items-center border-b-2 border-slate-700 pb-4 shrink-0">
                 <h2 className="text-4xl text-yellow-400 font-bold uppercase tracking-widest drop-shadow-md" style={{ fontFamily: '"VT323", monospace' }}>Settings</h2>
                 <button onClick={onClose} className="bg-red-600/80 hover:bg-red-600 text-white p-2 rounded-lg border-2 border-red-800 shadow-lg"><X size={24} /></button>
