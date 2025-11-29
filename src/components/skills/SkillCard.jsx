@@ -142,6 +142,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, cha
                     </div>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center">
+                        <p className="text-gray-400 text-center mb-4 px-2">{config.taskDescription}</p>
                         <button onClick={onStartBattle} className={`w-full bg-gradient-to-b from-purple-500 to-purple-700 text-white text-3xl font-bold py-6 rounded-lg shadow-[0_6px_0_#581c87] active:shadow-none active:translate-y-[6px] transition-all border-2 border-purple-400 uppercase tracking-wider hover:from-purple-400 hover:to-purple-600`}>
                             {config.actionName}
                         </button>

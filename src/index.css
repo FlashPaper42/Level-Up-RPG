@@ -1,8 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Force include gradient utilities that are being purged */
+@utility from-purple-500 {
+  --tw-gradient-from: #a855f7;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent);
+}
+
+@utility to-purple-700 {
+  --tw-gradient-to: #7e22ce;
+}
+
+@utility border-purple-400 {
+  border-color: #c084fc;
+}
+
+@utility from-red-600 {
+  --tw-gradient-from: #dc2626;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent);
+}
+
+@utility to-red-500 {
+  --tw-gradient-to: #ef4444;
+}
 
 * {
   margin: 0;
