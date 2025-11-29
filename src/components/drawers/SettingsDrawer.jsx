@@ -10,21 +10,21 @@ const SettingsDrawer = ({ isOpen, onClose, activeTheme, setActiveTheme, onReset,
         style={{ top: 0, left: 0 }}
     >
         <div className="!p-6 h-full flex flex-col min-h-full overflow-y-auto scrollbar-hide text-slate-200 font-sans">
-            <div className="flex justify-between items-center mb-5 border-b-2 border-slate-700 pb-4">
+            <div className="flex justify-between items-center mb-8 border-b-2 border-slate-700 pb-4">
                 <h2 className="text-4xl text-yellow-400 font-bold uppercase tracking-widest drop-shadow-md" style={{ fontFamily: '"VT323", monospace' }}>Settings</h2>
                 <button onClick={onClose} className="bg-red-600/80 hover:bg-red-600 text-white p-2 rounded-lg border-2 border-red-800 shadow-lg"><X size={24} /></button>
             </div>
             
-            <div className="mb-8">
+            <div className="mb-12">
                 <h3 className="text-xl text-blue-300 mb-3 font-bold flex items-center gap-3 uppercase tracking-wider"><Users size={20} /> Select File</h3>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-5">
                     {[1, 2, 3].map(id => (<ProfileCard key={id} id={id} name={profileNames[id]} stats={getProfileStats(id)} isCurrent={currentProfile === id} onSwitch={onSwitchProfile} onRename={onRenameProfile} />))}
                 </div>
             </div>
             
-            <div className="mb-8">
+            <div className="mb-12">
                 <h3 className="text-xl text-blue-300 mb-3 font-bold flex items-center gap-3 uppercase tracking-wider"><Music size={20} /> Audio Configuration</h3>
-                <div className="space-y-4 bg-slate-900/50 p-4 rounded-xl border-2 border-slate-600">
+                <div className="space-y-6 bg-slate-900/50 p-6 rounded-xl border-2 border-slate-600">
                     <div>
                         <div className="flex justify-between mb-1 text-slate-400 font-bold text-sm uppercase"><span>Music Volume</span><span className="text-yellow-400">{Math.round(bgmVol * 100)}%</span></div>
                         <input type="range" min="0" max="1" step="0.05" value={bgmVol} onChange={(e) => setBgmVol(parseFloat(e.target.value))} className="h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-400" />
@@ -36,9 +36,9 @@ const SettingsDrawer = ({ isOpen, onClose, activeTheme, setActiveTheme, onReset,
                 </div>
             </div>
             
-            <div className="mb-8">
+            <div className="mb-12">
                 <h3 className="text-xl text-blue-300 mb-3 font-bold flex items-center gap-3 uppercase tracking-wider"><Sparkles size={20} /> Theme Select</h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                     {THEMES_LIST.map(theme => (
                         <button key={theme.id} onClick={() => setActiveTheme(theme.id)} disabled={activeTheme === theme.id} className={`h-24 rounded-lg border-2 overflow-hidden relative transition-all duration-300 shadow-lg group ${activeTheme === theme.id ? 'border-yellow-400 ring-2 ring-yellow-400/20 opacity-100 cursor-default' : 'border-slate-600 hover:scale-105 hover:border-white opacity-60 hover:opacity-100'}`}>
                             <SafeImage src={theme.img} alt={theme.name} className={`w-full h-full object-cover ${activeTheme === theme.id ? 'grayscale-0' : 'grayscale'}`} />
