@@ -5,7 +5,10 @@ import SafeImage from '../ui/SafeImage';
 import { THEMES_LIST } from '../../constants/gameData';
 
 const SettingsDrawer = ({ isOpen, onClose, activeTheme, setActiveTheme, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol, currentProfile, onSwitchProfile, profileNames, onRenameProfile, getProfileStats }) => (
-    <div className={`fixed top-0 left-0 h-full w-[85%] md:w-[60%] bg-[#0f172a]/95 backdrop-blur-xl z-50 border-r-4 border-slate-700 shadow-2xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <div 
+        className={`fixed h-full w-[85%] md:w-[60%] bg-[#0f172a]/95 backdrop-blur-xl z-50 border-r-4 border-slate-700 shadow-2xl transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        style={{ top: 0, left: 0 }}
+    >
         <div className="p-6 h-full flex flex-col overflow-y-auto scrollbar-hide text-slate-200 font-sans">
             <div className="flex justify-between items-center mb-8 border-b-2 border-slate-700 pb-4">
                 <h2 className="text-4xl text-yellow-400 font-bold uppercase tracking-widest drop-shadow-md" style={{ fontFamily: '"VT323", monospace' }}>Settings</h2>

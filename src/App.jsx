@@ -155,11 +155,11 @@ const App = () => {
         <div className="min-h-screen overflow-hidden relative flex flex-col bg-cover bg-center bg-no-repeat font-sans text-stone-100" style={containerStyle}>
             <GlobalStyles />
             <div className="absolute inset-0 bg-black/30 pointer-events-none z-0"></div>
-            <div className="absolute top-4 left-4 z-50 flex gap-2">{Array(10).fill(0).map((_, i) => (<Heart key={i} size={32} className={`${i < playerHealth ? 'fill-red-600 text-red-600' : 'fill-gray-900 text-gray-700'} drop-shadow-md`} />))}</div>
-            <button onClick={() => setIsSettingsOpen(true)} className="absolute top-6 left-8 z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg mt-12"><Sparkles size={32} className="text-yellow-400" /></button>
+            <button onClick={() => setIsSettingsOpen(true)} className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg" style={{ top: '16px', left: '16px' }}><Sparkles size={32} className="text-yellow-400" /></button>
+            <div className="absolute z-40 flex gap-2" style={{ top: '16px', left: '80px' }}>{Array(10).fill(0).map((_, i) => (<Heart key={i} size={32} className={`${i < playerHealth ? 'fill-red-600 text-red-600' : 'fill-gray-900 text-gray-700'} drop-shadow-md`} />))}</div>
             <SettingsDrawer isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} activeTheme={activeTheme} setActiveTheme={setActiveTheme} onReset={handleReset} bgmVol={bgmVol} setBgmVol={setBgmVol} sfxVol={sfxVol} setSfxVol={setSfxVol} currentProfile={currentProfile} onSwitchProfile={handleSwitchProfile} profileNames={profileNames} onRenameProfile={handleRenameProfile} getProfileStats={getProfileStats} />
             <ResetModal isOpen={isResetOpen} onClose={() => setIsResetOpen(false)} onConfirm={handleReset} />
-            <button onClick={() => setIsMenuOpen(true)} className="absolute top-6 right-8 z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"><Menu size={32} /></button>
+            <button onClick={() => setIsMenuOpen(true)} className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg" style={{ top: '16px', right: '16px' }}><Menu size={32} /></button>
             <MenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} skills={skills} />
             <main className="flex-1 relative flex flex-col items-center justify-center w-full">
                 <div className="z-10 relative mb-[-30px] md:mb-[-50px] pointer-events-none opacity-90"><SafeImage src={currentThemeData.assets.logo} fallbackSrc="https://placehold.co/800x300/333/FFD700?text=LOGO+PLACEHOLDER&font=monsterrat" alt="Game Logo" className="w-[480px] md:w-[720px] lg:w-[960px] object-contain drop-shadow-2xl" /></div>
