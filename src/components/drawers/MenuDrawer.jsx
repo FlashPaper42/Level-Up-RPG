@@ -7,7 +7,10 @@ const MenuDrawer = ({ isOpen, onClose, skills }) => {
     const totalLevels = Object.values(skills).reduce((acc, s) => acc + s.level, 0);
     
     return (
-        <div className={`fixed top-0 right-0 h-full w-[75%] md:w-[60%] bg-[#1a1a1a]/95 backdrop-blur-md z-50 border-l-4 border-stone-600 shadow-2xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div 
+            className={`fixed h-full w-[75%] md:w-[60%] bg-[#1a1a1a]/95 backdrop-blur-md z-50 border-l-4 border-stone-600 shadow-2xl transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            style={{ top: 0, right: 0 }}
+        >
             <div className="p-8 h-full flex flex-col">
                 <div className="flex justify-between items-start mb-8 border-b-4 border-stone-600 pb-4">
                     <div><h2 className="text-6xl text-yellow-400 font-bold uppercase tracking-widest mb-2 drop-shadow-md">Achievements</h2><p className="text-stone-400 text-4xl">Total Level: <span className="text-white font-bold">{totalLevels}</span></p></div>
