@@ -1,0 +1,487 @@
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #6366f1;
+    --primary-hover: #4f46e5;
+    --background-color: #1a1a2e;
+    --card-background: #16213e;
+    --text-color: #ffffff;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --success-color: #22c55e;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--background-color) 0%, #0f0f23 100%);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Settings Button - Top Left, Always Visible */
+.settings-btn {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 100;
+    box-shadow: var(--card-shadow);
+}
+
+.settings-btn:hover {
+    background-color: var(--primary-hover);
+    transform: scale(1.1);
+}
+
+.settings-btn svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+}
+
+/* Achievement Toggle Button - Top Right */
+.achievement-toggle-btn {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--success-color);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 100;
+    box-shadow: var(--card-shadow);
+}
+
+.achievement-toggle-btn:hover {
+    transform: scale(1.1);
+}
+
+.achievement-toggle-btn svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    height: 100vh;
+}
+
+.game-title {
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #f59e0b, #eab308, #fde047);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 40px rgba(245, 158, 11, 0.3);
+}
+
+/* Carousel Container - Full Width with Edge Arrows */
+.carousel-container {
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    max-height: 70vh;
+}
+
+/* Carousel Arrows - Positioned at Screen Edges */
+.carousel-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: clamp(40px, 5vw, 60px);
+    height: clamp(60px, 10vh, 100px);
+    background-color: rgba(99, 102, 241, 0.9);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 50;
+}
+
+.carousel-arrow-left {
+    left: 0;
+    border-radius: 0 8px 8px 0;
+}
+
+.carousel-arrow-right {
+    right: 0;
+    border-radius: 8px 0 0 8px;
+}
+
+.carousel-arrow:hover {
+    background-color: var(--primary-hover);
+}
+
+.carousel-arrow:disabled {
+    background-color: rgba(99, 102, 241, 0.3);
+    cursor: not-allowed;
+}
+
+.carousel-arrow svg {
+    width: clamp(24px, 3vw, 36px);
+    height: clamp(24px, 3vw, 36px);
+    color: white;
+}
+
+/* Carousel Track Container */
+.carousel-track-container {
+    width: calc(100% - clamp(100px, 12vw, 160px));
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.carousel-track {
+    display: flex;
+    gap: clamp(1rem, 2vw, 2rem);
+    transition: transform 0.5s ease;
+    cursor: grab;
+    user-select: none;
+}
+
+.carousel-track:active {
+    cursor: grabbing;
+}
+
+/* Mob Cards - Responsive Sizing */
+.mob-card {
+    flex: 0 0 auto;
+    width: clamp(200px, 25vw, 300px);
+    height: clamp(280px, 40vh, 400px);
+    background: var(--card-background);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.mob-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Mob Image Container - Constrained to fit card */
+.mob-image-container {
+    position: relative;
+    width: 100%;
+    height: 60%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.mob-image {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* Mob Info Section */
+.mob-info {
+    flex: 1;
+    padding: clamp(0.75rem, 2vw, 1.25rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.mob-name {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.mob-level {
+    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.mob-type {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background-color: var(--primary-color);
+    border-radius: 9999px;
+    font-size: clamp(0.65rem, 1.25vw, 0.75rem);
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+/* Achievement Panel - Hidden by Default */
+.achievement-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: clamp(280px, 25vw, 350px);
+    height: 100%;
+    background-color: var(--card-background);
+    border-left: 1px solid var(--border-color);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.3);
+}
+
+.achievement-panel.open {
+    transform: translateX(0);
+}
+
+.achievement-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.achievement-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.achievement-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: background-color 0.2s ease;
+}
+
+.achievement-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.achievement-item.locked {
+    opacity: 0.5;
+}
+
+.achievement-icon {
+    font-size: 1.5rem;
+}
+
+.achievement-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Close Button */
+.close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.close-btn svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-color);
+}
+
+/* Settings Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+}
+
+.modal.open {
+    display: flex;
+}
+
+.modal-content {
+    width: clamp(300px, 90vw, 450px);
+    background-color: var(--card-background);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-item span {
+    font-size: 0.875rem;
+}
+
+.setting-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .carousel-arrow {
+        width: 36px;
+        height: 50px;
+    }
+
+    .carousel-track-container {
+        width: calc(100% - 80px);
+    }
+
+    .mob-card {
+        width: clamp(180px, 60vw, 250px);
+        height: clamp(240px, 50vh, 320px);
+    }
+
+    .achievement-panel {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .carousel-arrow {
+        width: 32px;
+        height: 44px;
+    }
+
+    .carousel-track-container {
+        width: calc(100% - 70px);
+    }
+
+    .mob-card {
+        width: clamp(160px, 70vw, 200px);
+        height: clamp(200px, 45vh, 280px);
+    }
+
+    .settings-btn,
+    .achievement-toggle-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .settings-btn svg,
+    .achievement-toggle-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .game-title {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Landscape mode adjustments */
+@media (max-height: 500px) {
+    .game-title {
+        margin-bottom: 0.5rem;
+        font-size: 1.5rem;
+    }
+
+    .mob-card {
+        height: clamp(180px, 60vh, 250px);
+    }
+
+    .carousel-container {
+        max-height: 80vh;
+    }
+}
