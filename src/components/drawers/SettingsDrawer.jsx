@@ -9,21 +9,21 @@ const SettingsDrawer = ({ isOpen, onClose, activeTheme, setActiveTheme, onReset,
         className={`fixed h-full w-[85%] md:w-[60%] bg-[#0f172a]/95 backdrop-blur-xl z-50 border-r-4 border-slate-700 shadow-2xl transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ top: 0, left: 0 }}
     >
-        <div className="p-6 h-full flex flex-col overflow-y-auto scrollbar-hide text-slate-200 font-sans">
-            <div className="flex justify-between items-center mb-8 border-b-2 border-slate-700 pb-4">
+        <div className="p-4 h-full flex flex-col min-h-full overflow-y-auto scrollbar-hide text-slate-200 font-sans">
+            <div className="flex justify-between items-center mb-5 border-b-2 border-slate-700 pb-4">
                 <h2 className="text-4xl text-yellow-400 font-bold uppercase tracking-widest drop-shadow-md" style={{ fontFamily: '"VT323", monospace' }}>Settings</h2>
                 <button onClick={onClose} className="bg-red-600/80 hover:bg-red-600 text-white p-2 rounded-lg border-2 border-red-800 shadow-lg"><X size={24} /></button>
             </div>
             
-            <div className="mb-8">
-                <h3 className="text-xl text-blue-300 mb-4 font-bold flex items-center gap-3 uppercase tracking-wider"><Users size={20} /> Select File</h3>
-                <div className="flex flex-col gap-4">
+            <div className="mb-5">
+                <h3 className="text-xl text-blue-300 mb-3 font-bold flex items-center gap-3 uppercase tracking-wider"><Users size={20} /> Select File</h3>
+                <div className="flex flex-col gap-3">
                     {[1, 2, 3].map(id => (<ProfileCard key={id} id={id} name={profileNames[id]} stats={getProfileStats(id)} isCurrent={currentProfile === id} onSwitch={onSwitchProfile} onRename={onRenameProfile} />))}
                 </div>
             </div>
             
-            <div className="mb-8">
-                <h3 className="text-xl text-blue-300 mb-4 font-bold flex items-center gap-3 uppercase tracking-wider"><Music size={20} /> Audio</h3>
+            <div className="mb-5">
+                <h3 className="text-xl text-blue-300 mb-3 font-bold flex items-center gap-3 uppercase tracking-wider"><Music size={20} /> Audio</h3>
                 <div className="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700">
                     <div>
                         <div className="flex justify-between mb-1 text-slate-400 font-bold text-sm uppercase"><span>Music</span><span className="text-yellow-400">{Math.round(bgmVol * 100)}%</span></div>
@@ -36,8 +36,8 @@ const SettingsDrawer = ({ isOpen, onClose, activeTheme, setActiveTheme, onReset,
                 </div>
             </div>
             
-            <div className="mb-8">
-                <h3 className="text-xl text-blue-300 mb-4 font-bold flex items-center gap-3 uppercase tracking-wider"><Sparkles size={20} /> Theme</h3>
+            <div className="mb-5">
+                <h3 className="text-xl text-blue-300 mb-3 font-bold flex items-center gap-3 uppercase tracking-wider"><Sparkles size={20} /> Theme</h3>
                 <div className="grid grid-cols-2 gap-3">
                     {THEMES_LIST.map(theme => (
                         <button key={theme.id} onClick={() => setActiveTheme(theme.id)} disabled={activeTheme === theme.id} className={`h-24 rounded-lg border-2 overflow-hidden relative transition-all duration-300 shadow-lg group ${activeTheme === theme.id ? 'border-yellow-400 ring-2 ring-yellow-400/20 opacity-100 cursor-default' : 'border-slate-600 hover:scale-105 hover:border-white opacity-60 hover:opacity-100'}`}>
@@ -50,7 +50,9 @@ const SettingsDrawer = ({ isOpen, onClose, activeTheme, setActiveTheme, onReset,
                 </div>
             </div>
             
-            <div className="mt-auto pt-6 border-t-2 border-slate-700">
+            <div className="flex-grow"></div>
+            
+            <div className="mt-auto pt-4 border-t-2 border-slate-700">
                 <button onClick={onReset} className="w-full bg-red-950/50 hover:bg-red-900/80 text-red-400 p-3 rounded-lg border border-red-900/50 hover:border-red-500 font-bold text-lg flex items-center justify-center gap-3 transition-all">
                     <Trash2 size={20} /> DELETE CURRENT FILE
                 </button>

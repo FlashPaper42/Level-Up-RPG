@@ -35,11 +35,11 @@ const ProfileCard = ({ id, name, stats, isCurrent, onSwitch, onRename }) => {
     const carouselItems = [].concat(...Array(10).fill(SKILL_DATA));
 
     return (
-        <div onClick={() => !isEditing && onSwitch(id)} className={`relative w-full h-[140px] rounded-xl overflow-hidden transition-all cursor-pointer group select-none ${isCurrent ? 'ring-4 ring-yellow-400 scale-[1.02] z-10' : 'hover:scale-[1.01] opacity-70 hover:opacity-100'}`} style={{ backgroundColor: '#0f172a', boxShadow: isCurrent ? '0 0 20px rgba(250, 204, 21, 0.3)' : '0 4px 6px rgba(0,0,0,0.5)' }}>
+        <div onClick={() => !isEditing && onSwitch(id)} className={`relative w-full h-[100px] rounded-xl overflow-hidden transition-all cursor-pointer group select-none ${isCurrent ? 'ring-4 ring-yellow-400 scale-[1.02] z-10' : 'hover:scale-[1.01] opacity-70 hover:opacity-100'}`} style={{ backgroundColor: '#0f172a', boxShadow: isCurrent ? '0 0 20px rgba(250, 204, 21, 0.3)' : '0 4px 6px rgba(0,0,0,0.5)' }}>
             {themeBg && <div className="absolute inset-0"><SafeImage src={themeBg} className="w-full h-full object-cover" /><div className="absolute inset-0 bg-black/60"></div></div>}
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-10 pointer-events-none"></div>
-            <div className="relative flex h-full p-3 gap-3 z-10">
-                <div className="w-1/3 flex flex-col justify-between border-r-2 border-white/20 pr-3">
+            <div className="relative flex h-full p-2 gap-2 z-10">
+                <div className="w-1/3 flex flex-col justify-between border-r-2 border-white/20 pr-2">
                     <div>
                         <div className="bg-black/60 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-full inline-block border border-white/10 mb-1 backdrop-blur-sm">FILE {id}</div>
                         {isEditing ? (

@@ -36,7 +36,7 @@ export const THEME_CONFIG = {
     }
 };
 
-export const THEMES_LIST = [ { id: 'minecraft', name: 'Minecraft', img: '/assets/themes/minecraft.png' }, { id: 'scifi', name: 'Sci-Fi', img: '/assets/themes/scifi.png' }, { id: 'fantasy', name: 'Fantasy', img: '/assets/themes/fantasy.png' }, { id: 'spy', name: 'Spy', img: '/assets/themes/spy.png' } ];
+export const THEMES_LIST = [ { id: 'minecraft', name: 'Minecraft', img: '/assets/themes/minecraft.png' }, { id: 'scifi', name: 'Sci-Fi', img: '/assets/themes/Scifi.png' }, { id: 'fantasy', name: 'Fantasy', img: '/assets/themes/fantasy.png' }, { id: 'spy', name: 'Spy', img: '/assets/themes/spy.png' } ];
 export const BADGE_TIERS = [ { level: 20, title: "Wood" }, { level: 40, title: "Stone" }, { level: 60, title: "Gold" }, { level: 80, title: "Iron" }, { level: 100, title: "Emerald" }, { level: 120, title: "Diamond" }, { level: 140, title: "Netherite" }, { level: 160, title: "Obsidian" } ];
 export const SIGHT_WORDS = ["THE", "AND", "YOU", "THAT", "WAS", "FOR", "ON", "ARE", "WITH", "HIS", "THEY", "CAT", "DOG", "BAT", "RUN", "JUMP", "BIG", "RED", "FOX", "SUN", "MOM", "DAD", "PLAY", "SEE", "LOOK", "IT", "IS", "GO", "TO", "MY", "NO", "YES"];
 export const SPELLING_ITEMS = [ { word: "TNT" }, { word: "BED" }, { word: "BOW" }, { word: "MAP" }, { word: "EGG" }, { word: "ICE" }, { word: "AXE" }, { word: "HOE" }, { word: "BOOK" }, { word: "CAKE" }, { word: "BOAT" }, { word: "DOOR" }, { word: "WOOL" }, { word: "SAND" }, { word: "DIRT" }, { word: "MILK" } ];
