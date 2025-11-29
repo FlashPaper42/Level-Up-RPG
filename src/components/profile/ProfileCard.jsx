@@ -39,30 +39,30 @@ const ProfileCard = ({ id, name, stats, isCurrent, onSwitch, onRename }) => {
             {themeBg && <div className="absolute inset-0"><SafeImage src={themeBg} className="w-full h-full object-cover" /><div className="absolute inset-0 bg-black/60"></div></div>}
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-10 pointer-events-none"></div>
             <div className="relative flex h-full p-2 gap-2 z-10">
-                <div className="w-1/3 flex flex-col justify-between border-r-2 border-white/20 pr-2">
+                <div className="w-1/3 flex flex-col justify-between border-r-2 border-white/20 pr-2 pl-2">
                     <div>
-                        <div className="bg-black/60 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-full inline-block border border-white/10 mb-1 backdrop-blur-sm">FILE {id}</div>
+                        <div className="bg-black/60 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-full inline-block border border-white/10 mb-1 backdrop-blur-sm ml-1">FILE {id}</div>
                         {isEditing ? (
                             <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                                 <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="bg-black text-white w-full text-lg font-bold p-0.5 rounded border border-yellow-500 outline-none uppercase" autoFocus />
                                 <button onClick={(e) => { e.stopPropagation(); onRename(id, tempName); setIsEditing(false); }} className="text-green-400 hover:text-green-300"><Check size={16} /></button>
                             </div>
                         ) : (
-                            <div className="group/name flex items-center gap-2">
+                            <div className="group/name flex items-center gap-2 pl-1">
                                 <h3 className={`text-2xl font-bold uppercase truncate leading-none ${isCurrent ? 'text-yellow-100 drop-shadow-md' : 'text-white'}`} style={{ fontFamily: 'sans-serif', textShadow: '2px 2px 0 #000' }}>{name}</h3>
                                 {isCurrent && <Pencil size={12} className="text-slate-400 group-hover/name:text-yellow-400 transition-colors" onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} />}
                             </div>
                         )}
                     </div>
-                    <div className="bg-black/50 rounded-lg p-2 border border-white/10 flex items-center gap-3 backdrop-blur-sm">
+                    <div className="bg-black/50 rounded-lg p-3 border border-white/10 flex items-center gap-3 backdrop-blur-sm ml-1">
                         <Heart className={`fill-red-600 text-red-800 ${isCurrent ? 'animate-pulse' : ''}`} size={24} />
-                        <div><div className="text-[10px] text-slate-400 uppercase tracking-widest leading-none">Level</div><div className="text-2xl font-bold text-white leading-none">{stats ? stats.totalLevel : 0}</div></div>
+                        <div className="bg-slate-900/70 rounded-md px-2 py-1"><div className="text-[10px] text-slate-400 uppercase tracking-widest leading-none">Level</div><div className="text-2xl font-bold text-white leading-none">{stats ? stats.totalLevel : 0}</div></div>
                     </div>
                 </div>
-                <div className="flex-1 flex flex-col min-w-0">
-                    <div className="flex justify-between items-center mb-1"><span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider drop-shadow-md">Proficiency</span></div>
+                <div className="flex-1 flex flex-col min-w-0 pr-2">
+                    <div className="flex justify-between items-center mb-1"><span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider drop-shadow-md pl-2">Skill Proficiency</span></div>
                     <div className="flex-1 bg-black/50 rounded-lg border-2 border-white/10 inner-shadow p-0 overflow-hidden backdrop-blur-sm relative flex items-center">
-                        <div className="flex gap-6 animate-scroll-left px-4 w-max">
+                        <div className="flex gap-6 animate-scroll-left px-6 w-max">
                             {carouselItems.map((skillConfig, index) => {
                                 const userSkillLevel = stats && stats.skills && stats.skills[skillConfig.id] ? stats.skills[skillConfig.id].level : 1;
                                 const isUnlocked = userSkillLevel > 1;
