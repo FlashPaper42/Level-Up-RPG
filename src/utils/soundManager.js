@@ -3,7 +3,7 @@
  * Centralized sound management for the game including BGM shuffle, UI sounds, and mob sounds.
  */
 
-// BGM tracks discovered from /public/assets/sounds/bgm/
+// BGM tracks discovered from public/assets/sounds/bgm/
 const BGM_TRACKS = [
     'assets/sounds/bgm/calm1.wav',
     'assets/sounds/bgm/calm2.wav',
