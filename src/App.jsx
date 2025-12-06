@@ -1059,7 +1059,8 @@ const App = () => {
     
     const getVisibleItems = () => {
         const items = [];
-        for (let i = -2; i <= 2; i++) {
+        // Generate 7 items: 5 visible cards (offsets -2 to +2) + 2 hidden positions (±3) for smooth entry/exit animation
+        for (let i = -3; i <= 3; i++) {
             let idx = selectedIndex + i;
             let dataIndex = idx % SKILL_DATA.length;
             if (dataIndex < 0) dataIndex += SKILL_DATA.length;
@@ -1320,11 +1321,12 @@ const App = () => {
                         const getVerticalOffset = (offset) => {
                             if (offset === 0) return -55; // Center card lowered by 5px (was -60)
                             if (Math.abs(offset) === 1) return -30; // Adjacent cards at intermediate height
-                            return 20; // Outer cards at lowest position
+                            if (Math.abs(offset) === 2) return 20; // Outer cards at lowest position
+                            return 75; // Hidden positions (±3) - off-screen, continuing the parabolic curve
                         };
                         const translateY = getVerticalOffset(item.offset);
                         // Add subtle rotation for 3D effect - negative values warp outward
-                        const rotateX = Math.abs(item.offset) === 2 ? -8 : (Math.abs(item.offset) === 1 ? -4 : 0);
+                        const rotateX = Math.abs(item.offset) === 3 ? -12 : (Math.abs(item.offset) === 2 ? -8 : (Math.abs(item.offset) === 1 ? -4 : 0));
                         
                         return (
                         <div 
@@ -1332,7 +1334,7 @@ const App = () => {
                             className="absolute transition-all duration-500 ease-out" 
                             style={{ 
                                 transform: `translateX(${item.offset * 320}px) translateY(${translateY}px) rotateX(${rotateX}deg) scale(${item.offset === 0 ? 1.1 : 0.85})`, 
-                                opacity: item.offset === 0 ? 1 : (Math.abs(item.offset) === 2 ? 0.3 : 0.6), 
+                                opacity: item.offset === 0 ? 1 : (Math.abs(item.offset) === 3 ? 0 : (Math.abs(item.offset) === 2 ? 0.3 : 0.6)), 
                                 zIndex: isItemBattling ? 50 : (item.offset === 0 ? 20 : 10 - Math.abs(item.offset)), 
                                 filter: item.offset === 0 ? 'none' : 'brightness(0.5) blur(1px)', 
                                 cursor: item.offset !== 0 && !battlingSkillId ? 'pointer' : 'default',
