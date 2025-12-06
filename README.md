@@ -45,3 +45,9 @@ npm run electron:build
 ![Screenshot 5](screenshots/image5.png)
 
 ![Screenshot 6](screenshots/image6.png)
+
+![Screenshot 7](screenshots/image7.png)
+
+![Screenshot 8](screenshots/image8.png)
+
+![Screenshot 9](screenshots/image9.png)
