@@ -14,17 +14,18 @@ function createWindow() {
     },
     // Remove menu bar for cleaner experience
     autoHideMenuBar: true,
-    // Set application icon
-    icon: path.join(__dirname, '../dist/vite.svg'),
   });
 
   // Load the built game
   mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
 
   // Prevent opening developer tools in production for a cleaner experience
-  if (!process.env.DEBUG) {
+  if (app.isPackaged) {
     mainWindow.webContents.on('before-input-event', (event, input) => {
-      if (input.key === 'F12' || (input.control && input.shift && input.key === 'I')) {
+      // Block F12 and common devtools shortcuts
+      if (input.key === 'F12' || 
+          (input.control && input.shift && input.key === 'I') ||
+          (input.control && input.shift && input.key === 'C')) {
         event.preventDefault();
       }
     });
