@@ -9,6 +9,10 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    
+    permissions:
+      contents: write  # Required for creating releases and uploading assets
+      actions: read    # Required for workflow runs
 
     steps:
       - name: Checkout code
