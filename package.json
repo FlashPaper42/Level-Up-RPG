@@ -52,8 +52,7 @@
           "target": "portable",
           "arch": ["x64"]
         }
-      ],
-      "icon": "public/vite.svg"
+      ]
     },
     "portable": {
       "artifactName": "LevelUpRPG-Portable.exe"
