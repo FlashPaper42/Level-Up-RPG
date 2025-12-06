@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+release/
 
 # Editor directories and files
 .vscode/
@@ -23,3 +24,7 @@ node_modules/
 
 # Temporary files
 tmp/
+
+# Electron
+out/
+dist-electron/

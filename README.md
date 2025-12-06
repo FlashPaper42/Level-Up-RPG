@@ -2,6 +2,36 @@
 
 Have fun!
 
+## Download & Play (Windows)
+
+Want to play the game without installing anything? Download the portable `.exe` file!
+
+### Option 1: Download from Releases (Recommended)
+1. Go to the [Releases page](https://github.com/FlashPaper42/Level-Up-RPG/releases)
+2. Download the latest `LevelUpRPG-Portable.exe` file
+3. Double-click the file to launch the game
+4. **No installation required!** Perfect for sharing via flash drive
+
+### Option 2: Download from GitHub Actions
+1. Go to the [Actions tab](https://github.com/FlashPaper42/Level-Up-RPG/actions/workflows/build-exe.yml)
+2. Click on the most recent successful workflow run (green checkmark)
+3. Scroll down to the "Artifacts" section
+4. Download `LevelUpRPG-Windows-Portable`
+5. Extract the `.exe` file and double-click to play
+
+## Development
+
+To run the game in development mode:
+```bash
+npm install
+npm run dev
+```
+
+To build the Electron app locally:
+```bash
+npm run electron:build
+```
+
 ## Screenshots
 
 ![Screenshot 1](screenshots/image1.png)
