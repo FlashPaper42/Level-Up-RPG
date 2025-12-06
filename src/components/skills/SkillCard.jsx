@@ -99,7 +99,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     const playAxolotlNote = useCallback((color) => {
         const noteName = AXOLOTL_NOTE_MAP[color];
         if (noteName) {
-            const audio = new Audio(`/assets/sounds/axolotl/${noteName}.wav`);
+            const audio = new Audio(`assets/sounds/axolotl/${noteName}.wav`);
             audio.volume = getSfxVolume();
             audio.play().catch(() => {
                 // Fallback to click sound if note file fails to load
@@ -161,7 +161,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     let displayMobName = mobName;
     
     if (config.id === 'memory') {
-        mobSrc = '/assets/skills/farm_icon.png';
+        mobSrc = 'assets/skills/farm_icon.png';
     } else if (config.id === 'cleaning') {
         mobSrc = CHEST_BLOCKS[mobName] || themeData.assets.mobs[mobName] || BASE_ASSETS.axolotls.Pink;
     } else if (config.id === 'patterns') {

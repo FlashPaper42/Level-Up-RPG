@@ -3,26 +3,26 @@
  * Centralized sound management for the game including BGM shuffle, UI sounds, and mob sounds.
  */
 
-// BGM tracks discovered from /public/assets/sounds/bgm/
+// BGM tracks discovered from public/assets/sounds/bgm/
 const BGM_TRACKS = [
-    '/assets/sounds/bgm/calm1.wav',
-    '/assets/sounds/bgm/calm2.wav',
-    '/assets/sounds/bgm/calm3.wav',
-    '/assets/sounds/bgm/piano1.wav',
-    '/assets/sounds/bgm/piano2.wav',
-    '/assets/sounds/bgm/piano3.wav'
+    'assets/sounds/bgm/calm1.wav',
+    'assets/sounds/bgm/calm2.wav',
+    'assets/sounds/bgm/calm3.wav',
+    'assets/sounds/bgm/piano1.wav',
+    'assets/sounds/bgm/piano2.wav',
+    'assets/sounds/bgm/piano3.wav'
 ];
 
 // UI sound paths
 const UI_SOUNDS = {
-    actioncard_left: '/assets/sounds/ui/actioncard_left.wav',
-    actioncard_right: '/assets/sounds/ui/actioncard_right.wav',
-    click: '/assets/sounds/ui/click.wav',
-    death: '/assets/sounds/ui/death.wav',
-    fail: '/assets/sounds/ui/fail.wav',
-    levelup: '/assets/sounds/ui/levelup.wav',
-    notification: '/assets/sounds/ui/notification.wav',
-    successful_hit: '/assets/sounds/ui/successful_hit.wav'
+    actioncard_left: 'assets/sounds/ui/actioncard_left.wav',
+    actioncard_right: 'assets/sounds/ui/actioncard_right.wav',
+    click: 'assets/sounds/ui/click.wav',
+    death: 'assets/sounds/ui/death.wav',
+    fail: 'assets/sounds/ui/fail.wav',
+    levelup: 'assets/sounds/ui/levelup.wav',
+    notification: 'assets/sounds/ui/notification.wav',
+    successful_hit: 'assets/sounds/ui/successful_hit.wav'
 };
 
 // Mob name to folder name mapping (handles differences between display names and folder names)
@@ -250,7 +250,7 @@ export const playMobHurt = (mobName) => {
     if (!folder) return;
     
     // Use standardized naming (all files renamed to hurt.wav)
-    const audio = new Audio(`/assets/sounds/mob/${folder}/hurt.wav`);
+    const audio = new Audio(`assets/sounds/mob/${folder}/hurt.wav`);
     audio.volume = sfxVolume;
     audio.play().catch(() => {});
 };
@@ -264,7 +264,7 @@ export const playMobDeath = (mobName) => {
     if (!folder) return;
     
     // Use standardized naming (all files renamed to death.wav)
-    const audio = new Audio(`/assets/sounds/mob/${folder}/death.wav`);
+    const audio = new Audio(`assets/sounds/mob/${folder}/death.wav`);
     audio.volume = sfxVolume;
     audio.play().catch(() => {});
 };
@@ -278,7 +278,7 @@ export const playMobSay = (mobName) => {
     if (!folder) return;
     
     // Use standardized naming (all files renamed to say.wav)
-    const audio = new Audio(`/assets/sounds/mob/${folder}/say.wav`);
+    const audio = new Audio(`assets/sounds/mob/${folder}/say.wav`);
     audio.volume = sfxVolume;
     audio.play().catch(() => {});
 };
