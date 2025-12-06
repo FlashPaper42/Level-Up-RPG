@@ -1,0 +1,69 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    permissions:
+      contents: write  # Required for creating releases and uploading assets
+      actions: read    # Required for workflow runs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Vite project
+        run: npm run build
+
+      - name: Build Electron app
+        run: npm run electron:build
+
+      - name: Upload Windows Portable EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: LevelUpRPG-Windows-Portable
+          path: release/LevelUpRPG-Portable.exe
+          if-no-files-found: error
+
+      - name: Create Release (on main branch push)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Level Up RPG v${{ github.run_number }}
+          body: |
+            ## Level Up RPG - Windows Portable Version
+            
+            Download the portable `.exe` file below and double-click to play!
+            
+            No installation required - perfect for sharing via flash drive.
+            
+            ### What's included:
+            - All game assets and themes
+            - Sound effects and music
+            - Complete game experience in a single executable
+            
+            ### How to run:
+            1. Download `LevelUpRPG-Portable.exe`
+            2. Double-click to launch
+            3. Have fun!
+          files: release/LevelUpRPG-Portable.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
