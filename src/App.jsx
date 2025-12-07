@@ -919,7 +919,6 @@ const App = () => {
         setBattleDifficulty(null);
         setChallengeData(null);
         stopVoiceRecognition();
-        setSpokenText(""); // Clear any lingering text after cleanup
         playClick();
     };
 
@@ -1096,8 +1095,6 @@ const App = () => {
         } else {
             // If not listening, start it
             console.log('[Mic Toggle] Starting recognition');
-            // Clear any existing ref first
-            stopVoiceRecognition();
             startVoiceListener(targetId);
         }
     };
