@@ -41,6 +41,7 @@ const PARENT_PRIVILEGE_BADGES = [1, 2, 3, 4, 5, 6, 7, 8];
 
 // Voice recognition constants
 const MIN_SPOKEN_TEXT_LENGTH = 2;
+const MIC_OFF_TEXT = "Mic Off";
 
 // Boss healing animation duration (ms)
 const BOSS_HEALING_ANIMATION_DURATION = 600;
@@ -917,17 +918,8 @@ const App = () => {
         setBattlingSkillId(null);
         setBattleDifficulty(null);
         setChallengeData(null);
-        if (recognitionRef.current) {
-            try {
-                recognitionRef.current.stop();
-                console.log('[Battle] Speech recognition stopped');
-            } catch (error) {
-                console.error('[Battle] Error stopping speech recognition:', error);
-            }
-            recognitionRef.current = null; // Clear ref to prevent auto-restart
-        }
-        setIsListening(false);
-        setSpokenText("");
+        stopVoiceRecognition();
+        setSpokenText(""); // Clear any lingering text after cleanup
         playClick();
     };
 
@@ -990,6 +982,21 @@ const App = () => {
         window.location.reload();
     };
 
+    // Helper function to stop and cleanup speech recognition
+    const stopVoiceRecognition = () => {
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.stop();
+                console.log('[Speech Recognition] Stopped');
+            } catch (error) {
+                console.warn('[Speech Recognition] Error stopping:', error);
+            }
+            recognitionRef.current = null;
+        }
+        setIsListening(false);
+        setSpokenText(MIC_OFF_TEXT);
+    };
+
     const startVoiceListener = (targetId) => {
         if (!window.webkitSpeechRecognition) {
             console.warn('[Speech Recognition] Web Speech API not available');
@@ -1006,7 +1013,6 @@ const App = () => {
         recognitionRef.current = new window.webkitSpeechRecognition();
         recognitionRef.current.lang = 'en-US';
         recognitionRef.current.continuous = true;
-        recognitionRef.current.interimResults = false;
         
         recognitionRef.current.onstart = () => { 
             console.log('[Speech Recognition] Started listening');
@@ -1030,7 +1036,7 @@ const App = () => {
                     }
                 }, 100);
             } else {
-                setSpokenText("Mic Off");
+                setSpokenText(MIC_OFF_TEXT);
             }
         };
         
@@ -1086,26 +1092,12 @@ const App = () => {
         // If currently listening, stop it
         if (recognitionRef.current && isListening) {
             console.log('[Mic Toggle] Stopping recognition');
-            try {
-                recognitionRef.current.stop();
-                recognitionRef.current = null;
-                setIsListening(false);
-                setSpokenText("Mic Off");
-            } catch (error) {
-                console.error('[Mic Toggle] Error stopping recognition:', error);
-            }
+            stopVoiceRecognition();
         } else {
             // If not listening, start it
             console.log('[Mic Toggle] Starting recognition');
             // Clear any existing ref first
-            if (recognitionRef.current) {
-                try {
-                    recognitionRef.current.stop();
-                } catch (e) {
-                    console.warn('[Mic Toggle] Error stopping existing recognition:', e);
-                }
-                recognitionRef.current = null;
-            }
+            stopVoiceRecognition();
             startVoiceListener(targetId);
         }
     };
