@@ -913,11 +913,17 @@ const App = () => {
     };
 
     const endBattle = () => {
+        console.log('[Battle] Ending battle, cleaning up speech recognition');
         setBattlingSkillId(null);
         setBattleDifficulty(null);
         setChallengeData(null);
         if (recognitionRef.current) {
-            recognitionRef.current.stop();
+            try {
+                recognitionRef.current.stop();
+                console.log('[Battle] Speech recognition stopped');
+            } catch (error) {
+                console.error('[Battle] Error stopping speech recognition:', error);
+            }
             recognitionRef.current = null; // Clear ref to prevent auto-restart
         }
         setIsListening(false);
