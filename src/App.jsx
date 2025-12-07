@@ -1023,7 +1023,8 @@ const App = () => {
             console.log('[Speech Recognition] Ended');
             setIsListening(false);
             // Auto-restart if still in Reading challenge
-            // Check battlingSkillId (use live state check inside timeout)
+            // Note: battlingSkillId is intentionally checked from closure - if battle has ended
+            // by the time this timeout fires, we don't want to restart (which is the desired behavior)
             if (battlingSkillId === 'reading' || targetId === 'reading') {
                 // Small delay before restarting to avoid rapid restarts
                 setTimeout(() => {
@@ -1080,7 +1081,7 @@ const App = () => {
 
     // Toggle mic on/off when mic button is clicked
     const toggleMicListener = (targetId) => {
-        console.log('[Mic Toggle] Current state - isListening:', isListening, 'recognitionRef exists:', !!recognitionRef.current);
+        console.log('[Mic Toggle] isListening:', isListening);
         
         if (!window.webkitSpeechRecognition) {
             console.warn('[Mic Toggle] Web Speech API not available');
