@@ -19,6 +19,16 @@ Want to play the game without installing anything? Download the portable `.exe` 
 4. Download `LevelUpRPG-Windows-Portable`
 5. Extract the `.exe` file and double-click to play
 
+## Features
+
+### Reading Skill with Voice Recognition
+The Reading skill uses your microphone to make learning interactive! Speak the words on screen to defeat enemies.
+
+**Important Notes:**
+- Click the microphone button to toggle listening on/off
+- The mic automatically starts when you begin a Reading battle
+- For detailed information about the microphone feature, see [docs/MICROPHONE_FEATURE.md](docs/MICROPHONE_FEATURE.md)
+
 ## Development
 
 To run the game in development mode:
@@ -31,6 +41,10 @@ To build the Electron app locally:
 ```bash
 npm run electron:build
 ```
+
+## Documentation
+
+- [Microphone Feature Guide](docs/MICROPHONE_FEATURE.md) - Complete guide to the voice recognition feature
 
 ## Screenshots
 
