@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { loadProfileSettings, saveProfileSettings } from '../utils/storage';
 
-// Helper for safe storage access
+// Helper for safe storage access (fallback for sync access)
 const safeGet = (key, fallback) => {
     try {
         const saved = localStorage.getItem(key);
@@ -12,16 +13,8 @@ const safeGet = (key, fallback) => {
     }
 };
 
-const safeSet = (key, value) => {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-        console.warn(`[useProfile] Failed to save ${key}`, e);
-    }
-};
-
 export const useProfile = () => {
-    // Current Profile ID (1-3)
+    // Initialize with sync fallback, then load async
     const [currentProfile, setCurrentProfileState] = useState(() => {
         try {
             const saved = localStorage.getItem('currentProfile_v1');
@@ -31,26 +24,58 @@ export const useProfile = () => {
         }
     });
 
-    // Profile Names
     const [profileNames, setProfileNames] = useState(() =>
         safeGet('heroProfileNames_v1', { 1: "Player 1", 2: "Player 2", 3: "Player 3" })
     );
 
-    // Parent Status
     const [parentStatus, setParentStatus] = useState(() =>
         safeGet('heroParentStatus_v1', { 1: false, 2: false, 3: false })
     );
 
-    // Persistence Effect
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Load settings asynchronously on mount
     useEffect(() => {
-        try {
-            localStorage.setItem('currentProfile_v1', currentProfile.toString());
-            safeSet('heroProfileNames_v1', profileNames);
-            safeSet('heroParentStatus_v1', parentStatus);
-        } catch (e) {
-            console.warn('[useProfile] Failed to persist state', e);
-        }
-    }, [currentProfile, profileNames, parentStatus]);
+        let isMounted = true;
+        
+        const loadSettings = async () => {
+            try {
+                const settings = await loadProfileSettings();
+                if (isMounted) {
+                    setCurrentProfileState(settings.currentProfile);
+                    setProfileNames(settings.profileNames);
+                    setParentStatus(settings.parentStatus);
+                    setIsLoading(false);
+                }
+            } catch (error) {
+                console.warn('[useProfile] Failed to load settings:', error);
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        };
+        
+        loadSettings();
+        
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    // Persistence Effect (debounced)
+    useEffect(() => {
+        if (isLoading) return; // Don't save during initial load
+        
+        const timeoutId = setTimeout(() => {
+            saveProfileSettings({
+                currentProfile,
+                profileNames,
+                parentStatus
+            });
+        }, 500); // Debounce saves by 500ms
+        
+        return () => clearTimeout(timeoutId);
+    }, [currentProfile, profileNames, parentStatus, isLoading]);
 
     // Helpers
     const setCurrentProfile = useCallback((id) => {
@@ -73,6 +98,7 @@ export const useProfile = () => {
         updateProfileName,
         parentStatus,
         setParentStatus,
-        toggleParentStatus
+        toggleParentStatus,
+        isLoading
     };
 };

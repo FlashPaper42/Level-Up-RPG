@@ -37,6 +37,8 @@ import {
     getDefaultStats, getNewlyUnlockedAchievements, getNewTierAchievements,
     addUniqueToArray, isAchievementUnlocked
 } from './utils/achievementUtils';
+import { migrateLocalStorageToFiles } from './utils/migration';
+import { saveProfileData, saveProfileSettings } from './utils/storage';
 
 // Parent verification privilege constants
 const PARENT_PRIVILEGE_LEVEL = 200;
@@ -287,6 +289,48 @@ const App = () => {
         const saved = localStorage.getItem(`profileBgColor_p${currentProfile}`);
         return saved || 'linear-gradient(to bottom, #7e22ce, #581c87)'; // Default purple
     });
+
+    // Run migration on mount (Electron only)
+    useEffect(() => {
+        migrateLocalStorageToFiles();
+    }, []);
+
+    // Save game data whenever it changes (debounced)
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            const dataToSave = { skills, theme: activeTheme, stats };
+            // Save to both localStorage (for browser compatibility) and files (for Electron)
+            const key = getStorageKey(currentProfile);
+            localStorage.setItem(key, JSON.stringify(dataToSave));
+            // Also save to files if in Electron
+            if (typeof window !== 'undefined' && window.electron && window.electron.isElectron) {
+                saveProfileData(currentProfile, dataToSave);
+            }
+        }, 500); // Debounce saves by 500ms
+        
+        return () => clearTimeout(timeoutId);
+    }, [skills, activeTheme, stats, currentProfile]);
+
+    // Save profile settings whenever they change (debounced)
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            const settingsToSave = {
+                currentProfile,
+                profileNames,
+                parentStatus
+            };
+            // Save to both localStorage (for browser compatibility) and files (for Electron)
+            localStorage.setItem('currentProfile_v1', currentProfile.toString());
+            localStorage.setItem('heroProfileNames_v1', JSON.stringify(profileNames));
+            localStorage.setItem('heroParentStatus_v1', JSON.stringify(parentStatus));
+            // Also save to files if in Electron
+            if (typeof window !== 'undefined' && window.electron && window.electron.isElectron) {
+                saveProfileSettings(settingsToSave);
+            }
+        }, 500); // Debounce saves by 500ms
+        
+        return () => clearTimeout(timeoutId);
+    }, [currentProfile, profileNames, parentStatus]);
 
     // Reload avatar and bgColor when profile changes
     useEffect(() => {

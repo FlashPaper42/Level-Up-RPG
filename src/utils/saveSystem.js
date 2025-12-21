@@ -5,9 +5,11 @@ import {
 } from './gameUtils';
 import { getRandomAura } from './mobDisplayUtils';
 import { getDefaultStats } from './achievementUtils';
+import { loadProfileData, saveProfileData } from './storage';
 
 export const getStorageKey = (profileId) => `heroSkills_v23_p${profileId}`;
 
+// Synchronous version for backward compatibility (uses localStorage directly)
 export const loadSkills = (profileId) => {
     const initial = {};
     SKILL_DATA.forEach(skill => {
@@ -42,8 +44,22 @@ export const loadSkills = (profileId) => {
             currentBossAura: getRandomAura() // Aura for boss encounters
         };
     });
-    let saved = localStorage.getItem(getStorageKey(profileId));
-    if (!saved && profileId === 1) saved = localStorage.getItem('heroSkills_v23');
+    
+    // Try to load from new storage system (async, but we'll handle sync fallback)
+    let saved = null;
+    if (typeof window !== 'undefined' && window.electron && window.electron.isElectron) {
+        // In Electron, we need to use sync localStorage as fallback for initial load
+        // The async version will be used in hooks
+        const key = getStorageKey(profileId);
+        saved = localStorage.getItem(key);
+        if (!saved && profileId === 1) saved = localStorage.getItem('heroSkills_v23');
+    } else {
+        // Browser: use localStorage
+        const key = getStorageKey(profileId);
+        saved = localStorage.getItem(key);
+        if (!saved && profileId === 1) saved = localStorage.getItem('heroSkills_v23');
+    }
+    
     try {
         if (saved) {
             const parsed = JSON.parse(saved);
@@ -128,12 +144,15 @@ export const loadSkills = (profileId) => {
 };
 
 export const loadTheme = (profileId) => {
-    let saved = localStorage.getItem(getStorageKey(profileId));
+    const key = getStorageKey(profileId);
+    let saved = localStorage.getItem(key);
     if (!saved && profileId === 1) {
         saved = localStorage.getItem('heroSkills_v23');
     }
     try {
-        return JSON.parse(saved).theme || 'minecraft';
+        if (saved) {
+            return JSON.parse(saved).theme || 'minecraft';
+        }
     } catch (e) {
         console.warn('Failed to parse theme:', e);
     }
@@ -141,20 +160,145 @@ export const loadTheme = (profileId) => {
 };
 
 export const loadStats = (profileId) => {
-    let saved = localStorage.getItem(getStorageKey(profileId));
+    const key = getStorageKey(profileId);
+    let saved = localStorage.getItem(key);
     if (!saved && profileId === 1) {
         saved = localStorage.getItem('heroSkills_v23');
     }
     try {
-        const data = JSON.parse(saved);
-        if (data.stats) {
-            // Merge with default stats to ensure all fields exist
-            return { ...getDefaultStats(), ...data.stats };
+        if (saved) {
+            const data = JSON.parse(saved);
+            if (data.stats) {
+                // Merge with default stats to ensure all fields exist
+                return { ...getDefaultStats(), ...data.stats };
+            }
         }
     } catch (e) {
         console.warn('Failed to parse stats:', e);
     }
     return getDefaultStats();
+};
+
+// Async versions that use the new storage system
+export const loadSkillsAsync = async (profileId) => {
+    const saved = await loadProfileData(profileId);
+    const initial = {};
+    SKILL_DATA.forEach(skill => {
+        initial[skill.id] = {
+            level: 1,
+            xp: 0,
+            xpToLevel: 10,
+            mobHealth: 10,
+            mobMaxHealth: 10,
+            difficulty: 1,
+            earnedBadges: [],
+            recoveryDifficulty: null,
+            lostLevel: false,
+            currentMob: skill.id === 'cleaning' || skill.id === 'memory'
+                ? getRandomFriendlyMob()
+                : getRandomMob(null),
+            currentMiniboss: getRandomMiniboss(),
+            currentBoss: getRandomBoss(),
+            memoryMob: skill.id === 'memory' ? getRandomFriendlyMob() : null,
+            patternMob: skill.id === 'patterns' ? getRandomMob(null) : null,
+            mathMob: skill.id === 'math' ? getRandomMob(null) : null,
+            writingMob: skill.id === 'writing' ? getRandomMob(null) : null,
+            readingMobAura: skill.id === 'reading' ? getRandomAura() : null,
+            mathMobAura: skill.id === 'math' ? getRandomAura() : null,
+            writingMobAura: skill.id === 'writing' ? getRandomAura() : null,
+            patternMobAura: skill.id === 'patterns' ? getRandomAura() : null,
+            currentMinibossAura: getRandomAura(),
+            currentBossAura: getRandomAura()
+        };
+    });
+    
+    if (saved) {
+        const data = saved.skills || saved;
+        Object.keys(data).forEach(key => {
+            initial[key] = { ...initial[key], ...data[key] };
+            // Apply same backward compatibility checks as sync version
+            if (typeof initial[key].difficulty !== 'number') {
+                initial[key].difficulty = 1;
+            }
+            if (!Array.isArray(initial[key].earnedBadges)) {
+                initial[key].earnedBadges = [];
+            }
+            if (typeof initial[key].mobHealth !== 'number') {
+                const diff = initial[key].difficulty || 1;
+                initial[key].mobHealth = calculateMobHealth(diff);
+                initial[key].mobMaxHealth = calculateMobHealth(diff);
+            }
+            if (typeof initial[key].lostLevel !== 'boolean') {
+                initial[key].lostLevel = false;
+            }
+            if (initial[key].recoveryDifficulty === undefined) {
+                initial[key].recoveryDifficulty = null;
+            }
+            if (key === 'memory' && !initial[key].memoryMob) {
+                initial[key].memoryMob = getRandomFriendlyMob();
+            }
+            if (key === 'patterns' && !initial[key].patternMob) {
+                initial[key].patternMob = getRandomMob(null);
+            }
+            if (key === 'reading' && !initial[key].readingMob) {
+                initial[key].readingMob = getRandomMob(null);
+            }
+            if (key === 'math' && !initial[key].mathMob) {
+                initial[key].mathMob = getRandomMob(null);
+            }
+            if (key === 'writing' && !initial[key].writingMob) {
+                initial[key].writingMob = getRandomMob(null);
+            }
+            if (key === 'reading' && !initial[key].readingMobAura) {
+                initial[key].readingMobAura = getRandomAura();
+            }
+            if (key === 'math' && !initial[key].mathMobAura) {
+                initial[key].mathMobAura = getRandomAura();
+            }
+            if (key === 'writing' && !initial[key].writingMobAura) {
+                initial[key].writingMobAura = getRandomAura();
+            }
+            if (key === 'patterns' && !initial[key].patternMobAura) {
+                initial[key].patternMobAura = getRandomAura();
+            }
+            if (key !== 'cleaning' && key !== 'memory') {
+                if (!initial[key].currentMiniboss) {
+                    initial[key].currentMiniboss = getRandomMiniboss();
+                }
+                if (!initial[key].currentBoss) {
+                    initial[key].currentBoss = getRandomBoss();
+                }
+                if (!initial[key].currentMinibossAura) {
+                    initial[key].currentMinibossAura = getRandomAura();
+                }
+                if (!initial[key].currentBossAura) {
+                    initial[key].currentBossAura = getRandomAura();
+                }
+            }
+        });
+    }
+    return initial;
+};
+
+export const loadThemeAsync = async (profileId) => {
+    const saved = await loadProfileData(profileId);
+    if (saved && saved.theme) {
+        return saved.theme;
+    }
+    return 'minecraft';
+};
+
+export const loadStatsAsync = async (profileId) => {
+    const saved = await loadProfileData(profileId);
+    if (saved && saved.stats) {
+        return { ...getDefaultStats(), ...saved.stats };
+    }
+    return getDefaultStats();
+};
+
+export const saveGameData = async (profileId, skills, theme, stats) => {
+    const dataToSave = { skills, theme, stats };
+    return await saveProfileData(profileId, dataToSave);
 };
 
 export const getProfileStats = (id, liveSkills = null, activeTheme = 'minecraft') => {

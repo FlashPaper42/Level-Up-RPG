@@ -1,20 +1,57 @@
 import { useState, useEffect } from 'react';
-import { loadSkills, loadTheme, loadStats, getStorageKey } from '../utils/saveSystem';
+import { loadSkills, loadTheme, loadStats, loadSkillsAsync, loadThemeAsync, loadStatsAsync, saveGameData } from '../utils/saveSystem';
 
 export const useGameData = (currentProfile) => {
     // Initialize state from storage based on current profile
-    // Note: Assuming window.location.reload() functionality on profile switch, 
-    // these initializers only run once per session effectively.
-
+    // Start with sync version for immediate render, then load async version
     const [skills, setSkills] = useState(() => loadSkills(currentProfile));
     const [activeTheme, setActiveTheme] = useState(() => loadTheme(currentProfile));
     const [stats, setStats] = useState(() => loadStats(currentProfile));
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Persist game data whenever it changes
+    // Load data asynchronously on mount and profile change
     useEffect(() => {
-        const dataToSave = { skills, theme: activeTheme, stats };
-        localStorage.setItem(getStorageKey(currentProfile), JSON.stringify(dataToSave));
-    }, [skills, activeTheme, stats, currentProfile]);
+        let isMounted = true;
+        
+        const loadData = async () => {
+            try {
+                const [loadedSkills, loadedTheme, loadedStats] = await Promise.all([
+                    loadSkillsAsync(currentProfile),
+                    loadThemeAsync(currentProfile),
+                    loadStatsAsync(currentProfile)
+                ]);
+                
+                if (isMounted) {
+                    setSkills(loadedSkills);
+                    setActiveTheme(loadedTheme);
+                    setStats(loadedStats);
+                    setIsLoading(false);
+                }
+            } catch (error) {
+                console.warn('Failed to load game data:', error);
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        };
+        
+        loadData();
+        
+        return () => {
+            isMounted = false;
+        };
+    }, [currentProfile]);
+
+    // Persist game data whenever it changes (debounced)
+    useEffect(() => {
+        if (isLoading) return; // Don't save during initial load
+        
+        const timeoutId = setTimeout(() => {
+            saveGameData(currentProfile, skills, activeTheme, stats);
+        }, 500); // Debounce saves by 500ms
+        
+        return () => clearTimeout(timeoutId);
+    }, [skills, activeTheme, stats, currentProfile, isLoading]);
 
     return {
         skills,
@@ -22,6 +59,7 @@ export const useGameData = (currentProfile) => {
         activeTheme,
         setActiveTheme,
         stats,
-        setStats
+        setStats,
+        isLoading
     };
 };

@@ -1,8 +1,10 @@
-import React from 'react';
-import { Users, Music, Trash2, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, Music, Trash2, AlertTriangle, Edit3, Crown } from 'lucide-react';
 import ProfileCard from '../profile/ProfileCard';
+import ProfileEditorModal from '../modals/ProfileEditorModal';
 
 const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol, currentProfile, onSwitchProfile, profileNames, onRenameProfile, getProfileStats, parentStatus, onParentVerified, currentSkills, selectedAvatar, selectedBorder, borderColor }) => {
+    const [editingProfileId, setEditingProfileId] = useState(null);
     // Helper to get avatar for each profile
     const getProfileAvatar = (profileId) => {
         if (profileId === currentProfile) {
@@ -74,6 +76,33 @@ const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol,
                             </div>
                         </div>
 
+                        {/* Parent Profile Editor - Only show if current profile is a parent */}
+                        {parentStatus && parentStatus[currentProfile] && (
+                            <div>
+                                <h3 className="text-xl text-yellow-300 mb-5 font-bold flex items-center gap-3 uppercase tracking-wider">
+                                    <Crown size={20} className="text-yellow-400" /> Parent Tools
+                                </h3>
+                                <div className="space-y-3 bg-slate-900/50 p-5 rounded-xl border-2 border-yellow-600/50">
+                                    <p className="text-slate-300 text-sm mb-4">
+                                        As a parent, you can edit profile data to adjust skill levels and achievements. 
+                                        This allows you to set the correct starting level for your child.
+                                    </p>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {[1, 2, 3].map(id => (
+                                            <button
+                                                key={id}
+                                                onClick={() => setEditingProfileId(id)}
+                                                className="bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-400 p-3 rounded-lg border-2 border-yellow-600/50 hover:border-yellow-500 font-bold text-lg flex items-center justify-center gap-3 transition-all"
+                                            >
+                                                <Edit3 size={20} />
+                                                Edit {profileNames[id]}'s Profile Data
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div>
                             <h3 className="text-xl text-blue-300 mb-5 font-bold flex items-center gap-3 uppercase tracking-wider"><Music size={20} /> Audio Configuration</h3>
                             <div className="space-y-4 bg-slate-900/50 p-5 rounded-xl border-2 border-slate-600">
@@ -100,6 +129,20 @@ const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol,
                     </button>
                 </div>
             </div>
+
+            {/* Profile Editor Modal */}
+            {editingProfileId && (
+                <ProfileEditorModal
+                    isOpen={!!editingProfileId}
+                    onClose={() => setEditingProfileId(null)}
+                    profileId={editingProfileId}
+                    profileName={profileNames[editingProfileId]}
+                    onSave={() => {
+                        // Reload the page to refresh data
+                        window.location.reload();
+                    }}
+                />
+            )}
         </div>
     );
 };
