@@ -229,7 +229,7 @@ const SkillCarousel = ({
                                 damageNumbers={damageNumbers?.filter(d => d.skillId === item.id) || []}
                                 onStartBattle={() => startBattle(item.id)}
                                 onEndBattle={endBattle}
-                                onMathSubmit={(val) => handleSuccessHit(item.id, val)}
+                                onMathSubmit={(val, customDamage, customXP) => handleSuccessHit(item.id, val, customDamage, customXP)}
                                 onMicClick={() => toggleMicListener(item.id)}
                                 difficulty={skills[item.id].difficulty || 1}
                                 setDifficulty={(newDiff) => setSkillDifficulty(item.id, newDiff)}

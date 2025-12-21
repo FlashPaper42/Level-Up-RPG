@@ -39,12 +39,18 @@ export function startAzureSpeechRecognition(onRecognizing, onRecognized, onError
         // These settings make recognition faster for short words/phrases
         speechConfig.setProperty(
             SpeechSDK.PropertyId.Speech_SegmentationSilenceTimeoutMs,
-            "300" // Wait only 300ms of silence before finalizing (default is ~500-1000ms)
+            "200" // Wait only 200ms of silence before finalizing (faster response)
         );
         speechConfig.setProperty(
             SpeechSDK.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
-            "500" // End recognition after 500ms of silence (faster response)
+            "300" // End recognition after 300ms of silence (faster response)
         );
+        speechConfig.setProperty(
+            SpeechSDK.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
+            "5000" // Wait 5 seconds for first speech
+        );
+        // Enable detailed results for better accuracy
+        speechConfig.enableDictation();
 
         // Create audio config from default microphone
         const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();

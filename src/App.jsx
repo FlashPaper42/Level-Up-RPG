@@ -516,7 +516,7 @@ const App = () => {
         }
     }, []);
 
-    const handleSuccessHit = (skillId, isWrong) => {
+    const handleSuccessHit = (skillId, isWrong, customDamage = null, customXPMultiplier = null) => {
         // Handle wrong answer
         if (isWrong === 'WRONG') {
             // Check if player is fighting a boss
@@ -611,7 +611,9 @@ const App = () => {
         const currentMobName = currentSkillState.currentMob;
 
         // Calculate damage using new RPG formulas
-        const damage = calculateDamage(playerLevel, skillDifficulty);
+        // Use custom damage if provided (for pattern recognition scaling)
+        const baseDamage = calculateDamage(playerLevel, skillDifficulty);
+        const damage = customDamage !== null ? customDamage : baseDamage;
 
         // Get encounter type for current level
         const encounterType = getEncounterType(playerLevel);
@@ -669,7 +671,11 @@ const App = () => {
 
             // Calculate XP reward for this hit
             // Total XP is split evenly among all hits required to defeat the mob
-            const totalXPReward = calculateXPReward(skillDifficulty, playerLevel);
+            // Apply custom XP multiplier if provided (for pattern recognition scaling)
+            const baseXPReward = calculateXPReward(skillDifficulty, playerLevel);
+            const totalXPReward = customXPMultiplier !== null 
+                ? Math.floor(baseXPReward * customXPMultiplier)
+                : baseXPReward;
             // For instant-defeat mobs (miniboss, cleaning, memory), actualDamage = full health, so hitsToKill = 1
             // For regular mobs, actualDamage = damage, so hitsToKill = mobMaxHealth / damage
             const effectiveDamage = isInstantDefeat ? current.mobMaxHealth : damage;

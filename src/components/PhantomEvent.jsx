@@ -118,8 +118,10 @@ const PhantomEvent = ({ battlingSkillId, onAwardLevel, onPhantomCaught }) => {
 
     return (
         <div
-            className="fixed top-4 z-[9999] cursor-pointer select-none"
+            className="fixed z-30 cursor-pointer select-none"
             style={{
+                // Position below UI buttons (which are at ~100px from top) but above carousel cards
+                top: '140px',
                 left: fromLeft ? PHANTOM_OFFSCREEN_LEFT : 'calc(100vw)',
                 animation: `${fromLeft ? 'phantomFlyLeft' : 'phantomFlyRight'} ${FLIGHT_DURATION_MS}ms linear forwards`,
                 opacity: clicked ? 0 : 1,

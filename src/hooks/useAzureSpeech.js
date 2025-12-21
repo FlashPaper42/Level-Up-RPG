@@ -4,6 +4,7 @@ import { HOMOPHONES } from '../constants/gameData';
 
 const MIN_SPOKEN_TEXT_LENGTH = 2;
 const MIC_OFF_TEXT = "Mic Off";
+const RECOGNITION_COOLDOWN_MS = 500; // Prevent rapid-fire recognitions
 
 export const useAzureSpeech = ({
     battlingSkillId,
@@ -13,24 +14,27 @@ export const useAzureSpeech = ({
 }) => {
     const [isListening, setIsListening] = useState(false);
     const [spokenText, setSpokenText] = useState("");
-    const recognitionRef = useRef(null); // Keep for Web kit legacy or internal tracking if needed
 
     // Keep challenge data fresh for the callback closure
     const challengeDataRef = useRef(challengeData);
     const battlingSkillRef = useRef(battlingSkillId);
     const lastProcessedAnswerRef = useRef(null); // Track last successful answer to prevent carryover
+    const lastRecognitionTimeRef = useRef(0); // Debounce recognition results
+    const challengeIdRef = useRef(0); // Unique ID for each challenge to detect staleness
+    const restartTimeoutRef = useRef(null); // Timeout for restarting recognition with new phrase
+    const isListeningRef = useRef(isListening); // Ref to track listening state for async callbacks
+    const onSuccessRef = useRef(onSuccess);
+    const onFailureRef = useRef(onFailure);
 
+    // Keep refs in sync with state/props
     useEffect(() => {
-        challengeDataRef.current = challengeData;
-        // IMPORTANT: Clear spokenText when challenge changes to prevent carryover
-        // This fixes the bug where previous word carries over to next challenge
-        if (isListening && challengeData) {
-            console.log('[Speech Recognition] Challenge changed, clearing spoken text');
-            setSpokenText("Listening...");
-            // Reset last processed answer when challenge changes
-            lastProcessedAnswerRef.current = null;
-        }
-    }, [challengeData, isListening]);
+        isListeningRef.current = isListening;
+    }, [isListening]);
+    
+    useEffect(() => {
+        onSuccessRef.current = onSuccess;
+        onFailureRef.current = onFailure;
+    }, [onSuccess, onFailure]);
 
     useEffect(() => {
         battlingSkillRef.current = battlingSkillId;
@@ -43,13 +47,15 @@ export const useAzureSpeech = ({
         setSpokenText(MIC_OFF_TEXT);
     }, []);
 
-    const startVoiceListener = useCallback((targetId) => {
+    // Internal function to start voice recognition (used for both initial start and restarts)
+    const startVoiceListenerInternal = useCallback((targetId) => {
         // Stop any existing recognition
         stopAzureSpeechRecognition();
 
         console.log('[Speech Recognition] Initializing Azure for skill:', targetId);
 
         const processResult = (text, isFinal) => {
+            const now = Date.now();
             const final = text.toUpperCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
             console.log(`[Speech Recognition] Processing (${isFinal ? 'FINAL' : 'PARTIAL'}):`, final);
             setSpokenText(final);
@@ -71,12 +77,19 @@ export const useAzureSpeech = ({
                         console.log('[Speech Recognition] Ignoring duplicate answer for same challenge');
                         return false;
                     }
+                    
+                    // Apply debouncing - prevent rapid-fire recognitions
+                    if (now - lastRecognitionTimeRef.current < RECOGNITION_COOLDOWN_MS) {
+                        console.log('[Speech Recognition] Debouncing - too soon after last recognition');
+                        return false;
+                    }
 
                     console.log('[Speech Recognition] Correct answer detected!');
                     lastProcessedAnswerRef.current = currentChallenge.answer; // Mark this answer as processed
-                    if (onSuccess) onSuccess(effectiveTargetId);
+                    lastRecognitionTimeRef.current = now; // Record recognition time
+                    if (onSuccessRef.current) onSuccessRef.current(effectiveTargetId);
                     // Clear text after success but DON'T stop recognition (keep listening continuously)
-                    setTimeout(() => setSpokenText("Listening..."), 1000);
+                    setTimeout(() => setSpokenText("Listening..."), 500);
                     return true;
                 } else if (isFinal && final && final.length >= MIN_SPOKEN_TEXT_LENGTH) {
                     // Check if this was the previous challenge's correct answer (carryover from previous round)
@@ -84,10 +97,17 @@ export const useAzureSpeech = ({
                         console.log('[Speech Recognition] Ignoring carryover from previous challenge:', final);
                         return false;
                     }
+                    
+                    // Apply debouncing for wrong answers too
+                    if (now - lastRecognitionTimeRef.current < RECOGNITION_COOLDOWN_MS) {
+                        console.log('[Speech Recognition] Debouncing wrong answer - too soon after last recognition');
+                        return false;
+                    }
 
                     // Wrong answer - trigger error feedback ONLY on final result
                     console.log('[Speech Recognition] Wrong answer (Final)');
-                    if (onFailure) onFailure(effectiveTargetId);
+                    lastRecognitionTimeRef.current = now;
+                    if (onFailureRef.current) onFailureRef.current(effectiveTargetId);
                     return false;
                 }
             }
@@ -120,11 +140,68 @@ export const useAzureSpeech = ({
         if (started) {
             setIsListening(true);
             setSpokenText("Listening...");
+            // Reset state for new recognition session
+            lastProcessedAnswerRef.current = null;
+            lastRecognitionTimeRef.current = 0;
         } else {
             setSpokenText("Microphone Error");
             setIsListening(false);
         }
-    }, [onSuccess, onFailure]);
+    }, []);
+    
+    // Public function to start voice recognition
+    const startVoiceListener = useCallback((targetId) => {
+        startVoiceListenerInternal(targetId);
+    }, [startVoiceListenerInternal]);
+
+    // Effect to handle challenge changes - restart recognition with new phrase hint
+    useEffect(() => {
+        // Increment challenge ID when challenge changes
+        challengeIdRef.current += 1;
+        const currentChallengeId = challengeIdRef.current;
+        challengeDataRef.current = challengeData;
+        
+        // IMPORTANT: Clear spokenText when challenge changes to prevent carryover
+        // This fixes the bug where previous word carries over to next challenge
+        if (isListeningRef.current && challengeData) {
+            console.log('[Speech Recognition] Challenge changed, clearing spoken text and restarting recognition');
+            setSpokenText("Listening...");
+            // Reset last processed answer when challenge changes
+            lastProcessedAnswerRef.current = null;
+            lastRecognitionTimeRef.current = 0;
+            
+            // Restart recognition with new phrase hint after a brief delay
+            // This ensures the Azure recognizer is primed for the new word
+            if (restartTimeoutRef.current) {
+                clearTimeout(restartTimeoutRef.current);
+            }
+            restartTimeoutRef.current = setTimeout(() => {
+                if (challengeIdRef.current === currentChallengeId && isListeningRef.current) {
+                    console.log('[Speech Recognition] Restarting with new phrase hint');
+                    stopAzureSpeechRecognition();
+                    // Small delay before restarting
+                    setTimeout(() => {
+                        if (challengeIdRef.current === currentChallengeId && isListeningRef.current) {
+                            const skill = battlingSkillRef.current;
+                            if (skill) {
+                                // Restart with the new challenge phrase
+                                startVoiceListenerInternal(skill);
+                            }
+                        }
+                    }, 100);
+                }
+            }, 200);
+        }
+    }, [challengeData, startVoiceListenerInternal]);
+    
+    // Cleanup restart timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (restartTimeoutRef.current) {
+                clearTimeout(restartTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Toggle mic on/off when mic button is clicked
     const toggleMicListener = useCallback((targetId) => {

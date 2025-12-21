@@ -77,6 +77,12 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     const [matchedPairs, setMatchedPairs] = useState([]);
     const [isProcessingMatch, setIsProcessingMatch] = useState(false);
     const [mismatchShake, setMismatchShake] = useState(false);
+    
+    // Nightmare mode: bouncing card positions and velocities
+    const [cardPositions, setCardPositions] = useState([]);
+    const [cardVelocities, setCardVelocities] = useState([]);
+    const animationFrameRef = useRef(null);
+    const containerRef = useRef(null);
 
     // Ref to track if memory game session was initialized for the current battle
     const memorySessionStartedRef = useRef(false);
@@ -248,13 +254,95 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
             let deck = [...selectedMobs, ...selectedMobs].sort(() => Math.random() - 0.5);
             setMemoryCards(deck.map((mobKey, i) => ({ id: i, color: mobKey, img: FRIENDLY_MOBS[mobKey] })));
             setFlippedIndices([]); setMatchedPairs([]); setIsProcessingMatch(false); setMismatchShake(false);
+            
+            // Initialize positions for nightmare mode (difficulty 7)
+            if (difficulty === 7) {
+                const initialPositions = deck.map(() => ({ x: 0, y: 0 }));
+                const initialVelocities = deck.map(() => ({
+                    x: (Math.random() - 0.5) * 1.2, // Slow enough to track, but adds challenge
+                    y: (Math.random() - 0.5) * 1.2
+                }));
+                setCardPositions(initialPositions);
+                setCardVelocities(initialVelocities);
+            }
         } else if (!isBattling && config.id === 'memory') {
             // Reset memory game state and session ref when exiting battle
             memorySessionStartedRef.current = false;
             setMemoryCards([]);
             setFlippedIndices([]); setMatchedPairs([]); setIsProcessingMatch(false); setMismatchShake(false);
+            setCardPositions([]);
+            setCardVelocities([]);
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
         }
-    }, [isBattling, config.id, memoryPairs]);
+    }, [isBattling, config.id, memoryPairs, difficulty]);
+    
+    // Nightmare mode: Bouncing card animation
+    useEffect(() => {
+        if (!isBattling || config.id !== 'memory' || difficulty !== 7 || memoryCards.length === 0) {
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
+            return;
+        }
+        
+        // Max offset from original position (in pixels) - keeps cards mostly in their grid area
+        const maxOffset = 20;
+        
+        const animate = () => {
+            setCardPositions(prevPositions => {
+                return prevPositions.map((pos, i) => {
+                    if (matchedPairs.includes(memoryCards[i]?.color)) {
+                        return pos; // Don't move matched cards
+                    }
+                    
+                    const vel = cardVelocities[i];
+                    if (!vel) return pos;
+                    
+                    let newX = pos.x + vel.x;
+                    let newY = pos.y + vel.y;
+                    
+                    // Bounce off boundaries
+                    if (newX > maxOffset || newX < -maxOffset) {
+                        setCardVelocities(prev => {
+                            const updated = [...prev];
+                            if (updated[i]) {
+                                updated[i] = { ...updated[i], x: -updated[i].x * (0.9 + Math.random() * 0.2) };
+                            }
+                            return updated;
+                        });
+                        newX = Math.max(-maxOffset, Math.min(maxOffset, newX));
+                    }
+                    if (newY > maxOffset || newY < -maxOffset) {
+                        setCardVelocities(prev => {
+                            const updated = [...prev];
+                            if (updated[i]) {
+                                updated[i] = { ...updated[i], y: -updated[i].y * (0.9 + Math.random() * 0.2) };
+                            }
+                            return updated;
+                        });
+                        newY = Math.max(-maxOffset, Math.min(maxOffset, newY));
+                    }
+                    
+                    return { x: newX, y: newY };
+                });
+            });
+            
+            animationFrameRef.current = requestAnimationFrame(animate);
+        };
+        
+        animationFrameRef.current = requestAnimationFrame(animate);
+        
+        return () => {
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
+        };
+    }, [isBattling, config.id, difficulty, memoryCards.length, matchedPairs, memoryCards, cardVelocities]);
 
     useEffect(() => {
         if (damageNumbers.length > prevDamageCount.current) { setIsHit(true); setTimeout(() => setIsHit(false), 400); }
@@ -341,12 +429,18 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                 const newRounds = completedRounds + 1;
                 setCompletedRounds(newRounds);
 
-                // Apply progressive damage based on round number (increases with each round)
-                // Using a gentle exponential formula: damage = round * 1.5 (rounded)
-                const damage = Math.round(newRounds * 1.5);
-                setTimeout(() => {
-                    onMathSubmit("WIN", damage);
-                }, 300);
+                                // Apply progressive damage and XP scaling based on round number
+                                // Early rounds have reduced rewards, later rounds have increased rewards
+                                // This incentivizes getting as far as possible rather than restarting
+                                // Damage formula: starts at 0.5x at round 1, reaches 1x at round 5, scales up after
+                                // XP formula: similar scaling to match - early rounds give less XP
+                                const baseMultiplier = Math.max(0.5, Math.min(2, 0.3 + (newRounds * 0.2)));
+                                const damage = Math.max(1, Math.round(newRounds * 1.5 * baseMultiplier));
+                                // XP scales similarly - round 1 gives ~50% XP, round 5 gives 100%, higher rounds give bonus
+                                const xpMultiplier = Math.max(0.5, Math.min(3, 0.3 + (newRounds * 0.25)));
+                                setTimeout(() => {
+                                    onMathSubmit("WIN", damage, xpMultiplier);
+                                }, 300);
 
                 // For difficulty 7, reset sequence each round instead of building
                 let newSequence;
@@ -424,9 +518,20 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
         }
     };
 
-    const showMob = !isBattling || config.id !== 'memory';
-    const topSectionBaseClass = config.id === 'memory' && isBattling ? 'hidden' : 'h-[55%] relative flex items-center justify-center overflow-hidden rounded-t-sm';
-    const bottomSectionClass = config.id === 'memory' && isBattling ? 'h-full bg-[#3a3a3a] p-4 flex flex-col relative rounded-lg' : 'flex-1 bg-[#3a3a3a] p-4 flex flex-col relative rounded-b-sm';
+    // Hide mob in card when battling non-memory skills (mob is now in left panel)
+    const showMob = !isBattling || config.id === 'memory';
+    // Hide top section for memory when battling, and shrink it for other skills when battling (mob is in left panel)
+    const topSectionBaseClass = config.id === 'memory' && isBattling 
+        ? 'hidden' 
+        : (isBattling && !['memory', 'cleaning'].includes(config.id) 
+            ? 'h-[15%] relative flex items-center justify-center overflow-hidden rounded-t-sm' 
+            : 'h-[55%] relative flex items-center justify-center overflow-hidden rounded-t-sm');
+    // Bottom section takes more space when battling (no mob/HP bar visible in card)
+    const bottomSectionClass = config.id === 'memory' && isBattling 
+        ? 'h-full bg-[#3a3a3a] p-4 flex flex-col relative rounded-lg' 
+        : (isBattling && !['memory', 'cleaning'].includes(config.id)
+            ? 'flex-1 bg-[#3a3a3a] p-4 flex flex-col relative rounded-b-sm h-[85%]'
+            : 'flex-1 bg-[#3a3a3a] p-4 flex flex-col relative rounded-b-sm');
 
     const isBattlingCenter = isBattling && isCenter;
 
@@ -477,18 +582,29 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                 </div>}
                 {config.id !== 'memory' && !isBattling && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 px-6 py-2 rounded-full text-white border-2 border-white/30 text-xl font-bold tracking-wide z-10 shadow-lg whitespace-nowrap min-w-max">{displayMobName}</div>}
             </div>
-            {(!isBattling || config.id !== 'memory') && <div className="bg-[#1a1a1a] p-2 border-t-4 border-b-4 border-black relative"><div className="flex justify-between text-gray-400 text-xs mb-1 uppercase"><span>HP</span><span>{hpPercent}%</span></div><div className="w-full h-6 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative"><div className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-200" style={{ width: `${hpPercent}%` }}></div></div></div>}
+            {/* HP bar - hide when battling non-memory/cleaning skills (HP is now in left panel) */}
+            {(!isBattling || config.id === 'memory' || config.id === 'cleaning') && <div className="bg-[#1a1a1a] p-2 border-t-4 border-b-4 border-black relative"><div className="flex justify-between text-gray-400 text-xs mb-1 uppercase"><span>HP</span><span>{hpPercent}%</span></div><div className="w-full h-6 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative"><div className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-200" style={{ width: `${hpPercent}%` }}></div></div></div>}
             <div className={bottomSectionClass}>
                 {isBattling ? (
                     <div className="flex flex-col h-full animate-in slide-in-from-bottom-10 duration-300">
                         {config.id === 'memory' ? (
-                            <div className={`flex-1 grid gap-2 bg-black/20 p-2 rounded items-center`} style={{ gridTemplateColumns: `repeat(${memoryGridCols}, 1fr)` }}>
+                            <div ref={containerRef} className={`flex-1 grid gap-2 bg-black/20 p-2 rounded items-center ${difficulty === 7 ? 'overflow-visible' : ''}`} style={{ gridTemplateColumns: `repeat(${memoryGridCols}, 1fr)` }}>
                                 {memoryCards.map((card, index) => {
                                     const isFlipped = flippedIndices.includes(index);
                                     const isMatched = matchedPairs.includes(card.color);
+                                    // Get bouncing position for nightmare mode
+                                    const bouncePos = difficulty === 7 && cardPositions[index] ? cardPositions[index] : { x: 0, y: 0 };
                                     if (isMatched) return <div key={card.id} className="w-full aspect-[2/3]"></div>;
                                     return (
-                                        <div key={card.id} onClick={() => handleCardClick(index)} className={`w-full aspect-[2/3] cursor-pointer transition-all duration-300 perspective-1000 relative transform-style-3d ${isFlipped ? 'rotate-y-180' : ''} ${mismatchShake && isFlipped ? 'animate-shake-flipped border-red-500' : ''}`}>
+                                        <div 
+                                            key={card.id} 
+                                            onClick={() => handleCardClick(index)} 
+                                            className={`w-full aspect-[2/3] cursor-pointer transition-transform duration-100 perspective-1000 relative transform-style-3d ${isFlipped ? 'rotate-y-180' : ''} ${mismatchShake && isFlipped ? 'animate-shake-flipped border-red-500' : ''}`}
+                                            style={difficulty === 7 ? { 
+                                                transform: `translate(${bouncePos.x}px, ${bouncePos.y}px) ${isFlipped ? 'rotateY(180deg)' : ''}`,
+                                                transition: 'none'
+                                            } : {}}
+                                        >
                                             <div className="absolute inset-0 backface-hidden w-full h-full" style={{ backfaceVisibility: 'hidden' }}><SafeImage src={themeData.assets.cardBack} className="w-full h-full object-cover rounded border border-stone-600" /></div>
                                             <div className="absolute inset-0 backface-hidden w-full h-full rotate-y-180 bg-slate-800 rounded border border-white/20 flex items-center justify-center" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}><SafeImage src={card.img} className="w-full h-full object-contain p-1" /></div>
                                         </div>
@@ -650,65 +766,142 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                         className="fixed inset-0 z-50 flex items-center justify-center"
                         onClick={onEndBattle}
                     >
-                        <div className="flex items-center justify-center relative" onClick={(e) => e.stopPropagation()}>
-                            {/* Battle Card - Centered */}
+                        {/* Click-out areas - visible corners that allow returning to carousel */}
+                        <div className="absolute top-4 left-4 text-white/50 text-sm pointer-events-none">
+                            Click outside to exit battle
+                        </div>
+                        
+                        <div className="flex items-center justify-center gap-6 relative max-w-[95vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                            {/* Left Panel - Mob Display (mirroring right info panel) */}
+                            {(!['memory', 'cleaning'].includes(config.id)) && (
+                                <div className="flex-shrink-0">
+                                    <div
+                                        className="relative w-[280px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg overflow-hidden"
+                                        style={{
+                                            boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(100,100,100,0.2)',
+                                        }}
+                                    >
+                                        {/* Decorative corner accents */}
+                                        <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-purple-600"></div>
+                                        <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-purple-600"></div>
+                                        <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-purple-600"></div>
+                                        <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-purple-600"></div>
+
+                                        {/* Header */}
+                                        <div className="bg-gradient-to-b from-purple-800 to-purple-900 p-3 border-b-4 border-slate-700 relative">
+                                            <div className="text-purple-200 text-lg font-black uppercase tracking-wider text-center" style={{ textShadow: '2px 2px 0 #000' }}>
+                                                ⚔ ENEMY ⚔
+                                            </div>
+                                        </div>
+
+                                        {/* Mob Display Area */}
+                                        <div className="p-4 flex flex-col items-center" style={config.colorStyle}>
+                                            <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                            
+                                            {/* Mob Image */}
+                                            <div className={`relative z-10 w-48 h-48 flex items-center justify-center ${isHit ? 'animate-knockback' : bossHealing ? 'animate-shake brightness-150 hue-rotate-90' : 'animate-bob'}`}>
+                                                {mobAura ? (
+                                                    <MobWithAura
+                                                        mobSrc={mobSrc}
+                                                        aura={mobAura}
+                                                        displayName={displayMobNameWithAura}
+                                                        size="100%"
+                                                        isHit={isHit}
+                                                        bossHealing={bossHealing}
+                                                    />
+                                                ) : (
+                                                    <SafeImage
+                                                        key={displayMobName}
+                                                        src={mobSrc}
+                                                        alt={displayMobName}
+                                                        className="max-w-full max-h-full object-contain drop-shadow-[4px_4px_0_rgba(0,0,0,0.5)]"
+                                                    />
+                                                )}
+                                                {/* Damage numbers */}
+                                                {damageNumbers.map(dmg => (
+                                                    <div
+                                                        key={dmg.id}
+                                                        className="absolute text-5xl font-bold text-red-500 animate-bounce pointer-events-none whitespace-nowrap"
+                                                        style={{ left: `calc(50% + ${dmg.x}px)`, top: `calc(50% + ${dmg.y}px)`, textShadow: '2px 2px 0 #000' }}
+                                                    >
+                                                        -{dmg.val}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            
+                                            {/* Mob Name */}
+                                            <div className="mt-2 bg-black/70 px-6 py-2 rounded-full text-white border-2 border-white/30 text-xl font-bold tracking-wide z-10 shadow-lg whitespace-nowrap">
+                                                {displayMobNameWithAura}
+                                            </div>
+                                        </div>
+
+                                        {/* HP Bar */}
+                                        <div className="bg-[#1a1a1a] p-3 border-t-4 border-slate-700">
+                                            <div className="flex justify-between text-gray-400 text-sm mb-1 uppercase font-bold">
+                                                <span>HP</span>
+                                                <span>{hpPercent}%</span>
+                                            </div>
+                                            <div className="w-full h-8 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative">
+                                                <div className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-200" style={{ width: `${hpPercent}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Center - Battle Card (Larger) */}
                             <div
+                                className="flex-shrink-0"
                                 style={{
-                                    transform: 'scale(1.5)',
+                                    transform: 'scale(1.4)',
                                     transformOrigin: 'center center',
                                 }}
                             >
                                 {cardContent}
                             </div>
-                            {/* Battle Info Side Panel - Offset to the right with gap */}
-                            {/* Positioning: 50% (center) + 225px (half of scaled card 450px) + 30px (gap) */}
+                            
+                            {/* Right Panel - Battle Info */}
                             {(!['memory', 'cleaning'].includes(config.id)) && (
-                                <div
-                                    className="absolute left-[calc(50%+225px+30px)] top-0"
-                                    style={{
-                                        transform: 'scale(1.5)',
-                                        transformOrigin: 'left top',
-                                    }}
-                                >
+                                <div className="flex-shrink-0">
                                     <div
-                                        className="relative w-[175px] bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-50 border-4 border-amber-800 rounded-lg overflow-hidden"
+                                        className="relative w-[280px] bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-50 border-4 border-amber-800 rounded-lg overflow-hidden"
                                         style={{
-                                            boxShadow: '0 0 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(251,191,36,0.3)',
+                                            boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(251,191,36,0.3)',
                                         }}
                                     >
                                         {/* Decorative corner accents */}
-                                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-700"></div>
-                                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-700"></div>
-                                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-700"></div>
-                                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-700"></div>
+                                        <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-red-700"></div>
+                                        <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-red-700"></div>
+                                        <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-red-700"></div>
+                                        <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-red-700"></div>
 
                                         {/* "WANTED" poster style header */}
-                                        <div className="bg-gradient-to-b from-red-700 to-red-800 p-2 border-b-4 border-amber-900 relative">
-                                            <div className="text-yellow-300 text-sm font-black uppercase tracking-wider text-center" style={{ textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>
+                                        <div className="bg-gradient-to-b from-red-700 to-red-800 p-3 border-b-4 border-amber-900 relative">
+                                            <div className="text-yellow-300 text-lg font-black uppercase tracking-wider text-center" style={{ textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>
                                                 ⚔ BATTLE ⚔
                                             </div>
                                             {/* Decorative rivets */}
-                                            <div className="absolute top-1 left-2 w-2 h-2 bg-amber-900 rounded-full border border-amber-950"></div>
-                                            <div className="absolute top-1 right-2 w-2 h-2 bg-amber-900 rounded-full border border-amber-950"></div>
+                                            <div className="absolute top-2 left-3 w-3 h-3 bg-amber-900 rounded-full border border-amber-950"></div>
+                                            <div className="absolute top-2 right-3 w-3 h-3 bg-amber-900 rounded-full border border-amber-950"></div>
                                         </div>
 
                                         {/* Info sections with vintage styling */}
-                                        <div className="p-2 space-y-1.5">
+                                        <div className="p-4 space-y-3">
                                             {/* Enemy Name */}
-                                            <div className="bg-amber-900/20 border-2 border-amber-900/40 rounded p-1.5">
-                                                <div className="text-[8px] text-amber-900 uppercase font-bold tracking-wide">Target</div>
-                                                <div className="text-stone-900 font-black text-sm leading-tight">{displayMobNameWithAura}</div>
+                                            <div className="bg-amber-900/20 border-2 border-amber-900/40 rounded p-3">
+                                                <div className="text-xs text-amber-900 uppercase font-bold tracking-wide">Target</div>
+                                                <div className="text-stone-900 font-black text-lg leading-tight">{displayMobNameWithAura}</div>
                                             </div>
 
                                             {/* Skill and Level in a row */}
-                                            <div className="flex gap-1.5">
-                                                <div className="flex-1 bg-amber-900/20 border-2 border-amber-900/40 rounded p-1.5">
-                                                    <div className="text-[8px] text-amber-900 uppercase font-bold">Skill</div>
-                                                    <div className="text-stone-900 font-bold text-xs leading-tight">{skillName}</div>
+                                            <div className="flex gap-3">
+                                                <div className="flex-1 bg-amber-900/20 border-2 border-amber-900/40 rounded p-3">
+                                                    <div className="text-xs text-amber-900 uppercase font-bold">Skill</div>
+                                                    <div className="text-stone-900 font-bold text-base leading-tight">{skillName}</div>
                                                 </div>
-                                                <div className="flex-1 bg-amber-900/20 border-2 border-amber-900/40 rounded p-1.5">
-                                                    <div className="text-[8px] text-amber-900 uppercase font-bold">Level</div>
-                                                    <div className={`font-black text-base leading-tight ${levelTextColor}`} style={{
+                                                <div className="flex-1 bg-amber-900/20 border-2 border-amber-900/40 rounded p-3">
+                                                    <div className="text-xs text-amber-900 uppercase font-bold">Level</div>
+                                                    <div className={`font-black text-2xl leading-tight ${levelTextColor}`} style={{
                                                         WebkitTextStroke: '0.5px rgba(0,0,0,0.5)',
                                                         filter: 'drop-shadow(1px 1px 0 rgba(0,0,0,0.3))'
                                                     }}>
@@ -718,17 +911,17 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                             </div>
 
                                             {/* Quest/Task */}
-                                            <div className="bg-amber-900/20 border-2 border-amber-900/40 rounded p-1.5">
-                                                <div className="text-[8px] text-amber-900 uppercase font-bold mb-0.5">Quest</div>
-                                                <div className="text-stone-800 text-[10px] leading-snug italic font-medium">
+                                            <div className="bg-amber-900/20 border-2 border-amber-900/40 rounded p-3">
+                                                <div className="text-xs text-amber-900 uppercase font-bold mb-1">Quest</div>
+                                                <div className="text-stone-800 text-sm leading-snug italic font-medium">
                                                     {config.taskDescription}
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Bottom stamp/seal effect */}
-                                        <div className="bg-gradient-to-t from-amber-900 to-amber-800 p-1 border-t-4 border-amber-950">
-                                            <div className="text-center text-yellow-200 text-[8px] font-bold uppercase tracking-widest">
+                                        <div className="bg-gradient-to-t from-amber-900 to-amber-800 p-2 border-t-4 border-amber-950">
+                                            <div className="text-center text-yellow-200 text-sm font-bold uppercase tracking-widest">
                                                 {config.fantasyName}
                                             </div>
                                         </div>
