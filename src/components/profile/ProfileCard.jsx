@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Pencil, Check, Heart, Crown } from 'lucide-react';
 import SafeImage from '../ui/SafeImage';
+import ProfilePicture from '../ui/ProfilePicture';
 import ParentalVerificationModal from '../ui/ParentalVerificationModal';
 import { THEMES_LIST, SKILL_DATA } from '../../constants/gameData';
+import { getAvatarEmoji } from '../../constants/avatarData';
 
-const ProfileCard = ({ id, name, stats, isCurrent, onSwitch, onRename, isParent, onParentVerified }) => {
+const ProfileCard = ({ id, name, stats, isCurrent, onSwitch, onRename, isParent, onParentVerified, selectedAvatar, selectedBorder, borderColor, profileBgColor }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [tempName, setTempName] = useState(name);
     const [showParentalModal, setShowParentalModal] = useState(false);
-    
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { if (!isCurrent) setIsEditing(false); }, [isCurrent]);
 
     let themeBg = null;
-    
+
     if (stats && stats.theme) {
         const themeObj = THEMES_LIST.find(t => t.id === stats.theme);
         if (themeObj) themeBg = themeObj.img;
@@ -87,7 +89,19 @@ const ProfileCard = ({ id, name, stats, isCurrent, onSwitch, onRename, isParent,
                             </label>
                         )}
                     </div>
-                    
+
+                    {/* Profile Picture */}
+                    <div className="flex items-center justify-center px-2">
+                        <ProfilePicture
+                            avatar={getAvatarEmoji(selectedAvatar || 'person')}
+                            border={selectedBorder || 'solid'}
+                            borderColor={borderColor || '#FFD700'}
+                            totalLevel={0}
+                            size="medium"
+                            skillColorStyle={{ background: profileBgColor || 'linear-gradient(to bottom, #7e22ce, #581c87)' }}
+                        />
+                    </div>
+
                     {/* Profile identifiers - horizontal layout */}
                     <div className="w-1/2 flex flex-col justify-center items-center px-4 border-r-2 border-white/20">
                         {isEditing ? (

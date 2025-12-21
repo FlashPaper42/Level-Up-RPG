@@ -40,25 +40,25 @@ const lerp = (start, end, t) => start + (end - start) * clamp(t, 0, 1);
 const getTempoDelays = (completedRounds, currentDifficulty) => {
     // Use 1-based round number
     const round = completedRounds + 1;
-    
+
     // Calculate starting delay based on difficulty
     // Difficulty 1: 800ms, Difficulty 7: 200ms
     const startingDelay = lerp(MAX_TEMPO_DELAY, MIN_TEMPO_DELAY, (currentDifficulty - 1) / 6);
-    
+
     // Calculate acceleration runway based on difficulty
     // Difficulty 1: ~10 rounds, Difficulty 7: 1 round (essentially no acceleration)
     const maxRunwayRounds = lerp(10, 1, (currentDifficulty - 1) / 6);
-    
+
     // Calculate current tempo with acceleration
     // Progress through the runway: 0 at round 1, 1 at maxRunwayRounds
     // Handle edge case where maxRunwayRounds is 1 (no acceleration)
     const runwayProgress = maxRunwayRounds > 1 ? (round - 1) / (maxRunwayRounds - 1) : 1;
     const rawOnDelay = lerp(startingDelay, MIN_TEMPO_DELAY, runwayProgress);
     const onDelay = clamp(rawOnDelay, MIN_TEMPO_DELAY, MAX_TEMPO_DELAY);
-    
+
     // offDelay scaled to ~35% of onDelay with a 100ms floor
     const offDelay = Math.max(100, Math.round(onDelay * 0.35));
-    
+
     return { onDelay, offDelay };
 };
 
@@ -71,13 +71,13 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     const inputRef = useRef(null);
     const readingWordRef = useRef(null);
     const prevSpokenTextRef = useRef('');
-    
+
     const [memoryCards, setMemoryCards] = useState([]);
     const [flippedIndices, setFlippedIndices] = useState([]);
     const [matchedPairs, setMatchedPairs] = useState([]);
     const [isProcessingMatch, setIsProcessingMatch] = useState(false);
     const [mismatchShake, setMismatchShake] = useState(false);
-    
+
     // Ref to track if memory game session was initialized for the current battle
     const memorySessionStartedRef = useRef(false);
 
@@ -85,13 +85,13 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     const [simonSequence, setSimonSequence] = useState([]);
     const [playerIndex, setPlayerIndex] = useState(0);
     const [isShowingSequence, setIsShowingSequence] = useState(false);
-    
+
     // Parental verification modal state for Cleaning skill
     const [showParentalModal, setShowParentalModal] = useState(false);
     const [completedRounds, setCompletedRounds] = useState(0);
     const [litAxolotl, setLitAxolotl] = useState(null);
     const [simonGameActive, setSimonGameActive] = useState(false);
-    
+
     // Ref to track if patterns game session was initialized for the current battle
     const simonSessionStartedRef = useRef(false);
 
@@ -121,7 +121,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     const mobHealth = data.mobHealth || 100;
     const mobMaxHealth = data.mobMaxHealth || 100;
     const hpPercent = Math.round((mobHealth / mobMaxHealth) * 100);
-    
+
     let borderClass = 'border-stone-500';
     let levelTextColor = 'text-white';
     if (data.level >= 20) { levelTextColor = 'text-amber-700'; borderClass = 'border-wood'; }
@@ -132,7 +132,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     if (data.level >= 120) { levelTextColor = 'text-cyan-300'; borderClass = 'border-diamond'; }
     if (data.level >= 140) { levelTextColor = 'text-gray-500'; borderClass = 'border-netherite'; }
     if (data.level >= 160) { levelTextColor = 'text-rainbow'; borderClass = 'border-netherite'; }
-    
+
     // Apply selected border effect if this is the center card
     let appliedBorderEffect = '';
     let borderStyle = {};
@@ -141,7 +141,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
             appliedBorderEffect = '';
             // For 'solid', use locked yellow color; for 'solid-picker', use custom color
             const effectiveColor = selectedBorder === 'solid' ? '#FFD700' : (borderColor || '#FFD700');
-            borderStyle = { 
+            borderStyle = {
                 borderColor: effectiveColor,
                 boxShadow: `0 0 20px ${effectiveColor}, 0 0 40px ${effectiveColor}`
             };
@@ -155,11 +155,11 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
 
     const skillThemeConfig = themeData.skills[config.id] || {};
     const skillName = skillThemeConfig.name || config.name;
-    
+
     // Determine valid mob source and display name based on skill type
     let mobSrc;
     let displayMobName = mobName;
-    
+
     if (config.id === 'memory') {
         mobSrc = 'assets/skills/farm_icon.png';
     } else if (config.id === 'cleaning') {
@@ -182,17 +182,17 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
             mobSrc = HOSTILE_MOBS[displayMobName] || BASE_ASSETS.axolotls.Pink;
         }
     }
-    
+
     // Add aura adjective to mob name when battling
     const displayMobNameWithAura = isBattling && mobAura && AURA_ADJECTIVES[mobAura]
         ? `${AURA_ADJECTIVES[mobAura]} ${displayMobName}`
         : displayMobName;
-    
+
     // Use dynamic sizing for mobs to fill container
     // No longer need fixed pixel sizes - let the container constrain the size
     const mobSize = '100%';
 
-    const gemStyle = {}; 
+    const gemStyle = {};
 
     // Extract button colors from config.colorStyle to match card background
     const getButtonStyle = () => {
@@ -222,21 +222,21 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     };
 
     const buttonStyle = getButtonStyle();
-    
+
     // Helper function to play mismatch sound with proper volume
     const playMismatch = () => {
         const audio = new Audio(BASE_ASSETS.audio.mismatch);
         audio.volume = getSfxVolume();
-        audio.play().catch(() => {});
+        audio.play().catch(() => { });
     };
 
     useEffect(() => { setMathInput(''); }, [challenge]);
-    
+
     // Memory game config based on difficulty
     const memoryConfig = DIFFICULTY_CONTENT.memory[difficulty] || DIFFICULTY_CONTENT.memory[1];
     const memoryPairs = memoryConfig.pairs || 3;
     const memoryGridCols = memoryConfig.gridCols || 4;
-    
+
     useEffect(() => {
         if (isBattling && config.id === 'memory' && !memorySessionStartedRef.current) {
             // Only regenerate cards when entering battle if no session started yet
@@ -293,13 +293,13 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
         const allAxolotlColors = Object.keys(BASE_ASSETS.axolotls);
         return allAxolotlColors.slice(0, Math.min(axolotlCount, allAxolotlColors.length));
     }, [axolotlCount]);
-    
+
     const playSequence = useCallback((sequence) => {
         setIsShowingSequence(true);
         setPlayerIndex(0);
         let i = 0;
         const { onDelay, offDelay } = getTempoDelays(completedRounds, difficulty);
-        
+
         const playNext = () => {
             if (i < sequence.length) {
                 setLitAxolotl(sequence[i]);
@@ -328,26 +328,26 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
 
     const handleAxolotlClick = (color) => {
         if (isShowingSequence || !simonGameActive) return;
-        
+
         playAxolotlNote(color);
-        
+
         if (color === simonSequence[playerIndex]) {
             // Correct click
             if (playerIndex === simonSequence.length - 1) {
                 // Completed the sequence
                 const matchAudio = new Audio(BASE_ASSETS.audio.match);
                 matchAudio.volume = getSfxVolume();
-                matchAudio.play().catch(() => {});
+                matchAudio.play().catch(() => { });
                 const newRounds = completedRounds + 1;
                 setCompletedRounds(newRounds);
-                
+
                 // Apply progressive damage based on round number (increases with each round)
                 // Using a gentle exponential formula: damage = round * 1.5 (rounded)
                 const damage = Math.round(newRounds * 1.5);
                 setTimeout(() => {
                     onMathSubmit("WIN", damage);
                 }, 300);
-                
+
                 // For difficulty 7, reset sequence each round instead of building
                 let newSequence;
                 if (shouldResetSequence) {
@@ -361,7 +361,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                     const nextColor = axolotlColors[Math.floor(Math.random() * axolotlColors.length)];
                     newSequence = [...simonSequence, nextColor];
                 }
-                
+
                 setSimonSequence(newSequence);
                 setPlayerIndex(0);
                 setTimeout(() => playSequence(newSequence), 800);
@@ -373,7 +373,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
             // Wrong click - game over
             const mismatchAudio = new Audio(BASE_ASSETS.audio.mismatch);
             mismatchAudio.volume = getSfxVolume();
-            mismatchAudio.play().catch(() => {});
+            mismatchAudio.play().catch(() => { });
             setSimonGameActive(false);
             // No damage on failure since damage was already applied during successful rounds
         }
@@ -408,7 +408,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                 if (memoryCards[newFlipped[0]].color === memoryCards[newFlipped[1]].color) {
                     const matchAudio = new Audio(BASE_ASSETS.audio.match);
                     matchAudio.volume = getSfxVolume();
-                    matchAudio.play().catch(() => {});
+                    matchAudio.play().catch(() => { });
                     const newMatched = [...matchedPairs, memoryCards[newFlipped[0]].color];
                     setMatchedPairs(newMatched); setFlippedIndices([]); setIsProcessingMatch(false);
                     // Win when all pairs are matched (use memoryPairs from difficulty config)
@@ -416,7 +416,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                 } else {
                     const mismatchAudio = new Audio(BASE_ASSETS.audio.mismatch);
                     mismatchAudio.volume = getSfxVolume();
-                    mismatchAudio.play().catch(() => {});
+                    mismatchAudio.play().catch(() => { });
                     setMismatchShake(true);
                     setTimeout(() => { setMismatchShake(false); setFlippedIndices([]); setIsProcessingMatch(false); }, 500);
                 }
@@ -435,49 +435,49 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
             className={`bg-[#2b2b2b] border-4 rounded-lg overflow-visible flex flex-col transition-all duration-500 ${isCenter ? `${appliedBorderEffect} ${!appliedBorderEffect ? borderClass : ''}` : 'border-stone-700'} w-[300px] h-[600px] ${!isBattlingCenter ? 'relative' : ''}`}
             style={isCenter ? borderStyle : {}}
         >
-                {isCenter && data.level >= PRESTIGE_LEVEL_THRESHOLD && <div className="gem-socket"><div className="gem-stone" style={gemStyle}></div></div>}
-                <div className={topSectionBaseClass} style={config.colorStyle}>
-                    <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                    {!isBattling && <div className="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-white border border-white/20 z-20"><div className="text-xs text-gray-400 uppercase">{skillName}</div><div className="text-lg leading-none">{config.fantasyName}</div></div>}
-                    {!isBattling && <div className="absolute top-2 right-2 z-20"><div className={`bg-black/60 px-3 py-1 rounded border border-white/20 text-3xl font-bold ${levelTextColor}`}>Lvl {data.level}</div></div>}
-                    {showMob && <div className="relative z-10 flex items-center justify-center h-full max-h-[200px] w-full">
-                        {/* Use MobWithAura component when aura exists (both battle and carousel states) */}
-                        {mobAura ? (
-                            <MobWithAura
-                                mobSrc={mobSrc}
-                                aura={mobAura}
-                                displayName={displayMobNameWithAura}
-                                size={mobSize}
-                                isHit={isHit}
-                                bossHealing={bossHealing}
-                            />
-                        ) : (
-                            <SafeImage 
-                                key={displayMobName} 
-                                src={mobSrc} 
-                                alt={displayMobName} 
-                                className={`
+            {isCenter && data.level >= PRESTIGE_LEVEL_THRESHOLD && <div className="gem-socket"><div className="gem-stone" style={gemStyle}></div></div>}
+            <div className={topSectionBaseClass} style={config.colorStyle}>
+                <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                {!isBattling && <div className="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-white border border-white/20 z-20"><div className="text-xs text-gray-400 uppercase">{skillName}</div><div className="text-lg leading-none">{config.fantasyName}</div></div>}
+                {!isBattling && <div className="absolute top-2 right-2 z-20"><div className={`bg-black/60 px-3 py-1 rounded border border-white/20 text-3xl font-bold ${levelTextColor}`}>Lvl {data.level}</div></div>}
+                {showMob && <div className="relative z-10 flex items-center justify-center h-full max-h-[200px] w-full">
+                    {/* Use MobWithAura component when aura exists (both battle and carousel states) */}
+                    {mobAura ? (
+                        <MobWithAura
+                            mobSrc={mobSrc}
+                            aura={mobAura}
+                            displayName={displayMobNameWithAura}
+                            size={mobSize}
+                            isHit={isHit}
+                            bossHealing={bossHealing}
+                        />
+                    ) : (
+                        <SafeImage
+                            key={displayMobName}
+                            src={mobSrc}
+                            alt={displayMobName}
+                            className={`
                                     relative z-10
                                     max-w-full max-h-full
                                     object-contain drop-shadow-[4px_4px_0_rgba(0,0,0,0.5)] transition-transform duration-100 
                                     ${isHit ? 'animate-knockback' : bossHealing ? 'animate-shake' : 'animate-bob'} 
                                     ${bossHealing ? 'brightness-150 hue-rotate-90' : ''}
                                 `}
-                            />
-                        )}
-                        {damageNumbers.map(dmg => (
-                            <div 
-                                key={dmg.id} 
-                                className="absolute text-5xl font-bold text-red-500 animate-bounce pointer-events-none whitespace-nowrap" 
-                                style={{ left: `calc(50% + ${dmg.x}px)`, top: `calc(50% + ${dmg.y}px)`, textShadow: '2px 2px 0 #000' }}
-                            >
-                                -{dmg.val}
-                            </div>
-                        ))}
-                    </div>}
-                    {config.id !== 'memory' && !isBattling && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 px-6 py-2 rounded-full text-white border-2 border-white/30 text-xl font-bold tracking-wide z-10 shadow-lg whitespace-nowrap min-w-max">{displayMobName}</div>}
-                </div>
-                {(!isBattling || config.id !== 'memory') && <div className="bg-[#1a1a1a] p-2 border-t-4 border-b-4 border-black relative"><div className="flex justify-between text-gray-400 text-xs mb-1 uppercase"><span>HP</span><span>{hpPercent}%</span></div><div className="w-full h-6 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative"><div className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-200" style={{ width: `${hpPercent}%` }}></div></div></div>}
+                        />
+                    )}
+                    {damageNumbers.map(dmg => (
+                        <div
+                            key={dmg.id}
+                            className="absolute text-5xl font-bold text-red-500 animate-bounce pointer-events-none whitespace-nowrap"
+                            style={{ left: `calc(50% + ${dmg.x}px)`, top: `calc(50% + ${dmg.y}px)`, textShadow: '2px 2px 0 #000' }}
+                        >
+                            -{dmg.val}
+                        </div>
+                    ))}
+                </div>}
+                {config.id !== 'memory' && !isBattling && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 px-6 py-2 rounded-full text-white border-2 border-white/30 text-xl font-bold tracking-wide z-10 shadow-lg whitespace-nowrap min-w-max">{displayMobName}</div>}
+            </div>
+            {(!isBattling || config.id !== 'memory') && <div className="bg-[#1a1a1a] p-2 border-t-4 border-b-4 border-black relative"><div className="flex justify-between text-gray-400 text-xs mb-1 uppercase"><span>HP</span><span>{hpPercent}%</span></div><div className="w-full h-6 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative"><div className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-200" style={{ width: `${hpPercent}%` }}></div></div></div>}
             <div className={bottomSectionClass}>
                 {isBattling ? (
                     <div className="flex flex-col h-full animate-in slide-in-from-bottom-10 duration-300">
@@ -534,7 +534,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                         {!simonGameActive && completedRounds > 0 && (
                                             <div className="flex flex-col items-center gap-3">
                                                 <div className="text-red-400 text-lg font-bold animate-pulse">Game Over! Rounds: {completedRounds}</div>
-                                                <button 
+                                                <button
                                                     onClick={startSimonGame}
                                                     className="bg-blue-600 hover:bg-blue-500 text-white text-xl font-bold py-3 px-6 rounded shadow-[0_4px_0_#1e40af] active:shadow-none active:translate-y-[4px] transition-all"
                                                 >
@@ -545,7 +545,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                     </div>
                                 ) : (
                                     <>
-                                        <div className={`flex-1 bg-black/40 rounded border-2 flex items-center justify-center mb-3 p-2 relative overflow-hidden w-full ${isReadingWrong ? 'border-red-500 bg-red-900/30 animate-shake' : 'border-[#555]'}`}>
+                                        <div className={`flex-1 bg-black/40 rounded border-2 flex flex-col items-center justify-center mb-3 p-2 relative overflow-hidden w-full ${isReadingWrong ? 'border-red-500 bg-red-900/30 animate-shake' : 'border-[#555]'}`}>
                                             {config.challengeType === 'writing' ? (
                                                 // Display single or multiple item images for writing challenge
                                                 <div className="flex items-center justify-center gap-2">
@@ -556,30 +556,33 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                                         </React.Fragment>
                                                     ))}
                                                 </div>
-                                            ) : (() => { 
-                                                const word = challenge?.question.replace('Write: ', '') || ''; 
-                                                // Use dynamic sizing that always fits the container
-                                                // Start with a base size and let CSS handle the overflow
+                                            ) : (() => {
+                                                const word = challenge?.question.replace('Write: ', '') || '';
+                                                const wordLength = word.length;
+                                                // Dynamic font sizing based on length to prevent overflow
+                                                const fontSize = wordLength > 20 ? '1.2rem' : (wordLength > 12 ? '1.8rem' : '2.5rem');
+
                                                 return (
-                                                    <span 
+                                                    <span
                                                         ref={readingWordRef}
                                                         className="text-white font-bold tracking-wider px-2"
                                                         style={{
-                                                            fontSize: 'clamp(1rem, 8vw, 2.5rem)',
+                                                            fontSize,
                                                             maxWidth: '100%',
                                                             wordBreak: 'break-word',
                                                             textAlign: 'center',
-                                                            lineHeight: '1.2'
+                                                            lineHeight: '1.2',
+                                                            marginBottom: config.challengeType === 'reading' ? '1rem' : '0' // Space for mic status
                                                         }}
                                                     >
                                                         {word}
                                                     </span>
                                                 );
                                             })()}
-                                            {config.challengeType === 'reading' && <div className={`absolute bottom-1 text-xs ${isReadingWrong ? 'text-red-400' : 'text-gray-400'}`}>{spokenText || (isListening ? "Listening..." : "Mic Off")}</div>}
+                                            {config.challengeType === 'reading' && <div className={`text-xs mt-auto ${isReadingWrong ? 'text-red-400' : 'text-gray-400'}`}>{spokenText || (isListening ? "Listening..." : "Mic Off")}</div>}
                                         </div>
                                         {config.challengeType === 'math' && <div className="relative w-full flex justify-center"><input ref={inputRef} type="text" inputMode="numeric" pattern="[0-9]*" value={mathInput} onChange={(e) => { const val = e.target.value.replace(/[^0-9-]/g, ''); setMathInput(val); if (val === String(challenge?.answer)) { onMathSubmit(val); setMathInput(''); } else if (val.length === String(challenge?.answer).length) { setIsWrong(true); playMismatch(); onMathSubmit('WRONG'); setTimeout(() => { setIsWrong(false); setMathInput(''); setTimeout(() => inputRef.current?.focus(), 10); }, 500); } }} className="absolute inset-0 opacity-0 cursor-pointer" autoFocus maxLength={String(challenge?.answer).length} disabled={isWrong} /><div className={`flex gap-2 ${isWrong ? 'animate-shake' : ''}`}>{String(challenge?.answer).split('').map((char, i) => (<div key={i} className={`w-10 h-12 border-b-4 flex items-center justify-center text-2xl font-mono font-bold text-white bg-black/20 rounded-t ${isWrong ? 'border-red-500 bg-red-900/30' : (i < mathInput.length ? 'border-green-500' : 'border-gray-600')}`}>{mathInput[i] || ''}</div>))}</div></div>}
-                                        {config.challengeType === 'writing' && <div className="relative w-full flex justify-center"><input ref={inputRef} type="text" value={mathInput} onChange={(e) => { const val = e.target.value.toUpperCase().replace(/\s/g, ''); setMathInput(val); const answerNoSpaces = challenge?.answer.replace(/\s/g, ''); if (val === answerNoSpaces) { onMathSubmit(val); setMathInput(''); } else if (val.length === answerNoSpaces.length) { setIsWrong(true); playMismatch(); setTimeout(() => { setIsWrong(false); setMathInput(''); setTimeout(() => inputRef.current?.focus(), 10); }, 500); } }} className="absolute inset-0 opacity-0 cursor-pointer" autoFocus maxLength={challenge?.answer.replace(/\s/g, '').length} disabled={isWrong} /><div className={`flex gap-1 flex-wrap justify-center ${isWrong ? 'animate-shake' : ''}`}>{(() => {
+                                        {config.challengeType === 'writing' && <div className="relative w-full flex justify-center"><input ref={inputRef} type="text" value={mathInput} onChange={(e) => { const val = e.target.value.toUpperCase().replace(/\s/g, ''); setMathInput(val); const answerNoSpaces = challenge?.answer.replace(/\s/g, ''); if (val === answerNoSpaces) { onMathSubmit(val); setMathInput(''); } else if (val.length === answerNoSpaces.length) { setIsWrong(true); playMismatch(); onMathSubmit('WRONG'); setTimeout(() => { setIsWrong(false); setMathInput(''); setTimeout(() => inputRef.current?.focus(), 10); }, 500); } }} className="absolute inset-0 opacity-0 cursor-pointer" autoFocus maxLength={challenge?.answer.replace(/\s/g, '').length} disabled={isWrong} /><div className={`flex gap-1 flex-wrap justify-center ${isWrong ? 'animate-shake' : ''}`}>{(() => {
                                             const answerNoSpaces = challenge?.answer.replace(/\s/g, '');
                                             const answerLength = answerNoSpaces.length;
                                             return challenge?.answer.split('').map((char, i) => {
@@ -618,8 +621,8 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                         <span>{data.xp} / {xpToLevel}</span>
                                     </div>
                                     <div className="w-full h-4 bg-[#333] rounded-full overflow-hidden border border-[#555] relative">
-                                        <div 
-                                            className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all duration-300" 
+                                        <div
+                                            className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all duration-300"
                                             style={{ width: `${xpPercent}%` }}
                                         ></div>
                                     </div>
@@ -643,13 +646,13 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
         return (
             <>
                 {ReactDOM.createPortal(
-                    <div 
+                    <div
                         className="fixed inset-0 z-50 flex items-center justify-center"
                         onClick={onEndBattle}
                     >
                         <div className="flex items-center justify-center relative" onClick={(e) => e.stopPropagation()}>
                             {/* Battle Card - Centered */}
-                            <div 
+                            <div
                                 style={{
                                     transform: 'scale(1.5)',
                                     transformOrigin: 'center center',
@@ -660,14 +663,14 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                             {/* Battle Info Side Panel - Offset to the right with gap */}
                             {/* Positioning: 50% (center) + 225px (half of scaled card 450px) + 30px (gap) */}
                             {(!['memory', 'cleaning'].includes(config.id)) && (
-                                <div 
+                                <div
                                     className="absolute left-[calc(50%+225px+30px)] top-0"
                                     style={{
                                         transform: 'scale(1.5)',
                                         transformOrigin: 'left top',
                                     }}
                                 >
-                                    <div 
+                                    <div
                                         className="relative w-[175px] bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-50 border-4 border-amber-800 rounded-lg overflow-hidden"
                                         style={{
                                             boxShadow: '0 0 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(251,191,36,0.3)',
@@ -678,7 +681,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                         <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-700"></div>
                                         <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-700"></div>
                                         <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-700"></div>
-                                        
+
                                         {/* "WANTED" poster style header */}
                                         <div className="bg-gradient-to-b from-red-700 to-red-800 p-2 border-b-4 border-amber-900 relative">
                                             <div className="text-yellow-300 text-sm font-black uppercase tracking-wider text-center" style={{ textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>
@@ -705,7 +708,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                                 </div>
                                                 <div className="flex-1 bg-amber-900/20 border-2 border-amber-900/40 rounded p-1.5">
                                                     <div className="text-[8px] text-amber-900 uppercase font-bold">Level</div>
-                                                    <div className={`font-black text-base leading-tight ${levelTextColor}`} style={{ 
+                                                    <div className={`font-black text-base leading-tight ${levelTextColor}`} style={{
                                                         WebkitTextStroke: '0.5px rgba(0,0,0,0.5)',
                                                         filter: 'drop-shadow(1px 1px 0 rgba(0,0,0,0.3))'
                                                     }}>
@@ -752,9 +755,9 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                 <div className="absolute -top-10 left-0 flex items-center gap-2 z-20">
                     <button onClick={() => setDifficulty(Math.max(1, difficulty - 1))} className="bg-stone-700 text-white rounded p-1 border border-stone-500 hover:bg-stone-600"><Minus size={16} /></button>
                     <div className="relative">
-                        <SafeImage 
-                            src={DIFFICULTY_IMAGES[difficulty] || DIFFICULTY_IMAGES[1]} 
-                            alt={`Difficulty ${difficulty}`} 
+                        <SafeImage
+                            src={DIFFICULTY_IMAGES[difficulty] || DIFFICULTY_IMAGES[1]}
+                            alt={`Difficulty ${difficulty}`}
                             className="w-8 h-8 object-contain"
                         />
                         {/* Difficulty level number indicator in bottom-right corner */}

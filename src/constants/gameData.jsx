@@ -184,44 +184,49 @@ export const THEME_CONFIG = {
     },
     'kpop': {
         name: 'K-Pop Demon Hunters',
-		style: { backgroundImage: `url('assets/themes/kpop.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center' },
-        assets: { 
-			logo: 'assets/themes/kpop_logo.png', cardBack: 'assets/themes/kpop_memorycard.jpg', 
-			mobs: {} 
-		},
+        style: { backgroundImage: `url('assets/themes/kpop.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center' },
+        assets: {
+            logo: 'assets/themes/kpop_logo.png', cardBack: 'assets/themes/kpop_memorycard.jpg',
+            mobs: {}
+        },
         skills: { reading: { name: 'Decryption', boss: 'Cyborg King' }, math: { name: 'Engineering', boss: 'Mecha-Brain' }, writing: { name: 'Hacking', boss: 'Mainframe' }, cleaning: { name: 'Waste Mgmt', boss: 'Trash Bot' }, memory: { name: 'Droid Repair', boss: 'Droid' }, patterns: { name: 'Navigation', boss: 'Star Map' } }
     },
     'pokemon': {
-        name: 'Pokemon', 
-		style: { backgroundImage: `url('assets/themes/pokemon.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center' },
-        assets: { 
-			logo: 'assets/themes/pokemon_logo.png', cardBack: 'assets/themes/pokemon_memorycard.jpg', 
-			mobs: {} 
-		},
+        name: 'Pokemon',
+        style: { backgroundImage: `url('assets/themes/pokemon.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center' },
+        assets: {
+            logo: 'assets/themes/pokemon_logo.png', cardBack: 'assets/themes/pokemon_memorycard.jpg',
+            mobs: {}
+        },
         skills: { reading: { name: 'Spellcasting', boss: 'Lich King' }, math: { name: 'Alchemy', boss: 'Golem' }, writing: { name: 'Scribing', boss: 'Dragon' }, cleaning: { name: 'Looting', boss: 'Mimic' }, memory: { name: 'Runes', boss: 'Wisp' }, patterns: { name: 'Rituals', boss: 'Cultist' } }
     },
     'spy': {
-        name: 'Spy', 
-		style: { backgroundImage: `url('assets/themes/minecraft.png')`, backgroundSize: 'cover', backgroundPosition: 'center' },
-        assets: { 
-			logo: 'assets/themes/spy_logo.png', cardBack: 'assets/themes/spy_memorycard.jpg', 
-			mobs: {} 
-		},
+        name: 'Spy',
+        style: { backgroundImage: `url('assets/themes/minecraft.png')`, backgroundSize: 'cover', backgroundPosition: 'center' },
+        assets: {
+            logo: 'assets/themes/spy_logo.png', cardBack: 'assets/themes/spy_memorycard.jpg',
+            mobs: {}
+        },
         skills: { reading: { name: 'Intel Analysis', boss: 'Double Agent' }, math: { name: 'Gadgetry', boss: 'Mad Scientist' }, writing: { name: 'Forgery', boss: 'Bureaucrat' }, cleaning: { name: 'Evidence', boss: 'Safe' }, memory: { name: 'Identities', boss: 'Mole' }, patterns: { name: 'Code Breaking', boss: 'Hacker' } }
     }
 };
 
-export const THEMES_LIST = [ { id: 'minecraft', name: 'Minecraft', img: 'assets/themes/minecraft.png' }, { id: 'kpop', name: 'K-Pop Demon Hunters', img: 'assets/themes/kpop.jpg' }, { id: 'pokemon', name: 'Pokemon', img: 'assets/themes/pokemon.jpg' }, { id: 'spy', name: 'Spy', img: 'assets/themes/spy.png' } ];
-export const BADGE_TIERS = [ { level: 20, title: "Wood" }, { level: 40, title: "Stone" }, { level: 60, title: "Gold" }, { level: 80, title: "Iron" }, { level: 100, title: "Emerald" }, { level: 120, title: "Diamond" }, { level: 140, title: "Netherite" }, { level: 160, title: "Obsidian" } ];
+export const THEMES_LIST = [{ id: 'minecraft', name: 'Minecraft', img: 'assets/themes/minecraft.png' }, { id: 'kpop', name: 'K-Pop Demon Hunters', img: 'assets/themes/kpop.jpg' }, { id: 'pokemon', name: 'Pokemon', img: 'assets/themes/pokemon.jpg' }, { id: 'spy', name: 'Spy', img: 'assets/themes/spy.png' }];
+export const BADGE_TIERS = [{ level: 20, title: "Wood" }, { level: 40, title: "Stone" }, { level: 60, title: "Gold" }, { level: 80, title: "Iron" }, { level: 100, title: "Emerald" }, { level: 120, title: "Diamond" }, { level: 140, title: "Netherite" }, { level: 160, title: "Obsidian" }];
 
 // Reading words organized by character length for difficulty scaling
+// OPTIMIZED FOR AZURE SPEECH RECOGNITION:
+// - Multi-syllable words (Azure is better with these)
+// - No homophones (BEE/BE, SEE/SEA, etc.)
+// - Common vocabulary (well-trained in Azure's model)
+// - Phonetically distinct (clear pronunciation)
 export const READING_WORDS = {
-    3: ["CAT", "DOG", "SUN", "BAT", "HAT", "RUN", "BIG", "RED", "FOX", "MOM", "DAD", "CUP", "BUS", "PEN", "ANT", "BEE"],
+    3: ["CAR", "SUN", "RUN", "BIG", "RED", "FOX", "MOM", "DAD", "CUP", "BUS", "PEN", "ANT", "BAG", "TUB", "PIG", "DIG"],
     4: ["BOOK", "TREE", "FISH", "BALL", "CAKE", "BIRD", "FROG", "PLAY", "JUMP", "MILK", "DOOR", "DUCK", "STAR", "MOON", "RAIN"],
     5: ["APPLE", "HOUSE", "WATER", "HAPPY", "MUSIC", "TIGER", "BEACH", "PLANT", "CLOUD", "SMILE", "PIZZA", "GRAPE", "HORSE", "SHEEP"],
     6: ["BANANA", "ORANGE", "PURPLE", "GARDEN", "FRIEND", "SCHOOL", "FLOWER", "RABBIT", "MONKEY", "BUTTON", "CASTLE", "DRAGON", "FOREST"],
     7: ["DIAMOND", "EMERALD", "CHICKEN", "RAINBOW", "DOLPHIN", "PENGUIN", "GIRAFFE", "PUMPKIN", "VOLCANO", "TORNADO", "MONSTER", "TEACHER"],
-    8: ["SKELETON", "ELEPHANT", "TREASURE", "CROCODILE", "FIREWORK", "BIRTHDAY", "SANDWICH", "DINOSAUR", "COMPUTER", "MUSHROOM", "I LOVE MOM"]
+    8: ["SKELETON", "ELEPHANT", "TREASURE", "DINOSAUR", "FIREWORK", "BIRTHDAY", "SANDWICH", "COMPUTER", "MUSHROOM", "UMBRELLA", "KANGAROO", "MOUNTAIN"]
 };
 
 // Humorously long words for difficulty 7 (adult assistance)
@@ -291,7 +296,7 @@ export const formatDisplayName = (word) => {
         'shulker_box': 'Shulker Box',
         'trapped_chest': 'Trapped Chest'
     };
-    
+
     return multiWordMap[word.toLowerCase()] || word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 };
 
@@ -324,7 +329,7 @@ export const WRITING_WORD_INDEX = [
     { word: 'strider', displayName: 'Strider', length: 7, imagePath: 'assets/mobs/friendly/strider.gif' },
     { word: 'turtle', displayName: 'Turtle', length: 6, imagePath: 'assets/mobs/friendly/turtle.png' },
     { word: 'wolf', displayName: 'Wolf', length: 4, imagePath: 'assets/mobs/friendly/wolf.png' },
-    
+
     // Mobs from hostile
     { word: 'blaze', displayName: 'Blaze', length: 5, imagePath: 'assets/mobs/hostile/blaze.gif' },
     { word: 'bogged', displayName: 'Bogged', length: 6, imagePath: 'assets/mobs/hostile/bogged.png' },
@@ -346,19 +351,19 @@ export const WRITING_WORD_INDEX = [
     { word: 'spider', displayName: 'Spider', length: 6, imagePath: 'assets/mobs/hostile/spider.png' },
     { word: 'witch', displayName: 'Witch', length: 5, imagePath: 'assets/mobs/hostile/witch.png' },
     { word: 'zombie', displayName: 'Zombie', length: 6, imagePath: 'assets/mobs/hostile/zombie.png' },
-    
+
     // Mobs from miniboss
     { word: 'creaking', displayName: 'Creaking', length: 8, imagePath: 'assets/mobs/miniboss/creaking.png' },
     { word: 'elderguardian', displayName: 'Elder Guardian', length: 14, imagePath: 'assets/mobs/miniboss/elderguardian.gif' },
     { word: 'ravager', displayName: 'Ravager', length: 7, imagePath: 'assets/mobs/miniboss/ravager.png' },
     { word: 'witherskeleton', displayName: 'Wither Skeleton', length: 15, imagePath: 'assets/mobs/miniboss/witherskeleton.png' },
-    
+
     // Mobs from boss
     { word: 'enderdragon', displayName: 'Ender Dragon', length: 12, imagePath: 'assets/mobs/boss/enderdragon.gif' },
     { word: 'herobrine', displayName: 'Herobrine', length: 9, imagePath: 'assets/mobs/boss/Herobrine.png' },
     { word: 'warden', displayName: 'Warden', length: 6, imagePath: 'assets/mobs/boss/warden.gif' },
     { word: 'wither', displayName: 'Wither', length: 6, imagePath: 'assets/mobs/boss/wither.png' },
-    
+
     // Items (including former blocks)
     { word: 'axe', displayName: 'Axe', length: 3, imagePath: 'assets/items/axe.gif' },
     { word: 'bed', displayName: 'Bed', length: 3, imagePath: 'assets/items/bed.png' },

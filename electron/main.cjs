@@ -11,6 +11,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.cjs')
     },
     // Remove menu bar for cleaner experience
     autoHideMenuBar: true,
@@ -23,9 +24,9 @@ function createWindow() {
   if (app.isPackaged) {
     mainWindow.webContents.on('before-input-event', (event, input) => {
       // Block F12 and common devtools shortcuts
-      if (input.key === 'F12' || 
-          (input.control && input.shift && input.key === 'I') ||
-          (input.control && input.shift && input.key === 'C')) {
+      if (input.key === 'F12' ||
+        (input.control && input.shift && input.key === 'I') ||
+        (input.control && input.shift && input.key === 'C')) {
         event.preventDefault();
       }
     });
@@ -35,6 +36,18 @@ function createWindow() {
     mainWindow = null;
   });
 }
+
+// IPC handler for fullscreen toggle
+const { ipcMain } = require('electron');
+
+ipcMain.handle('toggle-fullscreen', async () => {
+  if (mainWindow) {
+    const isFullScreen = mainWindow.isFullScreen();
+    mainWindow.setFullScreen(!isFullScreen);
+    return !isFullScreen; // Return new fullscreen state
+  }
+  return false;
+});
 
 // Create window when Electron is ready
 app.whenReady().then(createWindow);
