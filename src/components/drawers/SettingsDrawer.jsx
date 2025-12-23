@@ -79,23 +79,22 @@ const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol,
                         {/* Parent Profile Editor - Only show if current profile is a parent */}
                         {parentStatus && parentStatus[currentProfile] && (
                             <div>
-                                <h3 className="text-xl text-yellow-300 mb-5 font-bold flex items-center gap-3 uppercase tracking-wider">
-                                    <Crown size={20} className="text-yellow-400" /> Parent Tools
+                                <h3 className="text-lg text-yellow-300 mb-3 font-bold flex items-center gap-2 uppercase tracking-wider">
+                                    <Crown size={18} className="text-yellow-400" /> Parent Tools
                                 </h3>
-                                <div className="space-y-3 bg-slate-900/50 p-5 rounded-xl border-2 border-yellow-600/50">
-                                    <p className="text-slate-300 text-sm mb-4">
-                                        As a parent, you can edit profile data to adjust skill levels and achievements. 
-                                        This allows you to set the correct starting level for your child.
+                                <div className="space-y-2 bg-slate-900/50 p-3 rounded-xl border-2 border-yellow-600/50">
+                                    <p className="text-slate-400 text-xs mb-2">
+                                        Edit profile data to adjust skill levels and achievements.
                                     </p>
-                                    <div className="grid grid-cols-1 gap-3">
+                                    <div className="flex gap-2">
                                         {[1, 2, 3].map(id => (
                                             <button
                                                 key={id}
                                                 onClick={() => setEditingProfileId(id)}
-                                                className="bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-400 p-3 rounded-lg border-2 border-yellow-600/50 hover:border-yellow-500 font-bold text-lg flex items-center justify-center gap-3 transition-all"
+                                                className="flex-1 bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-400 p-2 rounded-lg border border-yellow-600/50 hover:border-yellow-500 font-bold text-sm flex items-center justify-center gap-1 transition-all"
                                             >
-                                                <Edit3 size={20} />
-                                                Edit {profileNames[id]}'s Profile Data
+                                                <Edit3 size={14} />
+                                                {profileNames[id]}
                                             </button>
                                         ))}
                                     </div>

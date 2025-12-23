@@ -79,7 +79,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     const [matchedPairs, setMatchedPairs] = useState([]);
     const [isProcessingMatch, setIsProcessingMatch] = useState(false);
     const [mismatchShake, setMismatchShake] = useState(false);
-    
+
     // Nightmare mode: bouncing card positions and velocities
     const [cardPositions, setCardPositions] = useState([]);
     const [cardVelocities, setCardVelocities] = useState([]);
@@ -136,7 +136,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
         const mobActionType = typeof mobAttacking === 'object' && mobAttacking ? mobAttacking.type : null;
         let animationClass = 'animate-bob';
         let actionStyle = {};
-        
+
         if (isHit) {
             // Takes damage: shrink, flash red
             animationClass = 'animate-action animate-shake';
@@ -146,39 +146,34 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                 '--action-brightness': '0.8'
             };
         } else if (isMobAttacking) {
-            // TEMPORARY: Use same animation as getting hit to test if animation logic works
-            // Deals action: use hit animation (shrink, flash red) for testing
-            animationClass = 'animate-action animate-shake';
-            actionStyle = {
-                '--action-scale': '0.85',
-                '--action-hue': '-50deg',
-                '--action-brightness': '0.8'
-            };
-            // Original code (commented out for testing):
-            // if (mobActionType === 'heal') {
-            //     actionStyle = {
-            //         '--action-scale': '1.2',
-            //         '--action-hue': '90deg',
-            //         '--action-brightness': '1.5'
-            //     };
-            // } else if (mobActionType === 'armor') {
-            //     actionStyle = {
-            //         '--action-scale': '1.2',
-            //         '--action-hue': '200deg',
-            //         '--action-brightness': '1.5'
-            //     };
-            // } else {
-            //     // damage (default)
-            //     actionStyle = {
-            //         '--action-scale': '1.2',
-            //         '--action-hue': '0deg',
-            //         '--action-brightness': '1.5'
-            //     };
-            // }
+            // Mob is performing an action - animate based on action type
+            animationClass = 'animate-action';
+            if (mobActionType === 'heal') {
+                // Heal: scale up, green glow (hue-rotate to green)
+                actionStyle = {
+                    '--action-scale': '1.2',
+                    '--action-hue': '90deg',
+                    '--action-brightness': '1.5'
+                };
+            } else if (mobActionType === 'armor') {
+                // Armor: scale up, blue glow (hue-rotate to cyan/blue)
+                actionStyle = {
+                    '--action-scale': '1.2',
+                    '--action-hue': '200deg',
+                    '--action-brightness': '1.5'
+                };
+            } else {
+                // Damage (default): scale up, red glow
+                actionStyle = {
+                    '--action-scale': '1.2',
+                    '--action-hue': '0deg',
+                    '--action-brightness': '1.5'
+                };
+            }
         } else if (bossHealing) {
             animationClass = 'animate-shake brightness-150 hue-rotate-90';
         }
-        
+
         return { animationClass, actionStyle };
     };
 
@@ -308,7 +303,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
             let deck = [...selectedMobs, ...selectedMobs].sort(() => Math.random() - 0.5);
             setMemoryCards(deck.map((mobKey, i) => ({ id: i, color: mobKey, img: FRIENDLY_MOBS[mobKey] })));
             setFlippedIndices([]); setMatchedPairs([]); setIsProcessingMatch(false); setMismatchShake(false);
-            
+
             // Initialize positions for nightmare mode (difficulty 7)
             if (difficulty === 7) {
                 const initialPositions = deck.map(() => ({ x: 0, y: 0 }));
@@ -332,7 +327,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
             }
         }
     }, [isBattling, config.id, memoryPairs, difficulty]);
-    
+
     // Nightmare mode: Bouncing card animation
     useEffect(() => {
         if (!isBattling || config.id !== 'memory' || difficulty !== 7 || memoryCards.length === 0) {
@@ -342,23 +337,23 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
             }
             return;
         }
-        
+
         // Max offset from original position (in pixels) - keeps cards mostly in their grid area
         const maxOffset = 20;
-        
+
         const animate = () => {
             setCardPositions(prevPositions => {
                 return prevPositions.map((pos, i) => {
                     if (matchedPairs.includes(memoryCards[i]?.color)) {
                         return pos; // Don't move matched cards
                     }
-                    
+
                     const vel = cardVelocities[i];
                     if (!vel) return pos;
-                    
+
                     let newX = pos.x + vel.x;
                     let newY = pos.y + vel.y;
-                    
+
                     // Bounce off boundaries
                     if (newX > maxOffset || newX < -maxOffset) {
                         setCardVelocities(prev => {
@@ -380,16 +375,16 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                         });
                         newY = Math.max(-maxOffset, Math.min(maxOffset, newY));
                     }
-                    
+
                     return { x: newX, y: newY };
                 });
             });
-            
+
             animationFrameRef.current = requestAnimationFrame(animate);
         };
-        
+
         animationFrameRef.current = requestAnimationFrame(animate);
-        
+
         return () => {
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
@@ -410,7 +405,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
             const normalizedAnswer = challenge.answer.toUpperCase().trim();
             const homophones = HOMOPHONES[normalizedAnswer];
             const isCorrect = normalizedSpoken === normalizedAnswer || (homophones && homophones.some(h => h.toUpperCase() === normalizedSpoken));
-            
+
             if (isCorrect && spokenText !== prevSpokenTextRef.current) {
                 // Word was read correctly - trigger combat action
                 if (handleCombatAction) {
@@ -494,18 +489,18 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                 const newRounds = completedRounds + 1;
                 setCompletedRounds(newRounds);
 
-                                // Apply progressive damage and XP scaling based on round number
-                                // Early rounds have reduced rewards, later rounds have increased rewards
-                                // This incentivizes getting as far as possible rather than restarting
-                                // Damage formula: starts at 0.5x at round 1, reaches 1x at round 5, scales up after
-                                // XP formula: similar scaling to match - early rounds give less XP
-                                const baseMultiplier = Math.max(0.5, Math.min(2, 0.3 + (newRounds * 0.2)));
-                                const damage = Math.max(1, Math.round(newRounds * 1.5 * baseMultiplier));
-                                // XP scales similarly - round 1 gives ~50% XP, round 5 gives 100%, higher rounds give bonus
-                                const xpMultiplier = Math.max(0.5, Math.min(3, 0.3 + (newRounds * 0.25)));
-                                setTimeout(() => {
-                                    onMathSubmit("WIN", damage, xpMultiplier);
-                                }, 300);
+                // Apply progressive damage and XP scaling based on round number
+                // Early rounds have reduced rewards, later rounds have increased rewards
+                // This incentivizes getting as far as possible rather than restarting
+                // Damage formula: starts at 0.5x at round 1, reaches 1x at round 5, scales up after
+                // XP formula: similar scaling to match - early rounds give less XP
+                const baseMultiplier = Math.max(0.5, Math.min(2, 0.3 + (newRounds * 0.2)));
+                const damage = Math.max(1, Math.round(newRounds * 1.5 * baseMultiplier));
+                // XP scales similarly - round 1 gives ~50% XP, round 5 gives 100%, higher rounds give bonus
+                const xpMultiplier = Math.max(0.5, Math.min(3, 0.3 + (newRounds * 0.25)));
+                setTimeout(() => {
+                    onMathSubmit("WIN", damage, xpMultiplier);
+                }, 300);
 
                 // For difficulty 7, reset sequence each round instead of building
                 let newSequence;
@@ -587,12 +582,12 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     const showMob = !isBattling || config.id === 'memory';
     // Hide top section completely when battling (mob preview window is deprecated - mob is in left panel)
     // When battling, don't render the top section at all to remove the colored window
-    const topSectionBaseClass = isBattling 
-        ? 'hidden' 
+    const topSectionBaseClass = isBattling
+        ? 'hidden'
         : 'h-[55%] relative flex items-center justify-center overflow-hidden rounded-t-sm';
     // Bottom section takes full space when battling (no mob preview window)
-    const bottomSectionClass = isBattling 
-        ? 'h-full bg-[#3a3a3a] p-4 flex flex-col relative rounded-lg' 
+    const bottomSectionClass = isBattling
+        ? 'h-full bg-[#3a3a3a] p-4 flex flex-col relative rounded-lg'
         : 'flex-1 bg-[#3a3a3a] p-4 flex flex-col relative rounded-b-sm';
 
     const isBattlingCenter = isBattling && isCenter;
@@ -661,11 +656,11 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                     const bouncePos = difficulty === 7 && cardPositions[index] ? cardPositions[index] : { x: 0, y: 0 };
                                     if (isMatched) return <div key={card.id} className="w-full aspect-[2/3]"></div>;
                                     return (
-                                        <div 
-                                            key={card.id} 
-                                            onClick={() => handleCardClick(index)} 
+                                        <div
+                                            key={card.id}
+                                            onClick={() => handleCardClick(index)}
                                             className={`w-full aspect-[2/3] cursor-pointer transition-transform duration-100 perspective-1000 relative transform-style-3d ${isFlipped ? 'rotate-y-180' : ''} ${mismatchShake && isFlipped ? 'animate-shake-flipped border-red-500' : ''}`}
-                                            style={difficulty === 7 ? { 
+                                            style={difficulty === 7 ? {
                                                 transform: `translate(${bouncePos.x}px, ${bouncePos.y}px) ${isFlipped ? 'rotateY(180deg)' : ''}`,
                                                 transition: 'none'
                                             } : {}}
@@ -679,21 +674,61 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                         ) : (
                             <div className="flex-1 flex flex-col items-center justify-center">
                                 {config.id === 'patterns' ? (
-                                    <div className="w-full flex flex-col items-center gap-1">
+                                    <div className="w-full flex flex-col items-center gap-1 relative">
+                                        {/* Cube texture background */}
+                                        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-slate-700 rounded-lg"></div>
                                         {/* Round counter */}
-                                        <div className="text-white text-lg font-bold py-1">
+                                        <div className="text-white text-lg font-bold py-1 relative z-10">
                                             Round: {completedRounds} {isShowingSequence && <span className="text-yellow-400 animate-pulse">Watch!</span>}
                                             {!isShowingSequence && simonGameActive && <span className="text-green-400">Your turn!</span>}
                                         </div>
-                                        {/* Dynamic axolotl formation based on difficulty */}
-                                        <div className="relative w-[240px] h-[240px]">
+                                        {/* Dynamic axolotl formation - larger and more square */}
+                                        <div className="relative w-[280px] h-[280px] z-10">
+                                            {/* Compass needle in center that points at lit axolotl */}
+                                            {litAxolotl && (() => {
+                                                const litIndex = axolotlColors.indexOf(litAxolotl);
+                                                const anglePerAxolotl = 360 / axolotlColors.length;
+                                                const needleAngle = litIndex * anglePerAxolotl - 90;
+                                                return (
+                                                    <div
+                                                        className="absolute w-[60px] h-[60px] z-20"
+                                                        style={{
+                                                            left: '50%',
+                                                            top: '50%',
+                                                            transform: `translate(-50%, -50%) rotate(${needleAngle}deg)`,
+                                                            transition: 'transform 0.15s ease-out'
+                                                        }}
+                                                    >
+                                                        {/* Compass needle SVG */}
+                                                        <svg viewBox="0 0 60 60" className="w-full h-full drop-shadow-lg">
+                                                            {/* Needle body pointing right when rotation is 0 */}
+                                                            <polygon
+                                                                points="30,25 55,30 30,35"
+                                                                fill="#FFD700"
+                                                                stroke="#B8860B"
+                                                                strokeWidth="1.5"
+                                                            />
+                                                            {/* Opposite side (dimmer) */}
+                                                            <polygon
+                                                                points="30,27 10,30 30,33"
+                                                                fill="#666"
+                                                                stroke="#444"
+                                                                strokeWidth="1"
+                                                            />
+                                                            {/* Center pivot */}
+                                                            <circle cx="30" cy="30" r="6" fill="#333" stroke="#555" strokeWidth="2" />
+                                                            <circle cx="30" cy="30" r="3" fill="#888" />
+                                                        </svg>
+                                                    </div>
+                                                );
+                                            })()}
                                             {axolotlColors.map((color, index) => {
                                                 // Calculate angle based on number of axolotls (evenly distributed around circle)
                                                 const anglePerAxolotl = 360 / axolotlColors.length;
                                                 const angle = (index * anglePerAxolotl - 90) * (Math.PI / 180);
-                                                const radius = 85;
-                                                const x = 120 + radius * Math.cos(angle) - 40;
-                                                const y = 120 + radius * Math.sin(angle) - 40;
+                                                const radius = 100; // Increased radius for larger ring
+                                                const x = 140 + radius * Math.cos(angle) - 40;
+                                                const y = 140 + radius * Math.sin(angle) - 40;
                                                 const isLit = litAxolotl === color;
                                                 return (
                                                     <div
@@ -759,12 +794,12 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                         {config.challengeType !== 'reading' || config.id !== 'reading' ? (
                                             <div className={`flex-1 bg-black/40 rounded border-2 flex flex-col items-center justify-center mb-3 p-2 relative overflow-hidden w-full ${isReadingWrong ? 'border-red-500 bg-red-900/30 animate-shake' : 'border-[#555]'}`}>
                                                 {config.challengeType === 'writing' ? (
-                                                    // Display single or multiple item images for writing challenge
-                                                    <div className="flex items-center justify-center gap-2">
+                                                    // Display single or multiple item images for writing challenge - scalable
+                                                    <div className="flex items-center justify-center gap-2 flex-1 w-full h-full p-2">
                                                         {challenge?.images?.map((img, idx) => (
                                                             <React.Fragment key={idx}>
                                                                 {idx > 0 && <span className="text-3xl text-yellow-400 font-bold">+</span>}
-                                                                <SafeImage src={img} className="w-24 h-24 object-contain animate-bob" />
+                                                                <SafeImage src={img} className="max-w-full max-h-full min-w-[80px] min-h-[80px] object-contain animate-bob flex-1" style={{ maxHeight: '150px' }} />
                                                             </React.Fragment>
                                                         ))}
                                                     </div>
@@ -909,8 +944,173 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                         }}
                         style={{ zIndex: 50 }}
                     >
-                        {/* Reading skill uses different layout: Centered Mob Card, Minigame Card left, Battle Data Card right */}
-                        {config.id === 'reading' ? (
+                        {/* Cleaning skill uses special 3-card layout: Instructions, Chest Preview, Bounty List */}
+                        {config.id === 'cleaning' ? (
+                            <div className="flex items-center justify-center gap-8 relative max-w-[95vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                                {/* Left Card - Instructions */}
+                                <div className="flex-shrink-0">
+                                    <div
+                                        className="relative w-[300px] bg-gradient-to-br from-cyan-900 via-slate-800 to-cyan-900 border-4 border-cyan-600 rounded-lg overflow-hidden"
+                                        style={{
+                                            boxShadow: '0 0 40px rgba(0,150,150,0.5), inset 0 0 30px rgba(100,200,200,0.1)',
+                                            height: '450px',
+                                        }}
+                                    >
+                                        {/* Decorative corner accents */}
+                                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-cyan-400"></div>
+                                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-cyan-400"></div>
+                                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-cyan-400"></div>
+                                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-cyan-400"></div>
+
+                                        {/* Header */}
+                                        <div className="bg-gradient-to-b from-cyan-700 to-cyan-800 p-3 border-b-4 border-slate-700 relative">
+                                            <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                            <div className="text-cyan-200 text-lg font-black uppercase tracking-wider text-center relative z-10" style={{ textShadow: '2px 2px 0 #000' }}>
+                                                📋 HOW TO LEVEL UP
+                                            </div>
+                                        </div>
+
+                                        {/* Instructions Content */}
+                                        <div className="p-4 flex flex-col gap-4 h-[calc(100%-52px)]">
+                                            <div className="bg-black/30 rounded-lg p-4 border border-cyan-700/50">
+                                                <p className="text-cyan-100 text-lg leading-relaxed text-center">
+                                                    Complete a <span className="text-yellow-400 font-bold">real-world chore</span> to earn XP!
+                                                </p>
+                                            </div>
+
+                                            <div className="bg-black/30 rounded-lg p-4 border border-cyan-700/50 flex-1">
+                                                <div className="text-cyan-300 text-sm uppercase font-bold mb-2 text-center">Steps:</div>
+                                                <ol className="text-cyan-100 text-base space-y-2 list-decimal list-inside">
+                                                    <li>Choose a chore from the bounty list</li>
+                                                    <li>Complete the chore in real life</li>
+                                                    <li>Ask a parent to verify you did it</li>
+                                                    <li>Click "Complete!" to level up!</li>
+                                                </ol>
+                                            </div>
+
+                                            <div className="bg-yellow-900/30 rounded-lg p-3 border border-yellow-600/50">
+                                                <p className="text-yellow-300 text-sm text-center font-bold">
+                                                    ⚠️ A Parent must verify your chore!
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Center Card - Chest Preview */}
+                                <div className="flex-shrink-0" style={{ transform: 'scale(1.1)' }}>
+                                    <div
+                                        className="relative w-[350px] bg-gradient-to-br from-amber-900 via-amber-800 to-amber-900 border-4 border-amber-600 rounded-lg overflow-hidden"
+                                        style={{
+                                            boxShadow: '0 0 50px rgba(200,150,50,0.5), inset 0 0 40px rgba(255,200,100,0.1)',
+                                            height: '450px',
+                                        }}
+                                    >
+                                        {/* Decorative corner accents */}
+                                        <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-yellow-500"></div>
+                                        <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-yellow-500"></div>
+                                        <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-yellow-500"></div>
+                                        <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-yellow-500"></div>
+
+                                        {/* Header */}
+                                        <div className="bg-gradient-to-b from-amber-700 to-amber-800 p-4 border-b-4 border-amber-950 relative">
+                                            <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                            <div className="text-yellow-300 text-xl font-black uppercase tracking-wider text-center relative z-10" style={{ textShadow: '2px 2px 0 #000' }}>
+                                                🗃️ CHEST MANAGEMENT
+                                            </div>
+                                        </div>
+
+                                        {/* Chest Display Area */}
+                                        <div className="relative flex flex-col items-center justify-center flex-1 p-4" style={{ height: 'calc(100% - 130px)' }}>
+                                            <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                            <SafeImage
+                                                src={mobSrc}
+                                                alt={displayMobName}
+                                                className="max-w-full max-h-full object-contain drop-shadow-[4px_4px_0_rgba(0,0,0,0.5)] animate-bob relative z-10"
+                                                style={{ maxHeight: '200px' }}
+                                            />
+                                            <div className="mt-4 bg-black/60 px-6 py-2 rounded-full border-2 border-yellow-500/50 relative z-10">
+                                                <span className="text-yellow-400 text-lg font-bold">{displayMobName}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Level Display & Complete Button */}
+                                        <div className="bg-[#1a1a1a] p-4 border-t-4 border-amber-950 flex flex-col gap-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-amber-400 text-lg font-bold uppercase">Level</span>
+                                                <span className="text-yellow-400 text-3xl font-black" style={{ textShadow: '2px 2px 0 #000' }}>{data.level}</span>
+                                            </div>
+                                            <button
+                                                onClick={() => setShowParentalModal(true)}
+                                                className="w-full bg-green-600 hover:bg-green-500 text-white text-2xl font-bold py-3 rounded shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-[4px] transition-all"
+                                            >
+                                                ✓ Complete!
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right Card - Bounty List */}
+                                <div className="flex-shrink-0">
+                                    <div
+                                        className="relative w-[300px] bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-50 border-4 border-amber-800 rounded-lg overflow-hidden"
+                                        style={{
+                                            boxShadow: '0 0 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(251,191,36,0.2)',
+                                            height: '450px',
+                                        }}
+                                    >
+                                        {/* Decorative corner accents */}
+                                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-700"></div>
+                                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-700"></div>
+                                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-700"></div>
+                                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-700"></div>
+
+                                        {/* WANTED style header */}
+                                        <div className="bg-gradient-to-b from-red-700 to-red-800 p-3 border-b-4 border-amber-900 relative">
+                                            <div className="absolute inset-0 opacity-50 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                            <div className="text-yellow-300 text-lg font-black uppercase tracking-wider text-center relative z-10" style={{ fontFamily: '"Orbitron", sans-serif', textShadow: '2px 2px 0 #000' }}>
+                                                📜 CHORE BOUNTIES
+                                            </div>
+                                            {/* Decorative rivets */}
+                                            <div className="absolute top-2 left-3 w-2.5 h-2.5 bg-amber-900 rounded-full border border-amber-950 z-10"></div>
+                                            <div className="absolute top-2 right-3 w-2.5 h-2.5 bg-amber-900 rounded-full border border-amber-950 z-10"></div>
+                                        </div>
+
+                                        {/* Bounty List */}
+                                        <div className="p-4 space-y-2 h-[calc(100%-100px)] overflow-y-auto">
+                                            {[
+                                                { chore: 'Take out the trash', reward: '🗑️' },
+                                                { chore: 'Clean your room', reward: '🧹' },
+                                                { chore: 'Do the dishes', reward: '🍽️' },
+                                                { chore: 'Put away laundry', reward: '👕' },
+                                                { chore: 'Feed the pets', reward: '🐕' },
+                                                { chore: 'Make your bed', reward: '🛏️' },
+                                                { chore: 'Set the table', reward: '🍴' },
+                                                { chore: 'Water plants', reward: '🌱' },
+                                            ].map((item, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="bg-amber-900/20 border-2 border-amber-900/40 rounded p-2 flex items-center gap-2 hover:bg-amber-900/30 transition-colors"
+                                                >
+                                                    <span className="text-2xl">{item.reward}</span>
+                                                    <span className="text-stone-800 font-bold text-sm flex-1" style={{ fontFamily: '"Orbitron", sans-serif' }}>
+                                                        {item.chore}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Bottom seal */}
+                                        <div className="bg-gradient-to-t from-amber-900 to-amber-800 p-2 border-t-4 border-amber-950 relative">
+                                            <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                            <div className="text-center text-yellow-200 text-xs font-bold uppercase tracking-widest relative z-10">
+                                                Pick One & Complete It!
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : config.id === 'reading' ? (
                             <div className="relative flex items-center justify-center pointer-events-none">
                                 {/* Left - Minigame Card (Long and Skinny) */}
                                 <div className="absolute left-[calc(50%-615px)] flex-shrink-0 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
@@ -1013,7 +1213,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 {/* Center - Mob Card - Centered, rigid dimensions: same width as player hearts (534px), extends from logo to above exit text */}
                                 <div className="flex-shrink-0 absolute left-1/2 pointer-events-auto" style={{ transform: 'translateX(-50%)' }} onClick={(e) => e.stopPropagation()}>
                                     <div
@@ -1040,7 +1240,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                         {/* Mob Display Area - Rigid dimensions, mobs scale to fit */}
                                         <div className="relative flex flex-col items-center justify-center flex-1" style={{ ...config.colorStyle, minHeight: '255px', width: '100%', overflow: 'hidden' }}>
                                             <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                                            
+
                                             {/* Mob Image - Scaled to fit within flexible container */}
                                             {(() => {
                                                 const { animationClass, actionStyle } = getActionAnimation(isHit, mobAttacking, config.id, bossHealing);
@@ -1100,7 +1300,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                                 </div>
                                             </div>
                                         )}
-                                        
+
                                         {/* HP Bar */}
                                         <div className="bg-[#1a1a1a] p-3 border-t-4 border-slate-700 flex-shrink-0">
                                             <div className="flex justify-between text-gray-400 text-sm mb-1 uppercase font-bold">
@@ -1125,7 +1325,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 {/* Right - Battle Data Card */}
                                 <div className="absolute left-[calc(50%+315px)] flex-shrink-0 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
                                     <div
@@ -1200,200 +1400,200 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                             <div className="flex items-center justify-center gap-24 relative max-w-[95vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                                 {/* Left Panel - Mob Display (2nd largest) - 25% smaller */}
                                 {(!['memory', 'cleaning'].includes(config.id)) && (
-                                <div className="flex-shrink-0">
-                                    <div
-                                        className="relative w-[469px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg overflow-hidden"
-                                        style={{
-                                            boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(100,100,100,0.2)',
-                                            height: '400px', // Rigid height
-                                        }}
-                                    >
-                                        {/* Decorative corner accents */}
-                                        <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-purple-600"></div>
-                                        <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-purple-600"></div>
-                                        <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-purple-600"></div>
-                                        <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-purple-600"></div>
+                                    <div className="flex-shrink-0">
+                                        <div
+                                            className="relative w-[469px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg overflow-hidden flex flex-col"
+                                            style={{
+                                                boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(100,100,100,0.2)',
+                                                height: '500px', // Increased height for taller mobs
+                                            }}
+                                        >
+                                            {/* Decorative corner accents */}
+                                            <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-purple-600"></div>
+                                            <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-purple-600"></div>
+                                            <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-purple-600"></div>
+                                            <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-purple-600"></div>
 
-                                        {/* Header */}
-                                        <div className="bg-gradient-to-b from-purple-800 to-purple-900 p-4 border-b-4 border-slate-700 relative">
-                                            <div className="text-purple-200 text-xl font-black uppercase tracking-wider text-center" style={{ textShadow: '2px 2px 0 #000' }}>
-                                                ⚔ {displayMobNameWithAura} ⚔
+                                            {/* Header */}
+                                            <div className="bg-gradient-to-b from-purple-800 to-purple-900 p-4 border-b-4 border-slate-700 relative">
+                                                <div className="text-purple-200 text-xl font-black uppercase tracking-wider text-center" style={{ textShadow: '2px 2px 0 #000' }}>
+                                                    ⚔ {displayMobNameWithAura} ⚔
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        {/* Mob Display Area - Rigid dimensions, mobs scale to fit */}
-                                        <div className="relative flex flex-col items-center justify-center" style={{ ...config.colorStyle, height: '255px', width: '100%', overflow: 'hidden' }}>
-                                            <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                                            
-                                            {/* Mob Image - Scaled to fit within rigid container */}
-                                            {(() => {
-                                                const { animationClass, actionStyle } = getActionAnimation(isHit, mobAttacking, config.id, bossHealing);
-                                                return (
-                                                    <div className={`relative z-10 w-full h-full flex items-center justify-center transition-all duration-300 ${animationClass}`} style={actionStyle}>
-                                                        {mobAura ? (
-                                                            <div className="w-full h-full flex items-center justify-center p-4">
-                                                                <MobWithAura
-                                                                    mobSrc={mobSrc}
-                                                                    aura={mobAura}
-                                                                    displayName={displayMobNameWithAura}
-                                                                    size="100%"
-                                                                    isHit={isHit}
-                                                                    bossHealing={bossHealing}
+                                            {/* Mob Display Area - Increased height for taller mobs */}
+                                            <div className="relative flex flex-col items-center justify-center flex-1" style={{ ...config.colorStyle, minHeight: '310px', width: '100%', overflow: 'hidden' }}>
+                                                <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+
+                                                {/* Mob Image - Scaled to fit within rigid container */}
+                                                {(() => {
+                                                    const { animationClass, actionStyle } = getActionAnimation(isHit, mobAttacking, config.id, bossHealing);
+                                                    return (
+                                                        <div className={`relative z-10 w-full h-full flex items-center justify-center transition-all duration-300 ${animationClass}`} style={actionStyle}>
+                                                            {mobAura ? (
+                                                                <div className="w-full h-full flex items-center justify-center p-4">
+                                                                    <MobWithAura
+                                                                        mobSrc={mobSrc}
+                                                                        aura={mobAura}
+                                                                        displayName={displayMobNameWithAura}
+                                                                        size="100%"
+                                                                        isHit={isHit}
+                                                                        bossHealing={bossHealing}
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <SafeImage
+                                                                    key={displayMobName}
+                                                                    src={mobSrc}
+                                                                    alt={displayMobName}
+                                                                    className="w-full h-full object-contain drop-shadow-[4px_4px_0_rgba(0,0,0,0.5)] p-4"
                                                                 />
-                                                            </div>
-                                                        ) : (
-                                                            <SafeImage
-                                                                key={displayMobName}
-                                                                src={mobSrc}
-                                                                alt={displayMobName}
-                                                                className="w-full h-full object-contain drop-shadow-[4px_4px_0_rgba(0,0,0,0.5)] p-4"
-                                                            />
-                                                        )}
-                                                        {/* Damage numbers */}
-                                                        {damageNumbers.map(dmg => (
-                                                            <div
-                                                                key={dmg.id}
-                                                                className="absolute text-5xl font-bold text-red-500 animate-bounce pointer-events-none whitespace-nowrap"
-                                                                style={{ left: `calc(50% + ${dmg.x}px)`, top: `calc(50% + ${dmg.y}px)`, textShadow: '2px 2px 0 #000' }}
-                                                            >
-                                                                -{dmg.val}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                );
-                                            })()}
-                                        </div>
+                                                            )}
+                                                            {/* Damage numbers */}
+                                                            {damageNumbers.map(dmg => (
+                                                                <div
+                                                                    key={dmg.id}
+                                                                    className="absolute text-5xl font-bold text-red-500 animate-bounce pointer-events-none whitespace-nowrap"
+                                                                    style={{ left: `calc(50% + ${dmg.x}px)`, top: `calc(50% + ${dmg.y}px)`, textShadow: '2px 2px 0 #000' }}
+                                                                >
+                                                                    -{dmg.val}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
 
-                                        {/* Mob Next Action Indicator - Button shaped */}
-                                        {config.id === 'reading' && isBattling && (
-                                            <div className="bg-[#1a1a1a] p-2 border-t-4 border-slate-700">
-                                                <div className="text-gray-400 text-xs mb-1 uppercase font-bold text-center">Next Action</div>
-                                                <div className="flex items-center justify-center">
+                                            {/* Mob Next Action Indicator - Button shaped */}
+                                            {config.id === 'reading' && isBattling && (
+                                                <div className="bg-[#1a1a1a] p-2 border-t-4 border-slate-700">
+                                                    <div className="text-gray-400 text-xs mb-1 uppercase font-bold text-center">Next Action</div>
+                                                    <div className="flex items-center justify-center">
+                                                        {(() => {
+                                                            const action = mobNextAction?.skillId === config.id ? mobNextAction.action : (calculateMobAction ? calculateMobAction(config.id) : { type: 'damage', value: 1 });
+                                                            return action.type === 'damage' ? (
+                                                                <span className="text-red-400 font-bold text-lg">⚔ +1 DMG</span>
+                                                            ) : action.type === 'armor' ? (
+                                                                <span className="text-blue-400 font-bold text-lg">🛡 +1 ARMOR</span>
+                                                            ) : (
+                                                                <span className="text-green-400 font-bold text-lg">❤️ +1 HEAL</span>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* HP Bar - Fixed at bottom with flex-shrink-0 to prevent cutoff */}
+                                            <div className="bg-[#1a1a1a] p-3 border-t-4 border-slate-700 flex-shrink-0">
+                                                <div className="flex justify-between text-gray-400 text-base mb-2 uppercase font-bold">
+                                                    <span>HP</span>
+                                                    <span>{hpPercent}%</span>
+                                                </div>
+                                                <div className="w-full h-10 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative">
+                                                    {/* Armor bar overlays health bar */}
                                                     {(() => {
-                                                        const action = mobNextAction?.skillId === config.id ? mobNextAction.action : (calculateMobAction ? calculateMobAction(config.id) : { type: 'damage', value: 1 });
-                                                        return action.type === 'damage' ? (
-                                                            <span className="text-red-400 font-bold text-lg">⚔ +1 DMG</span>
-                                                        ) : action.type === 'armor' ? (
-                                                            <span className="text-blue-400 font-bold text-lg">🛡 +1 ARMOR</span>
-                                                        ) : (
-                                                            <span className="text-green-400 font-bold text-lg">❤️ +1 HEAL</span>
+                                                        const mobArmor = data.mobArmor || 0;
+                                                        const armorPercent = mobMaxHealth > 0 ? Math.min(100, (mobArmor / mobMaxHealth) * 100) : 0;
+                                                        return (
+                                                            <>
+                                                                <div className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-200" style={{ width: `${hpPercent}%` }}></div>
+                                                                {armorPercent > 0 && (
+                                                                    <div className="absolute inset-0 h-full bg-gradient-to-r from-blue-600 to-blue-500 transition-all duration-200 opacity-80" style={{ width: `${armorPercent}%` }}></div>
+                                                                )}
+                                                            </>
                                                         );
                                                     })()}
                                                 </div>
                                             </div>
-                                        )}
-                                        
-                                        {/* HP Bar */}
-                                        <div className="bg-[#1a1a1a] p-4 border-t-4 border-slate-700">
-                                            <div className="flex justify-between text-gray-400 text-base mb-2 uppercase font-bold">
-                                                <span>HP</span>
-                                                <span>{hpPercent}%</span>
-                                            </div>
-                                            <div className="w-full h-10 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative">
-                                                {/* Armor bar overlays health bar */}
-                                                {(() => {
-                                                    const mobArmor = data.mobArmor || 0;
-                                                    const armorPercent = mobMaxHealth > 0 ? Math.min(100, (mobArmor / mobMaxHealth) * 100) : 0;
-                                                    return (
-                                                        <>
-                                                            <div className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-200" style={{ width: `${hpPercent}%` }}></div>
-                                                            {armorPercent > 0 && (
-                                                                <div className="absolute inset-0 h-full bg-gradient-to-r from-blue-600 to-blue-500 transition-all duration-200 opacity-80" style={{ width: `${armorPercent}%` }}></div>
-                                                            )}
-                                                        </>
-                                                    );
-                                                })()}
-                                            </div>
                                         </div>
                                     </div>
+                                )}
+
+                                {/* Center - Battle Card (Largest - Primary Focus) */}
+                                <div
+                                    className="flex-shrink-0"
+                                    style={{
+                                        transform: 'scale(1.3)',
+                                        transformOrigin: 'center center',
+                                    }}
+                                >
+                                    {cardContent}
                                 </div>
-                            )}
-                            
-                            {/* Center - Battle Card (Largest - Primary Focus) */}
-                            <div
-                                className="flex-shrink-0"
-                                style={{
-                                    transform: 'scale(1.3)',
-                                    transformOrigin: 'center center',
-                                }}
-                            >
-                                {cardContent}
-                            </div>
-                            
-                            {/* Right Panel - Battle Info (Smallest) */}
-                            {(!['memory', 'cleaning'].includes(config.id)) && (
-                                <div className="flex-shrink-0">
-                                    <div
-                                        className="relative w-[400px] bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-50 border-4 border-amber-800 rounded-lg overflow-hidden"
-                                        style={{
-                                            boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(251,191,36,0.3)',
-                                        }}
-                                    >
-                                        {/* Decorative corner accents */}
-                                        <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-red-700"></div>
-                                        <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-red-700"></div>
-                                        <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-red-700"></div>
-                                        <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-red-700"></div>
 
-                                        {/* "WANTED" poster style header */}
-                                        <div className="bg-gradient-to-b from-red-700 to-red-800 p-3 border-b-4 border-amber-900 relative">
-                                            <div className="absolute inset-0 opacity-80 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                                            <div className="text-yellow-300 text-lg font-black uppercase tracking-wider text-center relative z-10" style={{ fontFamily: '"Orbitron", sans-serif', textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>
-                                                ⚔ BATTLE DATA ⚔
-                                            </div>
-                                            {/* Decorative rivets */}
-                                            <div className="absolute top-2 left-3 w-3 h-3 bg-amber-900 rounded-full border border-amber-950 z-10"></div>
-                                            <div className="absolute top-2 right-3 w-3 h-3 bg-amber-900 rounded-full border border-amber-950 z-10"></div>
-                                        </div>
+                                {/* Right Panel - Battle Info (Smallest) */}
+                                {(!['memory', 'cleaning'].includes(config.id)) && (
+                                    <div className="flex-shrink-0">
+                                        <div
+                                            className="relative w-[400px] bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-50 border-4 border-amber-800 rounded-lg overflow-hidden"
+                                            style={{
+                                                boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(251,191,36,0.3)',
+                                            }}
+                                        >
+                                            {/* Decorative corner accents */}
+                                            <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-red-700"></div>
+                                            <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-red-700"></div>
+                                            <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-red-700"></div>
+                                            <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-red-700"></div>
 
-                                        {/* Info sections with vintage styling - centered text, larger fonts without changing card size */}
-                                        <div className="p-4 space-y-3">
-                                            {/* Enemy Name */}
-                                            <div className="bg-amber-900/20 border-2 border-amber-900/40 rounded p-3 flex flex-col items-center justify-center min-h-[80px]">
-                                                <div className="text-xl text-amber-900 uppercase font-bold tracking-wide mb-2" style={{ fontFamily: '"Orbitron", sans-serif' }}>Target</div>
-                                                <div className="text-stone-900 font-black text-2xl leading-tight text-center" style={{ fontFamily: '"Orbitron", sans-serif' }}>{displayMobNameWithAura}</div>
-                                            </div>
-
-                                            {/* Skill and Level in a row */}
-                                            <div className="flex gap-3">
-                                                <div className="flex-1 bg-amber-900/20 border-2 border-amber-900/40 rounded p-3 flex flex-col items-center justify-center min-h-[80px]">
-                                                    <div className="text-xl text-amber-900 uppercase font-bold mb-2" style={{ fontFamily: '"Orbitron", sans-serif' }}>Skill</div>
-                                                    <div className="text-stone-900 font-bold text-lg leading-tight text-center" style={{ fontFamily: '"Orbitron", sans-serif' }}>{skillName}</div>
+                                            {/* "WANTED" poster style header */}
+                                            <div className="bg-gradient-to-b from-red-700 to-red-800 p-3 border-b-4 border-amber-900 relative">
+                                                <div className="absolute inset-0 opacity-80 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                                <div className="text-yellow-300 text-lg font-black uppercase tracking-wider text-center relative z-10" style={{ fontFamily: '"Orbitron", sans-serif', textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>
+                                                    ⚔ BATTLE DATA ⚔
                                                 </div>
-                                                <div className="flex-1 bg-amber-900/20 border-2 border-amber-900/40 rounded p-3 flex flex-col items-center justify-center min-h-[80px]">
-                                                    <div className="text-xl text-amber-900 uppercase font-bold mb-2" style={{ fontFamily: '"Orbitron", sans-serif' }}>Level</div>
-                                                    <div className={`font-black text-4xl leading-tight text-center ${levelTextColor}`} style={{
-                                                        fontFamily: '"Orbitron", sans-serif',
-                                                        WebkitTextStroke: '0.5px rgba(0,0,0,0.5)',
-                                                        filter: 'drop-shadow(1px 1px 0 rgba(0,0,0,0.3))'
-                                                    }}>
-                                                        {data.level}
+                                                {/* Decorative rivets */}
+                                                <div className="absolute top-2 left-3 w-3 h-3 bg-amber-900 rounded-full border border-amber-950 z-10"></div>
+                                                <div className="absolute top-2 right-3 w-3 h-3 bg-amber-900 rounded-full border border-amber-950 z-10"></div>
+                                            </div>
+
+                                            {/* Info sections with vintage styling - centered text, larger fonts without changing card size */}
+                                            <div className="p-4 space-y-3">
+                                                {/* Enemy Name */}
+                                                <div className="bg-amber-900/20 border-2 border-amber-900/40 rounded p-3 flex flex-col items-center justify-center min-h-[80px]">
+                                                    <div className="text-xl text-amber-900 uppercase font-bold tracking-wide mb-2" style={{ fontFamily: '"Orbitron", sans-serif' }}>Target</div>
+                                                    <div className="text-stone-900 font-black text-2xl leading-tight text-center" style={{ fontFamily: '"Orbitron", sans-serif' }}>{displayMobNameWithAura}</div>
+                                                </div>
+
+                                                {/* Skill and Level in a row */}
+                                                <div className="flex gap-3">
+                                                    <div className="flex-1 bg-amber-900/20 border-2 border-amber-900/40 rounded p-3 flex flex-col items-center justify-center min-h-[80px]">
+                                                        <div className="text-xl text-amber-900 uppercase font-bold mb-2" style={{ fontFamily: '"Orbitron", sans-serif' }}>Skill</div>
+                                                        <div className="text-stone-900 font-bold text-lg leading-tight text-center" style={{ fontFamily: '"Orbitron", sans-serif' }}>{skillName}</div>
+                                                    </div>
+                                                    <div className="flex-1 bg-amber-900/20 border-2 border-amber-900/40 rounded p-3 flex flex-col items-center justify-center min-h-[80px]">
+                                                        <div className="text-xl text-amber-900 uppercase font-bold mb-2" style={{ fontFamily: '"Orbitron", sans-serif' }}>Level</div>
+                                                        <div className={`font-black text-4xl leading-tight text-center ${levelTextColor}`} style={{
+                                                            fontFamily: '"Orbitron", sans-serif',
+                                                            WebkitTextStroke: '0.5px rgba(0,0,0,0.5)',
+                                                            filter: 'drop-shadow(1px 1px 0 rgba(0,0,0,0.3))'
+                                                        }}>
+                                                            {data.level}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Quest/Task */}
+                                                <div className="bg-amber-900/20 border-2 border-amber-900/40 rounded p-3 flex flex-col items-center justify-center min-h-[80px]">
+                                                    <div className="text-xl text-amber-900 uppercase font-bold mb-2" style={{ fontFamily: '"Orbitron", sans-serif' }}>Quest</div>
+                                                    <div className="text-stone-800 text-base leading-snug italic font-medium text-center" style={{ fontFamily: '"Orbitron", sans-serif' }}>
+                                                        {config.taskDescription}
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* Quest/Task */}
-                                            <div className="bg-amber-900/20 border-2 border-amber-900/40 rounded p-3 flex flex-col items-center justify-center min-h-[80px]">
-                                                <div className="text-xl text-amber-900 uppercase font-bold mb-2" style={{ fontFamily: '"Orbitron", sans-serif' }}>Quest</div>
-                                                <div className="text-stone-800 text-base leading-snug italic font-medium text-center" style={{ fontFamily: '"Orbitron", sans-serif' }}>
-                                                    {config.taskDescription}
+                                            {/* Bottom stamp/seal effect */}
+                                            <div className="bg-gradient-to-t from-amber-900 to-amber-800 p-2 border-t-4 border-amber-950 relative">
+                                                <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                                <div className="text-center text-yellow-200 text-sm font-bold uppercase tracking-widest relative z-10" style={{ fontFamily: '"Orbitron", sans-serif' }}>
+                                                    {config.fantasyName}
                                                 </div>
                                             </div>
                                         </div>
-
-                                        {/* Bottom stamp/seal effect */}
-                                        <div className="bg-gradient-to-t from-amber-900 to-amber-800 p-2 border-t-4 border-amber-950 relative">
-                                            <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                                            <div className="text-center text-yellow-200 text-sm font-bold uppercase tracking-widest relative z-10" style={{ fontFamily: '"Orbitron", sans-serif' }}>
-                                                {config.fantasyName}
-                                            </div>
-                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
                             </div>
                         )}
-                        
+
                         {/* Click-out instruction - centered at bottom, yellow, larger */}
                         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-yellow-400 text-2xl font-bold pointer-events-none z-50" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
                             Click outside to exit battle
@@ -1403,8 +1603,8 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                 )}
                 {/* Top Word Display Box - Rendered outside portal for topmost z-index - Only for Reading skill */}
                 {isBattlingCenter && config.id === 'reading' && config.challengeType === 'reading' && selectedAction && challenge?.question && ReactDOM.createPortal(
-                    <div 
-                        className="fixed top-0 left-0 right-0 bg-black/95 border-b-4 border-yellow-500 p-6 flex flex-col items-center justify-center min-h-[120px]" 
+                    <div
+                        className="fixed top-0 left-0 right-0 bg-black/95 border-b-4 border-yellow-500 p-6 flex flex-col items-center justify-center min-h-[120px]"
                         style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.8)', zIndex: 999 }}
                         onClick={(e) => {
                             // Allow clicks to pass through to gray overlay

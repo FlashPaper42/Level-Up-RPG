@@ -58,7 +58,7 @@ const App = () => {
     const [profileNames, setProfileNames] = useState(() => localStorage.getItem('heroProfileNames_v1') ? JSON.parse(localStorage.getItem('heroProfileNames_v1')) : { 1: "Player 1", 2: "Player 2", 3: "Player 3" });
     const [parentStatus, setParentStatus] = useState(() => localStorage.getItem('heroParentStatus_v1') ? JSON.parse(localStorage.getItem('heroParentStatus_v1')) : { 1: false, 2: false, 3: false });
     const [playerHealth, setPlayerHealth] = useState(10);
-    
+
     // Turn-based combat state
     const [actionPoints, setActionPoints] = useState(0);
     const [armorPoints, setArmorPoints] = useState(0);
@@ -320,7 +320,7 @@ const App = () => {
                 saveProfileData(currentProfile, dataToSave);
             }
         }, 500); // Debounce saves by 500ms
-        
+
         return () => clearTimeout(timeoutId);
     }, [skills, activeTheme, stats, currentProfile]);
 
@@ -341,7 +341,7 @@ const App = () => {
                 saveProfileSettings(settingsToSave);
             }
         }, 500); // Debounce saves by 500ms
-        
+
         return () => clearTimeout(timeoutId);
     }, [currentProfile, profileNames, parentStatus]);
 
@@ -705,7 +705,7 @@ const App = () => {
             // Total XP is split evenly among all hits required to defeat the mob
             // Apply custom XP multiplier if provided (for pattern recognition scaling)
             const baseXPReward = calculateXPReward(skillDifficulty, playerLevel);
-            const totalXPReward = customXPMultiplier !== null 
+            const totalXPReward = customXPMultiplier !== null
                 ? Math.floor(baseXPReward * customXPMultiplier)
                 : baseXPReward;
             // For instant-defeat mobs (miniboss, cleaning, memory), actualDamage = full health, so hitsToKill = 1
@@ -902,7 +902,7 @@ const App = () => {
 
             return updatedState;
         });
-        
+
         // Check if mob was defeated and end battle for reading skill
         // Check after state update completes
         if (newMobHealth <= 0 && skillConfig.id === 'reading') {
@@ -943,7 +943,7 @@ const App = () => {
     const calculateMobAction = useCallback((skillId) => {
         if (!skillId) return { type: 'damage', value: 1 };
         const skillConfig = SKILL_DATA.find(s => s.id === skillId);
-        
+
         // Only normalize for Reading skill - other skills keep original scaling
         if (skillConfig && skillConfig.id === 'reading') {
             // Randomly choose: 1 damage, 1 armor, or 1 heal (equal probability - 33.3% each)
@@ -960,7 +960,7 @@ const App = () => {
                 return { type: 'heal', value: 1 };
             }
         }
-        
+
         // For non-reading skills, return default damage
         return { type: 'damage', value: 1 };
     }, []);
@@ -968,40 +968,40 @@ const App = () => {
     // Handle turn-based combat action (attack, defend, special, heal)
     const handleCombatAction = useCallback((skillId, actionType, wasSuccessful) => {
         if (!skillId || !wasSuccessful) return;
-        
+
         const skillConfig = SKILL_DATA.find(s => s.id === skillId);
         const skillState = skills[skillId];
         const encounterType = getEncounterType(skillState.level);
-        
+
         if (actionType === 'attack') {
-            // Gain 1 AP first (before state changes that might trigger re-renders)
-            setActionPoints(prev => prev + 1);
-            
+            // Gain 1 AP first (before state changes that might trigger re-renders) - capped at 5
+            setActionPoints(prev => Math.min(5, prev + 1));
+
             // Mob counterattacks after player's turn (with delay for better feedback)
             // Calculate NEW action for this turn (don't use stored one - that's for display only)
             const mobAction = calculateMobAction(skillId);
             console.log('[Mob Action] Attack turn - calculated action:', mobAction);
             // Calculate next mob action for display (for next turn)
             setMobNextAction({ skillId, action: calculateMobAction(skillId) });
-            
+
             // Then deal damage to mob (after setting up mob action)
             handleSuccessHit(skillId);
-            
+
             // Check if battle is still active before mob acts
             setTimeout(() => {
                 // Only act if battle is still active
                 if (battlingSkillId !== skillId) return;
-                
+
                 // Show mob attack animation with action type
                 setMobAttacking({ skillId, type: mobAction.type });
-                
+
                 // Apply action after animation plays (increased duration for visibility)
                 setTimeout(() => {
                     // Check again if battle is still active
                     if (battlingSkillId !== skillId) return;
-                    
+
                     setMobAttacking(null);
-                    
+
                     if (mobAction.type === 'armor') {
                         // Mob gains armor
                         setSkills(prev => {
@@ -1088,7 +1088,7 @@ const App = () => {
                             // Direct damage to player
                             setPlayerDamageIndicator({ amount: mobDamage, blocked: false });
                             setTimeout(() => setPlayerDamageIndicator(null), 1000);
-                            
+
                             setPlayerHealth(h => {
                                 const newH = h - mobDamage;
                                 if (newH <= 0) {
@@ -1125,13 +1125,13 @@ const App = () => {
                     }
                 }, 600); // Action applies after attack animation (increased for distinct sound queue)
             }, 1000); // Delay before mob counterattacks (reduced by 200ms)
-            
+
         } else if (actionType === 'defend') {
-            // Gain armor, gain 1 AP
+            // Gain armor, gain 1 AP - capped at 5
             setArmorPoints(prev => Math.min(10, prev + 2)); // Gain 2 armor per defend (cap at 10)
-            setActionPoints(prev => prev + 1);
+            setActionPoints(prev => Math.min(5, prev + 1));
             playClick();
-            
+
             // Mob still attacks but armor should absorb it
             // Calculate NEW action for this turn (don't use stored one)
             const mobAction = calculateMobAction(skillId);
@@ -1141,16 +1141,16 @@ const App = () => {
             setTimeout(() => {
                 // Only act if battle is still active
                 if (battlingSkillId !== skillId) return;
-                
+
                 // Show mob attack animation with action type
                 setMobAttacking({ skillId, type: mobAction.type });
-                
+
                 setTimeout(() => {
                     // Check again if battle is still active
                     if (battlingSkillId !== skillId) return;
-                    
+
                     setMobAttacking(null);
-                    
+
                     if (mobAction.type === 'armor') {
                         // Mob gains armor
                         setSkills(prev => {
@@ -1234,20 +1234,20 @@ const App = () => {
                     }
                 }, 600); // Action applies after attack animation (increased for distinct sound queue)
             }, 1000); // Delay before mob counterattacks (reduced by 200ms)
-            
+
             // Generate next challenge
             if (skillConfig.hasChallenge) {
                 const challengeDiff = battleDifficulty || skillState.difficulty || 1;
                 setChallengeData(generateChallenge(skillConfig.challengeType, challengeDiff));
                 setSpokenText('');
             }
-            
+
         } else if (actionType === 'special') {
             // Requires 5 AP, instant kill (or 3x damage to boss)
             if (actionPoints < 5) return;
-            
+
             setActionPoints(prev => prev - 5);
-            
+
             if (encounterType === 'boss') {
                 // Deal 3x damage to boss
                 handleSuccessHit(skillId, null, null, 3);
@@ -1259,15 +1259,15 @@ const App = () => {
                 handleSuccessHit(skillId, null, instantKillDamage, 1.5);
             }
             playSuccessfulHit();
-            
+
         } else if (actionType === 'heal') {
             // Requires 2 AP, full heal
             if (actionPoints < 2) return;
-            
+
             setActionPoints(prev => prev - 2);
             setPlayerHealth(10); // Full heal
             playNotification();
-            
+
             // Generate next challenge
             if (skillConfig.hasChallenge) {
                 const challengeDiff = battleDifficulty || skillState.difficulty || 1;
@@ -1585,7 +1585,7 @@ const App = () => {
             </div>
 
             {/* Player Health Display - Centered with Armor Shields overlaying Hearts */}
-            <div className="absolute z-[200] flex gap-1.5" style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
+            <div className="absolute z-30 flex gap-1.5" style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
                 {Array(10).fill(0).map((_, i) => {
                     // Hearts always show (filled or empty based on health)
                     const isFilledHeart = i < playerHealth;
