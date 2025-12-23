@@ -146,28 +146,35 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                 '--action-brightness': '0.8'
             };
         } else if (isMobAttacking) {
-            // Deals action: expand, flash color based on type
+            // TEMPORARY: Use same animation as getting hit to test if animation logic works
+            // Deals action: use hit animation (shrink, flash red) for testing
             animationClass = 'animate-action animate-shake';
-            if (mobActionType === 'heal') {
-                actionStyle = {
-                    '--action-scale': '1.2',
-                    '--action-hue': '90deg',
-                    '--action-brightness': '1.5'
-                };
-            } else if (mobActionType === 'armor') {
-                actionStyle = {
-                    '--action-scale': '1.2',
-                    '--action-hue': '200deg',
-                    '--action-brightness': '1.5'
-                };
-            } else {
-                // damage (default)
-                actionStyle = {
-                    '--action-scale': '1.2',
-                    '--action-hue': '0deg',
-                    '--action-brightness': '1.5'
-                };
-            }
+            actionStyle = {
+                '--action-scale': '0.85',
+                '--action-hue': '-50deg',
+                '--action-brightness': '0.8'
+            };
+            // Original code (commented out for testing):
+            // if (mobActionType === 'heal') {
+            //     actionStyle = {
+            //         '--action-scale': '1.2',
+            //         '--action-hue': '90deg',
+            //         '--action-brightness': '1.5'
+            //     };
+            // } else if (mobActionType === 'armor') {
+            //     actionStyle = {
+            //         '--action-scale': '1.2',
+            //         '--action-hue': '200deg',
+            //         '--action-brightness': '1.5'
+            //     };
+            // } else {
+            //     // damage (default)
+            //     actionStyle = {
+            //         '--action-scale': '1.2',
+            //         '--action-hue': '0deg',
+            //         '--action-brightness': '1.5'
+            //     };
+            // }
         } else if (bossHealing) {
             animationClass = 'animate-shake brightness-150 hue-rotate-90';
         }

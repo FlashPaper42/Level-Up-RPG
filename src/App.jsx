@@ -870,7 +870,7 @@ const App = () => {
                 }
             }
 
-            return {
+            const updatedState = {
                 ...prev,
                 [skillId]: {
                     ...current,
@@ -899,10 +899,12 @@ const App = () => {
                     currentBossAura: newBossAura
                 }
             };
-        });
 
+            return updatedState;
+        });
+        
         // Check if mob was defeated and end battle for reading skill
-        // Use the calculated newMobHealth value directly
+        // Check after state update completes
         if (newMobHealth <= 0 && skillConfig.id === 'reading') {
             // End battle when mob is defeated
             setTimeout(() => {
@@ -913,24 +915,27 @@ const App = () => {
                 setArmorPoints(0);
                 setMobNextAction(null);
                 stopVoiceRecognition();
-            }, 500); // Small delay to show death animation
+            }, 100); // Small delay to ensure state is updated
             return; // Exit early to prevent generating new challenge
         }
 
-        // Generate next challenge for continuous gameplay
-        if (skillConfig.hasChallenge && skillConfig.id !== 'memory') {
-            // Use the stored battle difficulty for consistent challenge generation throughout the battle
-            // This ensures bosses don't change difficulty mid-fight and miniboss difficulty+1 is maintained
-            const challengeDiff = battleDifficulty || skillDifficulty;
-            setChallengeData(generateChallenge(skillConfig.challengeType, challengeDiff));
-            // Clear spokenText for reading challenges to prevent stale text from triggering false damage
-            if (skillConfig.challengeType === 'reading') {
-                setSpokenText('');
+        // Generate next challenge for continuous gameplay (only if mob wasn't defeated)
+        // Check if battle is still active before generating new challenge
+        setTimeout(() => {
+            if (battlingSkillId === skillId && skillConfig.hasChallenge && skillConfig.id !== 'memory') {
+                // Use the stored battle difficulty for consistent challenge generation throughout the battle
+                // This ensures bosses don't change difficulty mid-fight and miniboss difficulty+1 is maintained
+                const challengeDiff = battleDifficulty || skillDifficulty;
+                setChallengeData(generateChallenge(skillConfig.challengeType, challengeDiff));
+                // Clear spokenText for reading challenges to prevent stale text from triggering false damage
+                if (skillConfig.challengeType === 'reading') {
+                    setSpokenText('');
+                }
+            } else if (skillConfig.id === 'memory') {
+                setBattlingSkillId(null);
+                setBattleDifficulty(null);
             }
-        } else if (skillConfig.id === 'memory') {
-            setBattlingSkillId(null);
-            setBattleDifficulty(null);
-        }
+        }, 0);
     };
 
     // Calculate mob action for Reading skill - randomly chooses: +1 DMG, +1 ARMOR, or +1 HEAL
@@ -943,11 +948,15 @@ const App = () => {
         if (skillConfig && skillConfig.id === 'reading') {
             // Randomly choose: 1 damage, 1 armor, or 1 heal (equal probability - 33.3% each)
             const rand = Math.random();
+            console.log('[Mob Action] Random value:', rand); // Debug log
             if (rand < 0.333) {
+                console.log('[Mob Action] Chosen: damage');
                 return { type: 'damage', value: 1 };
             } else if (rand < 0.666) {
+                console.log('[Mob Action] Chosen: armor');
                 return { type: 'armor', value: 1 };
             } else {
+                console.log('[Mob Action] Chosen: heal');
                 return { type: 'heal', value: 1 };
             }
         }
@@ -967,20 +976,30 @@ const App = () => {
         if (actionType === 'attack') {
             // Gain 1 AP first (before state changes that might trigger re-renders)
             setActionPoints(prev => prev + 1);
-            // Then deal damage to mob
-            handleSuccessHit(skillId);
             
             // Mob counterattacks after player's turn (with delay for better feedback)
-            // Use stored mob action if available, otherwise calculate new one
-            const mobAction = mobNextAction?.skillId === skillId ? mobNextAction.action : calculateMobAction(skillId);
-            // Calculate next mob action for display
+            // Calculate NEW action for this turn (don't use stored one - that's for display only)
+            const mobAction = calculateMobAction(skillId);
+            console.log('[Mob Action] Attack turn - calculated action:', mobAction);
+            // Calculate next mob action for display (for next turn)
             setMobNextAction({ skillId, action: calculateMobAction(skillId) });
+            
+            // Then deal damage to mob (after setting up mob action)
+            handleSuccessHit(skillId);
+            
+            // Check if battle is still active before mob acts
             setTimeout(() => {
+                // Only act if battle is still active
+                if (battlingSkillId !== skillId) return;
+                
                 // Show mob attack animation with action type
                 setMobAttacking({ skillId, type: mobAction.type });
                 
                 // Apply action after animation plays (increased duration for visibility)
                 setTimeout(() => {
+                    // Check again if battle is still active
+                    if (battlingSkillId !== skillId) return;
+                    
                     setMobAttacking(null);
                     
                     if (mobAction.type === 'armor') {
@@ -1114,15 +1133,22 @@ const App = () => {
             playClick();
             
             // Mob still attacks but armor should absorb it
-            // Use stored mob action if available, otherwise calculate new one
-            const mobAction = mobNextAction?.skillId === skillId ? mobNextAction.action : calculateMobAction(skillId);
-            // Calculate next mob action for display
+            // Calculate NEW action for this turn (don't use stored one)
+            const mobAction = calculateMobAction(skillId);
+            console.log('[Mob Action] Defend turn - calculated action:', mobAction);
+            // Calculate next mob action for display (for next turn)
             setMobNextAction({ skillId, action: calculateMobAction(skillId) });
             setTimeout(() => {
+                // Only act if battle is still active
+                if (battlingSkillId !== skillId) return;
+                
                 // Show mob attack animation with action type
                 setMobAttacking({ skillId, type: mobAction.type });
                 
                 setTimeout(() => {
+                    // Check again if battle is still active
+                    if (battlingSkillId !== skillId) return;
+                    
                     setMobAttacking(null);
                     
                     if (mobAction.type === 'armor') {
