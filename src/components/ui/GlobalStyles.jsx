@@ -64,13 +64,14 @@ const GlobalStyles = () => (
     @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
     .animate-bob { animation: bob 2s ease-in-out infinite; }
 
-    @keyframes knockback {
+    @keyframes action {
         0% { transform: scale(1) rotate(0deg); filter: none; }
-        10% { transform: scale(0.9) rotate(-5deg); filter: sepia(1) hue-rotate(-50deg) saturate(5) brightness(0.8); } 
-        30% { transform: scale(0.85) rotate(5deg); filter: sepia(1) hue-rotate(-50deg) saturate(5) brightness(0.8); }
+        10% { transform: scale(var(--action-scale, 0.9)) rotate(-5deg); filter: sepia(1) hue-rotate(var(--action-hue, -50deg)) saturate(5) brightness(var(--action-brightness, 0.8)); } 
+        30% { transform: scale(var(--action-scale, 0.85)) rotate(5deg); filter: sepia(1) hue-rotate(var(--action-hue, -50deg)) saturate(5) brightness(var(--action-brightness, 0.8)); }
         100% { transform: scale(1) rotate(0deg); filter: none; }
     }
-    .animate-knockback { animation: knockback 0.4s ease-out forwards; }
+    .animate-action { animation: action 0.4s ease-out forwards; }
+    .animate-knockback { animation: action 0.4s ease-out forwards; }
     
     @keyframes shake { 
         0%, 100% { transform: translateX(0); } 

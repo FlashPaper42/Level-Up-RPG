@@ -7,6 +7,7 @@ import {
 import GlobalStyles from './components/ui/GlobalStyles';
 import SafeImage from './components/ui/SafeImage';
 import PixelHeart from './components/ui/PixelHeart';
+import PixelShield from './components/ui/PixelShield';
 import ProfilePicture from './components/ui/ProfilePicture';
 import ResetModal from './components/modals/ResetModal';
 import BugReportModal from './components/modals/BugReportModal';
@@ -57,6 +58,13 @@ const App = () => {
     const [profileNames, setProfileNames] = useState(() => localStorage.getItem('heroProfileNames_v1') ? JSON.parse(localStorage.getItem('heroProfileNames_v1')) : { 1: "Player 1", 2: "Player 2", 3: "Player 3" });
     const [parentStatus, setParentStatus] = useState(() => localStorage.getItem('heroParentStatus_v1') ? JSON.parse(localStorage.getItem('heroParentStatus_v1')) : { 1: false, 2: false, 3: false });
     const [playerHealth, setPlayerHealth] = useState(10);
+    
+    // Turn-based combat state
+    const [actionPoints, setActionPoints] = useState(0);
+    const [armorPoints, setArmorPoints] = useState(0);
+    const [mobAttacking, setMobAttacking] = useState(null); // skillId of mob attacking player
+    const [playerDamageIndicator, setPlayerDamageIndicator] = useState(null); // { amount: number, blocked: boolean }
+    const [mobNextAction, setMobNextAction] = useState(null); // { skillId: string, action: { type: string, value: number } }
 
     const getStorageKey = (profileId) => `heroSkills_v23_p${profileId}`;
     const loadSkills = (profileId) => {
@@ -73,6 +81,7 @@ const App = () => {
                 earnedBadges: [], // Array of earned badge tier numbers (1-7)
                 mobHealth: calculateMobHealth(initialDifficulty), // Mob's current HP
                 mobMaxHealth: calculateMobHealth(initialDifficulty), // Mob's max HP
+                mobArmor: 0, // Mob's current armor (for reading skill)
                 lostLevel: false, // True if player died and lost a level
                 recoveryDifficulty: null, // Difficulty to suggest for recovery
                 memoryMob: skill.id === 'memory' ? getRandomFriendlyMob() : null, // Stable mob for Memory card display
@@ -112,6 +121,10 @@ const App = () => {
                         const diff = initial[key].difficulty || 1;
                         initial[key].mobHealth = calculateMobHealth(diff);
                         initial[key].mobMaxHealth = calculateMobHealth(diff);
+                    }
+                    // Ensure mobArmor exists (backward compatibility)
+                    if (typeof initial[key].mobArmor !== 'number') {
+                        initial[key].mobArmor = 0;
                     }
                     // Ensure death/recovery state exists
                     if (typeof initial[key].lostLevel !== 'boolean') {
@@ -353,7 +366,15 @@ const App = () => {
     } = useAzureSpeech({
         battlingSkillId,
         challengeData,
-        onSuccess: (targetId) => handleSuccessHit(targetId),
+        onSuccess: (targetId) => {
+            // For reading skill, don't call handleSuccessHit directly - let SkillCard handle it via handleCombatAction
+            // This prevents bypassing the action selection system (attack/defend/special/heal)
+            if (targetId === 'reading') {
+                // SkillCard's useEffect will handle the combat action based on selectedAction
+                return;
+            }
+            handleSuccessHit(targetId);
+        },
         onFailure: (targetId) => handleSuccessHit(targetId, 'WRONG')
     });
 
@@ -623,8 +644,10 @@ const App = () => {
         const isInstantDefeat = skillConfig.id === 'cleaning' || skillConfig.id === 'memory' || isMiniboss;
         const actualDamage = isInstantDefeat ? currentSkillState.mobHealth : damage;
 
-        // Determine if this hit will defeat the mob
-        const willDefeatMob = (currentSkillState.mobHealth - actualDamage) <= 0;
+        // Determine if this hit will defeat the mob (including exactly 0) - account for armor
+        const currentMobArmor = currentSkillState.mobArmor || 0;
+        const damageAfterArmor = Math.max(0, actualDamage - currentMobArmor);
+        const willDefeatMob = (currentSkillState.mobHealth - damageAfterArmor) <= 0;
 
         // Show damage numbers and play sounds
         if (skillConfig.id !== 'memory') {
@@ -645,7 +668,16 @@ const App = () => {
 
         setSkills(prev => {
             const current = prev[skillId];
-            let newMobHealth = current.mobHealth - actualDamage;
+            const currentMobArmor = current.mobArmor || 0;
+            // Apply damage to armor first, then health
+            let remainingDamage = actualDamage;
+            let newMobArmor = currentMobArmor;
+            if (currentMobArmor > 0 && remainingDamage > 0) {
+                const armorAbsorbed = Math.min(currentMobArmor, remainingDamage);
+                newMobArmor = Math.max(0, currentMobArmor - armorAbsorbed);
+                remainingDamage = remainingDamage - armorAbsorbed;
+            }
+            let newMobHealth = Math.max(0, current.mobHealth - remainingDamage); // Ensure health doesn't go below 0
             let newLevel = current.level;
             let newXp = current.xp;
             let leveledUp = false;
@@ -849,6 +881,7 @@ const App = () => {
                     earnedBadges: newBadges,
                     mobHealth: newMobHealth,
                     mobMaxHealth: newMobMaxHealth,
+                    mobArmor: newMobArmor,
                     lostLevel: newLostLevel,
                     recoveryDifficulty: newRecoveryDifficulty,
                     memoryMob: newMemoryMob,
@@ -868,6 +901,22 @@ const App = () => {
             };
         });
 
+        // Check if mob was defeated and end battle for reading skill
+        // Use the calculated newMobHealth value directly
+        if (newMobHealth <= 0 && skillConfig.id === 'reading') {
+            // End battle when mob is defeated
+            setTimeout(() => {
+                setBattlingSkillId(null);
+                setBattleDifficulty(null);
+                setChallengeData(null);
+                setActionPoints(0);
+                setArmorPoints(0);
+                setMobNextAction(null);
+                stopVoiceRecognition();
+            }, 500); // Small delay to show death animation
+            return; // Exit early to prevent generating new challenge
+        }
+
         // Generate next challenge for continuous gameplay
         if (skillConfig.hasChallenge && skillConfig.id !== 'memory') {
             // Use the stored battle difficulty for consistent challenge generation throughout the battle
@@ -883,6 +932,324 @@ const App = () => {
             setBattleDifficulty(null);
         }
     };
+
+    // Calculate mob action for Reading skill - randomly chooses: +1 DMG, +1 ARMOR, or +1 HEAL
+    // Returns: { type: 'damage' | 'armor' | 'heal', value: 1 }
+    const calculateMobAction = useCallback((skillId) => {
+        if (!skillId) return { type: 'damage', value: 1 };
+        const skillConfig = SKILL_DATA.find(s => s.id === skillId);
+        
+        // Only normalize for Reading skill - other skills keep original scaling
+        if (skillConfig && skillConfig.id === 'reading') {
+            // Randomly choose: 1 damage, 1 armor, or 1 heal (equal probability - 33.3% each)
+            const rand = Math.random();
+            if (rand < 0.333) {
+                return { type: 'damage', value: 1 };
+            } else if (rand < 0.666) {
+                return { type: 'armor', value: 1 };
+            } else {
+                return { type: 'heal', value: 1 };
+            }
+        }
+        
+        // For non-reading skills, return default damage
+        return { type: 'damage', value: 1 };
+    }, []);
+
+    // Handle turn-based combat action (attack, defend, special, heal)
+    const handleCombatAction = useCallback((skillId, actionType, wasSuccessful) => {
+        if (!skillId || !wasSuccessful) return;
+        
+        const skillConfig = SKILL_DATA.find(s => s.id === skillId);
+        const skillState = skills[skillId];
+        const encounterType = getEncounterType(skillState.level);
+        
+        if (actionType === 'attack') {
+            // Gain 1 AP first (before state changes that might trigger re-renders)
+            setActionPoints(prev => prev + 1);
+            // Then deal damage to mob
+            handleSuccessHit(skillId);
+            
+            // Mob counterattacks after player's turn (with delay for better feedback)
+            // Use stored mob action if available, otherwise calculate new one
+            const mobAction = mobNextAction?.skillId === skillId ? mobNextAction.action : calculateMobAction(skillId);
+            // Calculate next mob action for display
+            setMobNextAction({ skillId, action: calculateMobAction(skillId) });
+            setTimeout(() => {
+                // Show mob attack animation with action type
+                setMobAttacking({ skillId, type: mobAction.type });
+                
+                // Apply action after animation plays (increased duration for visibility)
+                setTimeout(() => {
+                    setMobAttacking(null);
+                    
+                    if (mobAction.type === 'armor') {
+                        // Mob gains armor
+                        setSkills(prev => {
+                            const current = prev[skillId];
+                            const currentArmor = current.mobArmor || 0;
+                            return {
+                                ...prev,
+                                [skillId]: {
+                                    ...current,
+                                    mobArmor: Math.min(10, currentArmor + mobAction.value) // Cap at 10
+                                }
+                            };
+                        });
+                        setPlayerDamageIndicator({ amount: mobAction.value, blocked: true, isHeal: true });
+                        setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                        playClick(); // Shield sound
+                    } else if (mobAction.type === 'heal') {
+                        // Mob heals itself (restore mob health)
+                        setSkills(prev => {
+                            const current = prev[skillId];
+                            const newMobHealth = Math.min(current.mobMaxHealth, current.mobHealth + mobAction.value);
+                            return {
+                                ...prev,
+                                [skillId]: {
+                                    ...current,
+                                    mobHealth: newMobHealth
+                                }
+                            };
+                        });
+                        setPlayerDamageIndicator({ amount: mobAction.value, blocked: true, isHeal: true });
+                        setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                        playClick(); // Heal sound
+                    } else {
+                        // Mob deals damage
+                        const mobDamage = mobAction.value;
+                        if (armorPoints > 0) {
+                            // Armor absorbs damage
+                            const absorbed = Math.min(armorPoints, mobDamage);
+                            setArmorPoints(prev => Math.max(0, prev - absorbed));
+                            if (absorbed < mobDamage) {
+                                // Remaining damage hits player
+                                const actualDamage = mobDamage - absorbed;
+                                setPlayerHealth(h => {
+                                    const newH = h - actualDamage;
+                                    if (newH <= 0) {
+                                        playDeath();
+                                        setShowDeathOverlay(true);
+                                        setStats(prevStats => ({
+                                            ...prevStats,
+                                            totalDeaths: (prevStats.totalDeaths || 0) + 1
+                                        }));
+                                        setSkills(prev => {
+                                            const current = prev[skillId];
+                                            return {
+                                                ...prev,
+                                                [skillId]: {
+                                                    ...current,
+                                                    level: Math.max(1, current.level - 1),
+                                                    lostLevel: current.level > 1,
+                                                    recoveryDifficulty: Math.max(1, (current.difficulty || 1) - 1)
+                                                }
+                                            };
+                                        });
+                                        setTimeout(() => {
+                                            setBattlingSkillId(null);
+                                            setShowDeathOverlay(false);
+                                            setActionPoints(0);
+                                            setArmorPoints(0);
+                                        }, 2000);
+                                        return 10;
+                                    }
+                                    return newH;
+                                });
+                                setPlayerDamageIndicator({ amount: actualDamage, blocked: false });
+                                setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                                if (actualDamage > 0) playFail();
+                            } else {
+                                // Fully blocked
+                                setPlayerDamageIndicator({ amount: absorbed, blocked: true });
+                                setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                                playClick(); // Shield sound
+                            }
+                        } else {
+                            // Direct damage to player
+                            setPlayerDamageIndicator({ amount: mobDamage, blocked: false });
+                            setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                            
+                            setPlayerHealth(h => {
+                                const newH = h - mobDamage;
+                                if (newH <= 0) {
+                                    playDeath();
+                                    setShowDeathOverlay(true);
+                                    setStats(prevStats => ({
+                                        ...prevStats,
+                                        totalDeaths: (prevStats.totalDeaths || 0) + 1
+                                    }));
+                                    setSkills(prev => {
+                                        const current = prev[skillId];
+                                        return {
+                                            ...prev,
+                                            [skillId]: {
+                                                ...current,
+                                                level: Math.max(1, current.level - 1),
+                                                lostLevel: current.level > 1,
+                                                recoveryDifficulty: Math.max(1, (current.difficulty || 1) - 1)
+                                            }
+                                        };
+                                    });
+                                    setTimeout(() => {
+                                        setBattlingSkillId(null);
+                                        setShowDeathOverlay(false);
+                                        setActionPoints(0);
+                                        setArmorPoints(0);
+                                    }, 2000);
+                                    return 10;
+                                }
+                                playFail();
+                                return newH;
+                            });
+                        }
+                    }
+                }, 600); // Action applies after attack animation (increased for distinct sound queue)
+            }, 1000); // Delay before mob counterattacks (reduced by 200ms)
+            
+        } else if (actionType === 'defend') {
+            // Gain armor, gain 1 AP
+            setArmorPoints(prev => Math.min(10, prev + 2)); // Gain 2 armor per defend (cap at 10)
+            setActionPoints(prev => prev + 1);
+            playClick();
+            
+            // Mob still attacks but armor should absorb it
+            // Use stored mob action if available, otherwise calculate new one
+            const mobAction = mobNextAction?.skillId === skillId ? mobNextAction.action : calculateMobAction(skillId);
+            // Calculate next mob action for display
+            setMobNextAction({ skillId, action: calculateMobAction(skillId) });
+            setTimeout(() => {
+                // Show mob attack animation with action type
+                setMobAttacking({ skillId, type: mobAction.type });
+                
+                setTimeout(() => {
+                    setMobAttacking(null);
+                    
+                    if (mobAction.type === 'armor') {
+                        // Mob gains armor
+                        setSkills(prev => {
+                            const current = prev[skillId];
+                            const currentArmor = current.mobArmor || 0;
+                            return {
+                                ...prev,
+                                [skillId]: {
+                                    ...current,
+                                    mobArmor: Math.min(10, currentArmor + mobAction.value) // Cap at 10
+                                }
+                            };
+                        });
+                        setPlayerDamageIndicator({ amount: mobAction.value, blocked: true, isHeal: true });
+                        setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                        playClick(); // Shield sound
+                    } else if (mobAction.type === 'heal') {
+                        // Mob heals itself (restore mob health)
+                        setSkills(prev => {
+                            const current = prev[skillId];
+                            const newMobHealth = Math.min(current.mobMaxHealth, current.mobHealth + mobAction.value);
+                            return {
+                                ...prev,
+                                [skillId]: {
+                                    ...current,
+                                    mobHealth: newMobHealth
+                                }
+                            };
+                        });
+                        setPlayerDamageIndicator({ amount: mobAction.value, blocked: true, isHeal: true });
+                        setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                        playClick(); // Heal sound
+                    } else {
+                        // Mob deals damage - armor should absorb it
+                        const mobDamage = mobAction.value;
+                        setArmorPoints(prev => {
+                            const newArmor = Math.max(0, prev - mobDamage);
+                            if (prev >= mobDamage) {
+                                playClick(); // Shield blocked sound
+                                setPlayerDamageIndicator({ amount: mobDamage, blocked: true });
+                            } else {
+                                // Some damage got through
+                                const damageTaken = mobDamage - prev;
+                                setPlayerHealth(h => {
+                                    const newH = h - damageTaken;
+                                    if (newH <= 0) {
+                                        playDeath();
+                                        setShowDeathOverlay(true);
+                                        setStats(prevStats => ({
+                                            ...prevStats,
+                                            totalDeaths: (prevStats.totalDeaths || 0) + 1
+                                        }));
+                                        setSkills(prev => {
+                                            const current = prev[skillId];
+                                            return {
+                                                ...prev,
+                                                [skillId]: {
+                                                    ...current,
+                                                    level: Math.max(1, current.level - 1),
+                                                    lostLevel: current.level > 1,
+                                                    recoveryDifficulty: Math.max(1, (current.difficulty || 1) - 1)
+                                                }
+                                            };
+                                        });
+                                        setTimeout(() => {
+                                            setBattlingSkillId(null);
+                                            setShowDeathOverlay(false);
+                                            setActionPoints(0);
+                                            setArmorPoints(0);
+                                        }, 2000);
+                                        return 10;
+                                    }
+                                    playFail();
+                                    return newH;
+                                });
+                                setPlayerDamageIndicator({ amount: damageTaken, blocked: false });
+                            }
+                            setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                            return newArmor;
+                        });
+                    }
+                }, 600); // Action applies after attack animation (increased for distinct sound queue)
+            }, 1000); // Delay before mob counterattacks (reduced by 200ms)
+            
+            // Generate next challenge
+            if (skillConfig.hasChallenge) {
+                const challengeDiff = battleDifficulty || skillState.difficulty || 1;
+                setChallengeData(generateChallenge(skillConfig.challengeType, challengeDiff));
+                setSpokenText('');
+            }
+            
+        } else if (actionType === 'special') {
+            // Requires 5 AP, instant kill (or 3x damage to boss)
+            if (actionPoints < 5) return;
+            
+            setActionPoints(prev => prev - 5);
+            
+            if (encounterType === 'boss') {
+                // Deal 3x damage to boss
+                handleSuccessHit(skillId, null, null, 3);
+                handleSuccessHit(skillId, null, null, 0);
+                handleSuccessHit(skillId, null, null, 0);
+            } else {
+                // Instant kill regular mob/miniboss
+                const instantKillDamage = skillState.mobHealth;
+                handleSuccessHit(skillId, null, instantKillDamage, 1.5);
+            }
+            playSuccessfulHit();
+            
+        } else if (actionType === 'heal') {
+            // Requires 2 AP, full heal
+            if (actionPoints < 2) return;
+            
+            setActionPoints(prev => prev - 2);
+            setPlayerHealth(10); // Full heal
+            playNotification();
+            
+            // Generate next challenge
+            if (skillConfig.hasChallenge) {
+                const challengeDiff = battleDifficulty || skillState.difficulty || 1;
+                setChallengeData(generateChallenge(skillConfig.challengeType, challengeDiff));
+                setSpokenText('');
+            }
+        }
+    }, [skills, actionPoints, armorPoints, battleDifficulty, calculateMobAction, handleSuccessHit, setSpokenText]);
 
     // Helper function to set difficulty for a specific skill
     const setSkillDifficulty = (skillId, newDiff) => {
@@ -988,6 +1355,29 @@ const App = () => {
         // Store the battle's challenge difficulty so it remains consistent throughout the battle
         setBattleDifficulty(challengeDiff);
 
+        // Reset turn-based combat state for new battle
+        setActionPoints(0);
+        setArmorPoints(0);
+        // Reset mob armor for reading skill
+        if (skill.challengeType === 'reading') {
+            setSkills(prev => {
+                const current = prev[id];
+                return {
+                    ...prev,
+                    [id]: {
+                        ...current,
+                        mobArmor: 0
+                    }
+                };
+            });
+        }
+        // Set initial mob action for reading skill
+        if (skill.challengeType === 'reading') {
+            setMobNextAction({ skillId: id, action: calculateMobAction(id) });
+        } else {
+            setMobNextAction(null);
+        }
+
         setChallengeData(generateChallenge(skill.challengeType, challengeDiff));
         playClick();
         startBGM(); // Start BGM on first battle (user interaction)
@@ -996,9 +1386,28 @@ const App = () => {
 
     const endBattle = () => {
         console.log('[Battle] Ending battle, cleaning up speech recognition');
+        // Reset mob armor for reading skill before clearing battlingSkillId
+        if (battlingSkillId) {
+            setSkills(prev => {
+                const current = prev[battlingSkillId];
+                if (current) {
+                    return {
+                        ...prev,
+                        [battlingSkillId]: {
+                            ...current,
+                            mobArmor: 0
+                        }
+                    };
+                }
+                return prev;
+            });
+        }
         setBattlingSkillId(null);
         setBattleDifficulty(null);
         setChallengeData(null);
+        // Reset turn-based combat state
+        setActionPoints(0);
+        setArmorPoints(0);
         stopVoiceRecognition();
         playClick();
     };
@@ -1100,22 +1509,26 @@ const App = () => {
             <GlobalStyles />
             <div className="absolute inset-0 bg-black/30 pointer-events-none z-0"></div>
 
-            {/* Top Left Buttons */}
-            {/* Button dimensions: p-3 (12px) + icon(48px) + p-3 (12px) + border-2*2 (4px) = 76px + 8px gap = 84px spacing */}
-            <button
-                onClick={() => { setIsMenuOpen(false); setIsCosmeticsOpen(false); setIsSettingsOpen(true); playClick(); }}
-                className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
-                style={{ top: '24px', left: '24px' }}
-            >
-                <Settings size={48} className="text-slate-400" />
-            </button>
-            <button
-                onClick={() => { setIsMenuOpen(false); setIsSettingsOpen(false); setIsCosmeticsOpen(true); playClick(); }}
-                className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
-                style={{ top: '24px', left: 'calc(24px + 76px + 12px)' }}
-            >
-                <Sparkles size={48} className="text-purple-400" />
-            </button>
+            {/* Top Left Buttons - Hidden when battling */}
+            {!battlingSkillId && (
+                <>
+                    {/* Button dimensions: p-3 (12px) + icon(48px) + p-3 (12px) + border-2*2 (4px) = 76px + 8px gap = 84px spacing */}
+                    <button
+                        onClick={() => { setIsMenuOpen(false); setIsCosmeticsOpen(false); setIsSettingsOpen(true); playClick(); }}
+                        className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
+                        style={{ top: '24px', left: '24px' }}
+                    >
+                        <Settings size={48} className="text-slate-400" />
+                    </button>
+                    <button
+                        onClick={() => { setIsMenuOpen(false); setIsSettingsOpen(false); setIsCosmeticsOpen(true); playClick(); }}
+                        className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
+                        style={{ top: '24px', left: 'calc(24px + 76px + 12px)' }}
+                    >
+                        <Sparkles size={48} className="text-purple-400" />
+                    </button>
+                </>
+            )}
 
             {/* Profile Picture Display - Bottom Left */}
             <div
@@ -1145,8 +1558,27 @@ const App = () => {
                 />
             </div>
 
-            {/* Player Health Display - Centered */}
-            <div className="absolute z-40 flex gap-1.5" style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>{Array(10).fill(0).map((_, i) => (<PixelHeart key={i} size={48} filled={i < playerHealth} />))}</div>
+            {/* Player Health Display - Centered with Armor Shields overlaying Hearts */}
+            <div className="absolute z-[200] flex gap-1.5" style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
+                {Array(10).fill(0).map((_, i) => {
+                    // Hearts always show (filled or empty based on health)
+                    const isFilledHeart = i < playerHealth;
+                    // Shields overlay the leftmost hearts (up to armorPoints)
+                    const hasShield = i < armorPoints;
+                    return (
+                        <div key={i} className="relative">
+                            {/* Always show heart */}
+                            <PixelHeart size={48} filled={isFilledHeart} />
+                            {/* Shield overlays the heart if armor exists */}
+                            {hasShield && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <PixelShield size={48} filled={true} />
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
 
             {/* Cosmetics drawer overlay - click to close */}
             {isCosmeticsOpen && (
@@ -1212,49 +1644,53 @@ const App = () => {
                 }}
             />
 
-            {/* Top Right Buttons */}
-            {/* Button dimensions: p-3 (12px) + icon(48px) + p-3 (12px) + border-2*2 (4px) = 76px + 8px gap = 84px spacing */}
-            <button
-                onClick={async () => {
-                    // Check if running in Electron
-                    if (window.electron?.toggleFullscreen) {
-                        console.log('[Fullscreen] Using Electron IPC');
-                        try {
-                            const newState = await window.electron.toggleFullscreen();
-                            console.log('[Fullscreen] New state:', newState);
-                            setIsFullscreen(newState);
-                        } catch (err) {
-                            console.error('[Fullscreen] Electron IPC error:', err);
-                        }
-                    } else {
-                        // Fallback to browser Fullscreen API
-                        console.log('[Fullscreen] Using browser Fullscreen API');
-                        if (!document.fullscreenElement) {
-                            document.documentElement.requestFullscreen()
-                                .then(() => console.log('[Fullscreen] Entered fullscreen'))
-                                .catch(err => console.error('[Fullscreen] Error:', err));
-                        } else {
-                            document.exitFullscreen()
-                                .then(() => console.log('[Fullscreen] Exited fullscreen'))
-                                .catch(err => console.error('[Fullscreen] Error:', err));
-                        }
-                    }
-                    playClick();
-                }}
-                className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
-                style={{ top: '24px', right: 'calc(24px + 76px + 12px)' }}
-                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            >
-                {isFullscreen ? <Minimize size={48} /> : <Maximize size={48} />}
-            </button>
-            <button
-                onClick={() => { setIsSettingsOpen(false); setIsCosmeticsOpen(false); setIsMenuOpen(true); playClick(); }}
-                className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
-                style={{ top: '24px', right: '24px' }}
-            >
-                <Menu size={48} />
-            </button>
+            {/* Top Right Buttons - Hidden when battling */}
+            {!battlingSkillId && (
+                <>
+                    {/* Button dimensions: p-3 (12px) + icon(48px) + p-3 (12px) + border-2*2 (4px) = 76px + 8px gap = 84px spacing */}
+                    <button
+                        onClick={async () => {
+                            // Check if running in Electron
+                            if (window.electron?.toggleFullscreen) {
+                                console.log('[Fullscreen] Using Electron IPC');
+                                try {
+                                    const newState = await window.electron.toggleFullscreen();
+                                    console.log('[Fullscreen] New state:', newState);
+                                    setIsFullscreen(newState);
+                                } catch (err) {
+                                    console.error('[Fullscreen] Electron IPC error:', err);
+                                }
+                            } else {
+                                // Fallback to browser Fullscreen API
+                                console.log('[Fullscreen] Using browser Fullscreen API');
+                                if (!document.fullscreenElement) {
+                                    document.documentElement.requestFullscreen()
+                                        .then(() => console.log('[Fullscreen] Entered fullscreen'))
+                                        .catch(err => console.error('[Fullscreen] Error:', err));
+                                } else {
+                                    document.exitFullscreen()
+                                        .then(() => console.log('[Fullscreen] Exited fullscreen'))
+                                        .catch(err => console.error('[Fullscreen] Error:', err));
+                                }
+                            }
+                            playClick();
+                        }}
+                        className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
+                        style={{ top: '24px', right: 'calc(24px + 76px + 12px)' }}
+                        aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                        title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                    >
+                        {isFullscreen ? <Minimize size={48} /> : <Maximize size={48} />}
+                    </button>
+                    <button
+                        onClick={() => { setIsSettingsOpen(false); setIsCosmeticsOpen(false); setIsMenuOpen(true); playClick(); }}
+                        className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
+                        style={{ top: '24px', right: '24px' }}
+                    >
+                        <Menu size={48} />
+                    </button>
+                </>
+            )}
 
             {/* Achievement drawer overlay - click to close */}
             {isMenuOpen && (
@@ -1302,6 +1738,26 @@ const App = () => {
                     selectedBorder={selectedBorder}
                     borderColor={borderColor}
                     bossHealing={bossHealing}
+                    actionPoints={actionPoints}
+                    armorPoints={armorPoints}
+                    playerHealth={playerHealth}
+                    handleCombatAction={handleCombatAction}
+                    generateChallengeAtDifficulty={(skillId, diff) => {
+                        const skill = SKILL_DATA.find(s => s.id === skillId);
+                        if (skill) {
+                            setChallengeData(generateChallenge(skill.challengeType, diff));
+                        }
+                    }}
+                    mobAttacking={mobAttacking}
+                    playerDamageIndicator={playerDamageIndicator}
+                    calculateMobAction={calculateMobAction}
+                    mobNextAction={mobNextAction}
+                    onPerfectMemoryGame={() => {
+                        setStats(prev => ({
+                            ...prev,
+                            perfectMemoryGames: (prev.perfectMemoryGames || 0) + 1
+                        }));
+                    }}
                 />
             </main>
 

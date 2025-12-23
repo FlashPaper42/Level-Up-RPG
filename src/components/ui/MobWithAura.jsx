@@ -28,8 +28,8 @@ const MobWithAura = ({ mobSrc, aura, displayName, size = '100%', isHit = false, 
         <div 
             className={`mob-with-aura-container ${className}`}
             style={{ 
-                width: isFillContainer ? '100%' : normalizedSize,
-                height: isFillContainer ? '100%' : normalizedSize,
+                width: normalizedSize,
+                height: normalizedSize,
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',

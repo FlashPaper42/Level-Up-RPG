@@ -118,7 +118,7 @@ const PhantomEvent = ({ battlingSkillId, onAwardLevel, onPhantomCaught }) => {
 
     return (
         <div
-            className="fixed z-30 cursor-pointer select-none"
+            className="fixed cursor-pointer select-none"
             style={{
                 // Position below UI buttons (which are at ~100px from top) but above carousel cards
                 top: '140px',
@@ -126,6 +126,7 @@ const PhantomEvent = ({ battlingSkillId, onAwardLevel, onPhantomCaught }) => {
                 animation: `${fromLeft ? 'phantomFlyLeft' : 'phantomFlyRight'} ${FLIGHT_DURATION_MS}ms linear forwards`,
                 opacity: clicked ? 0 : 1,
                 transition: 'opacity 0.2s ease-out',
+                zIndex: 999,
             }}
             onClick={handleClick}
         >
