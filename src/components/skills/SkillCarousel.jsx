@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SkillCard from './SkillCard';
+import SkillCardFactory from './SkillCardFactory';
 import { SKILL_DATA, THEME_CONFIG } from '../../constants/gameData.jsx';
 import { getEncounterType, getMobForSkill } from '../../utils/gameUtils';
 import { playActionCardLeft, playActionCardRight } from '../../utils/soundManager';
@@ -223,7 +223,7 @@ const SkillCarousel = ({
                             }}
                             onClick={() => handleCardClick(item.offset)}
                         >
-                            <SkillCard
+                            <SkillCardFactory
                                 config={item}
                                 data={skills[item.id]}
                                 themeData={currentThemeData}
