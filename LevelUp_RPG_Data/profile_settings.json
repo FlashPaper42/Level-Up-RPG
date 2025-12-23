@@ -1,0 +1,13 @@
+{
+  "currentProfile": 2,
+  "profileNames": {
+    "1": "Player 1",
+    "2": "Eliott",
+    "3": "Player 3"
+  },
+  "parentStatus": {
+    "1": false,
+    "2": false,
+    "3": false
+  }
+}
