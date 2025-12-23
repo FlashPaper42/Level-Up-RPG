@@ -19,7 +19,15 @@ const SkillCarousel = ({
     setSkillDifficulty,
     selectedBorder,
     borderColor,
-    bossHealing
+    bossHealing,
+    actionPoints,
+    armorPoints,
+    playerHealth,
+    handleCombatAction,
+    generateChallengeAtDifficulty,
+    mobAttacking,
+    playerDamageIndicator,
+    onPerfectMemoryGame
 }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
@@ -237,6 +245,14 @@ const SkillCarousel = ({
                                 selectedBorder={selectedBorder}
                                 borderColor={borderColor}
                                 bossHealing={bossHealing === item.id}
+                                actionPoints={actionPoints}
+                                armorPoints={armorPoints}
+                                playerHealth={playerHealth}
+                                handleCombatAction={handleCombatAction}
+                                generateChallengeAtDifficulty={generateChallengeAtDifficulty}
+                                mobAttacking={mobAttacking === item.id}
+                                playerDamageIndicator={playerDamageIndicator}
+                                onPerfectMemoryGame={onPerfectMemoryGame}
                             />
                         </div>
                     );
