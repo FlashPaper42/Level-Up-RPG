@@ -35,7 +35,7 @@ export const getDefaultStats = () => ({
 export const isAchievementUnlocked = (achievementId, stats, skills) => {
     const achievement = ACHIEVEMENTS[achievementId];
     if (!achievement) return false;
-    
+
     if (achievement.isTiered) {
         // For tiered achievements, check if at least tier 1 is reached
         const progress = achievement.getProgress(stats, skills);
@@ -56,16 +56,16 @@ export const isAchievementUnlocked = (achievementId, stats, skills) => {
 export const getCurrentTier = (achievementId, stats, skills) => {
     const achievement = ACHIEVEMENTS[achievementId];
     if (!achievement || !achievement.isTiered) return -1;
-    
+
     const progress = achievement.getProgress(stats, skills);
-    
+
     // Find the highest tier that has been reached
     for (let i = achievement.tiers.length - 1; i >= 0; i--) {
         if (progress >= achievement.tiers[i].level) {
             return i;
         }
     }
-    
+
     return -1; // No tier reached yet
 };
 
@@ -79,14 +79,14 @@ export const getCurrentTier = (achievementId, stats, skills) => {
 export const getNextTier = (achievementId, stats, skills) => {
     const achievement = ACHIEVEMENTS[achievementId];
     if (!achievement || !achievement.isTiered) return null;
-    
+
     const currentTierIndex = getCurrentTier(achievementId, stats, skills);
     const nextTierIndex = currentTierIndex + 1;
-    
+
     if (nextTierIndex >= achievement.tiers.length) {
         return null; // At max tier
     }
-    
+
     return achievement.tiers[nextTierIndex];
 };
 
@@ -100,21 +100,21 @@ export const getNextTier = (achievementId, stats, skills) => {
 export const getTierProgress = (achievementId, stats, skills) => {
     const achievement = ACHIEVEMENTS[achievementId];
     if (!achievement || !achievement.isTiered) return 0;
-    
+
     const progress = achievement.getProgress(stats, skills);
     const currentTierIndex = getCurrentTier(achievementId, stats, skills);
     const nextTier = getNextTier(achievementId, stats, skills);
-    
+
     if (!nextTier) {
         return 100; // At max tier
     }
-    
+
     const currentTierLevel = currentTierIndex >= 0 ? achievement.tiers[currentTierIndex].level : 0;
     const nextTierLevel = nextTier.level;
-    
+
     const progressInTier = progress - currentTierLevel;
     const tierRange = nextTierLevel - currentTierLevel;
-    
+
     return Math.min(100, Math.floor((progressInTier / tierRange) * 100));
 };
 
@@ -128,17 +128,17 @@ export const getTierProgress = (achievementId, stats, skills) => {
  */
 export const getNewlyUnlockedAchievements = (oldStats, newStats, oldSkills, newSkills) => {
     const newlyUnlocked = [];
-    
+
     Object.keys(ACHIEVEMENTS).forEach(achievementId => {
         // Check if was locked before and is now unlocked
         const wasUnlocked = isAchievementUnlocked(achievementId, oldStats, oldSkills);
         const isNowUnlocked = isAchievementUnlocked(achievementId, newStats, newSkills);
-        
+
         if (!wasUnlocked && isNowUnlocked) {
             newlyUnlocked.push(achievementId);
         }
     });
-    
+
     return newlyUnlocked;
 };
 
@@ -152,20 +152,29 @@ export const getNewlyUnlockedAchievements = (oldStats, newStats, oldSkills, newS
  */
 export const getNewTierAchievements = (oldStats, newStats, oldSkills, newSkills) => {
     const newTiers = [];
-    
+
     Object.keys(ACHIEVEMENTS).forEach(achievementId => {
         const achievement = ACHIEVEMENTS[achievementId];
         if (!achievement.isTiered) return;
-        
+
         const oldTier = getCurrentTier(achievementId, oldStats, oldSkills);
         const newTier = getCurrentTier(achievementId, newStats, newSkills);
-        
+
         if (newTier > oldTier) {
             newTiers.push({ achievementId, tierIndex: newTier });
         }
     });
-    
+
     return newTiers;
+};
+
+/**
+ * Aggregate check for any achievements/tiers gained
+ */
+export const checkAchievements = (oldStats, newStats, oldSkills, newSkills) => {
+    const newlyUnlocked = getNewlyUnlockedAchievements(oldStats, newStats, oldSkills, newSkills);
+    const newTiers = getNewTierAchievements(oldStats, newStats, oldSkills, newSkills);
+    return { newlyUnlocked, newTiers };
 };
 
 /**
@@ -204,7 +213,7 @@ export const recordLoginDate = (loginDates) => {
 export const getAchievementDisplayName = (achievementId, stats, skills) => {
     const achievement = ACHIEVEMENTS[achievementId];
     if (!achievement) return '';
-    
+
     if (achievement.isTiered) {
         const tierIndex = getCurrentTier(achievementId, stats, skills);
         if (tierIndex >= 0) {
@@ -212,6 +221,6 @@ export const getAchievementDisplayName = (achievementId, stats, skills) => {
         }
         return achievement.name; // Not yet at tier 1
     }
-    
+
     return achievement.name;
 };

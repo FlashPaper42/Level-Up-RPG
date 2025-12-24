@@ -355,9 +355,9 @@ const WritingSkillCard = ({
                                                     return action.type === 'damage' ? (
                                                         <span className="text-red-400 font-bold text-lg">⚔ +1 DMG</span>
                                                     ) : action.type === 'armor' ? (
-                                                        <span className="text-blue-400 font-bold text-lg">🛡 +1 ARMOR</span>
+                                                        <span className="text-blue-400 font-bold text-lg">🛡 +20% ARMOR</span>
                                                     ) : (
-                                                        <span className="text-green-400 font-bold text-lg">❤️ +1 HEAL</span>
+                                                        <span className="text-green-400 font-bold text-lg">❤️ +20% HEAL</span>
                                                     );
                                                 })()}
                                             </div>

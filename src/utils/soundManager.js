@@ -45,6 +45,7 @@ const MOB_FOLDER_MAP = {
     'Guardian': 'guardian',
     'Magma Cube': 'magmacube',
     'Witch': 'witch',
+    'Bogged': 'skeleton', // Maps to Skeleton sounds
     // Boss mobs
     'Ender Dragon': 'enderdragon',
     'Wither': 'wither',
@@ -102,12 +103,12 @@ class BGMManager {
         const availableIndices = this.tracks
             .map((_, i) => i)
             .filter(i => i !== this.currentTrackIndex);
-        
+
         // If only one track or no other tracks available, return current
         if (availableIndices.length === 0) {
             return this.currentTrackIndex >= 0 ? this.currentTrackIndex : 0;
         }
-        
+
         const randomIndex = Math.floor(Math.random() * availableIndices.length);
         return availableIndices[randomIndex];
     }
@@ -117,14 +118,14 @@ class BGMManager {
             this.currentTrackIndex = this.getRandomTrack();
             this.audio = new Audio(this.tracks[this.currentTrackIndex]);
             this.audio.volume = this.volume;
-            
+
             // When a track ends, play a new random track
             this.audio.addEventListener('ended', () => {
                 this.playNextTrack();
             });
         }
-        
-        this.audio.play().catch(() => {});
+
+        this.audio.play().catch(() => { });
         this.isPlaying = true;
     }
 
@@ -133,7 +134,7 @@ class BGMManager {
         if (this.audio) {
             this.audio.src = this.tracks[this.currentTrackIndex];
             this.audio.volume = this.volume; // Ensure volume is set for new track
-            this.audio.play().catch(() => {});
+            this.audio.play().catch(() => { });
         }
     }
 
@@ -179,10 +180,10 @@ export const getSfxVolume = () => sfxVolume;
 export const playUISound = (soundName) => {
     const path = UI_SOUNDS[soundName];
     if (!path) return;
-    
+
     const audio = new Audio(path);
     audio.volume = sfxVolume;
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
 };
 
 /**
@@ -248,11 +249,11 @@ const getMobFolder = (mobName) => {
 export const playMobHurt = (mobName) => {
     const folder = getMobFolder(mobName);
     if (!folder) return;
-    
+
     // Use standardized naming (all files renamed to hurt.wav)
     const audio = new Audio(`assets/sounds/mob/${folder}/hurt.wav`);
     audio.volume = sfxVolume;
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
 };
 
 /**
@@ -262,11 +263,11 @@ export const playMobHurt = (mobName) => {
 export const playMobDeath = (mobName) => {
     const folder = getMobFolder(mobName);
     if (!folder) return;
-    
+
     // Use standardized naming (all files renamed to death.wav)
     const audio = new Audio(`assets/sounds/mob/${folder}/death.wav`);
     audio.volume = sfxVolume;
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
 };
 
 /**
@@ -276,11 +277,11 @@ export const playMobDeath = (mobName) => {
 export const playMobSay = (mobName) => {
     const folder = getMobFolder(mobName);
     if (!folder) return;
-    
+
     // Use standardized naming (all files renamed to say.wav)
     const audio = new Audio(`assets/sounds/mob/${folder}/say.wav`);
     audio.volume = sfxVolume;
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
 };
 
 // Export UI sound names for reference

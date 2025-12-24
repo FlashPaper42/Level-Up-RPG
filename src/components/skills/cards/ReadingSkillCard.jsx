@@ -277,7 +277,7 @@ const ReadingSkillCard = ({
                                                                 <span className={actionPoints >= 5 ? 'text-yellow-300' : 'text-red-400'}>{actionPoints >= 5 ? '5 AP' : `${actionPoints}/5 AP`} ✨</span>
                                                             </div>
                                                         </button>
-                                                        <button onClick={() => { if (actionPoints >= 2) { handleCombatAction && handleCombatAction(config.id, 'heal', true); playClick(); } }} disabled={actionPoints < 2} className={`text-white text-xl font-bold py-3 px-2 rounded border-2 active:shadow-none active:translate-y-[2px] transition-all flex flex-col items-center justify-center relative ${actionPoints >= 2 ? 'bg-green-600 hover:bg-green-500 border-green-700 shadow-[0_2px_0_#14532d]' : 'bg-green-900/50 border-green-900 cursor-not-allowed'}`} style={actionPoints >= 2 ? { backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")', backgroundSize: '40px 40px', opacity: 0.9 } : {}}>
+                                                        <button onClick={() => { if (actionPoints >= 2) { setSelectedAction('heal'); onMicClick(); playClick(); } }} disabled={actionPoints < 2} className={`text-white text-xl font-bold py-3 px-2 rounded border-2 active:shadow-none active:translate-y-[2px] transition-all flex flex-col items-center justify-center relative ${actionPoints >= 2 ? 'bg-green-600 hover:bg-green-500 border-green-700 shadow-[0_2px_0_#14532d]' : 'bg-green-900/50 border-green-900 cursor-not-allowed'}`} style={actionPoints >= 2 ? { backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")', backgroundSize: '40px 40px', opacity: 0.9 } : {}}>
                                                             {actionPoints >= 2 && <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-60" style={{ backgroundSize: '40px 40px' }}></div>}
                                                             <span className="relative z-10 uppercase">Heal</span>
                                                             <div className="relative z-10 flex items-center justify-center gap-2 mt-1 text-base">
@@ -367,9 +367,9 @@ const ReadingSkillCard = ({
                                                     return action.type === 'damage' ? (
                                                         <span className="text-red-400 font-bold text-lg">⚔ +1 DMG</span>
                                                     ) : action.type === 'armor' ? (
-                                                        <span className="text-blue-400 font-bold text-lg">🛡 +1 ARMOR</span>
+                                                        <span className="text-blue-400 font-bold text-lg">🛡 +20% ARMOR</span>
                                                     ) : (
-                                                        <span className="text-green-400 font-bold text-lg">❤️ +1 HEAL</span>
+                                                        <span className="text-green-400 font-bold text-lg">❤️ +20% HEAL</span>
                                                     );
                                                 })()}
                                             </div>

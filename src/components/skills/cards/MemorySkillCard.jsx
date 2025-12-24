@@ -280,7 +280,7 @@ const MemorySkillCard = ({
         const maxCardWidth = Math.floor((gameAreaWidth - 80) / memoryGridCols) - 16;
         const cardSize = Math.min(maxCardHeight * 0.8, maxCardWidth); // Slightly shorter than maxHeight for aesthetics
         const cardWidth = cardSize;
-        const cardHeight = cardSize * 1.3;
+        const cardHeight = cardSize * 1.4; // Match typical card aspect ratio to prevent cardback clipping
 
         return ReactDOM.createPortal(
             <div
@@ -333,7 +333,7 @@ const MemorySkillCard = ({
                                     }}
                                 >
                                     <div className="absolute inset-0 backface-hidden w-full h-full" style={{ backfaceVisibility: 'hidden' }}>
-                                        <SafeImage src={themeData.assets.cardBack} className="w-full h-full object-cover rounded-xl border-4 border-slate-600 shadow-lg" />
+                                        <SafeImage src={themeData.assets.cardBack} className="w-full h-full object-contain rounded-xl border-4 border-slate-600 shadow-lg" />
                                     </div>
                                     <div className="absolute inset-0 backface-hidden w-full h-full rotate-y-180 bg-slate-800 rounded-xl border-4 border-teal-500/50 flex items-center justify-center shadow-lg" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                                         <SafeImage src={card.img} className="w-full h-full object-contain p-3" />

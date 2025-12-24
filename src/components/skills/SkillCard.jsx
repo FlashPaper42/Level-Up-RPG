@@ -1129,7 +1129,10 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                                                     <button onClick={onMicClick} className={`w-full text-center p-2 rounded border-2 transition-colors flex items-center justify-center gap-2 ${isListening ? 'border-red-500 bg-red-900/20' : 'border-gray-600 hover:bg-white/10'}`}>{isListening ? <Mic className="inline animate-pulse text-red-500" /> : <><Mic className="inline text-gray-500" /><span className="text-xs uppercase font-bold text-stone-400">Tap to Speak</span></>}</button>
                                                                     {config.challengeType !== 'cleaning' && config.challengeType !== 'writing' && config.challengeType !== 'math' && (
                                                                         config.id === 'reading' && selectedAction ? (
-                                                                            <button onClick={() => { if (handleCombatAction) { handleCombatAction(config.id, selectedAction, true); setSelectedAction(null); } playClick(); }} className="w-full text-xs text-gray-500 underline hover:text-white">Skip / Manual Success</button>
+                                                                            <div className="flex flex-col gap-1 w-full">
+                                                                                <button onClick={() => { if (handleCombatAction) { handleCombatAction(config.id, selectedAction, true); setSelectedAction(null); } playClick(); }} className="w-full text-xs text-gray-500 underline hover:text-white">[DEV] Auto-Win</button>
+                                                                                <button onClick={() => { onMathSubmit('WRONG_ANSWER'); setSelectedAction(null); playClick(); }} className="w-full text-xs text-red-500 underline hover:text-red-300">[DEV] Auto-Fail</button>
+                                                                            </div>
                                                                         ) : (
                                                                             <button onClick={() => onMathSubmit(challenge?.answer)} className="w-full text-xs text-gray-500 underline hover:text-white">Skip / Manual Success</button>
                                                                         )
@@ -1316,7 +1319,7 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
                                                         <>
                                                             <div className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-200" style={{ width: `${hpPercent}%` }}></div>
                                                             {armorPercent > 0 && (
-                                                                <div className="absolute inset-0 h-full bg-gradient-to-r from-blue-600 to-blue-500 transition-all duration-200 opacity-80" style={{ width: `${armorPercent}%` }}></div>
+                                                                <div className="absolute inset-0 h-full transition-all duration-200" style={{ width: `${armorPercent}%`, background: 'linear-gradient(to right, #5bb8ed, #87CEEB)' }}></div>
                                                             )}
                                                         </>
                                                     );
