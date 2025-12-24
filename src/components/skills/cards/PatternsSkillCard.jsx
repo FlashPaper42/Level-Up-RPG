@@ -1,24 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import { Plus, Minus } from 'lucide-react';
 import SafeImage from '../../ui/SafeImage';
-import MobWithAura from '../../ui/MobWithAura';
-import { BASE_ASSETS, HOSTILE_MOBS, BOSS_MOBS, MINIBOSS_MOBS, DIFFICULTY_IMAGES, DIFFICULTY_CONTENT } from '../../../constants/gameData';
+import { BASE_ASSETS, DIFFICULTY_IMAGES, DIFFICULTY_CONTENT } from '../../../constants/gameData';
 import { playClick, getSfxVolume } from '../../../utils/soundManager';
 import { calculateXPToLevel } from '../../../utils/gameUtils';
-import { AURA_ADJECTIVES } from '../../../utils/mobDisplayUtils';
 import {
     PRESTIGE_LEVEL_THRESHOLD,
     AXOLOTL_NOTE_MAP,
     getTempoDelays,
-    getActionAnimation,
     getLevelStyling,
     getButtonStyle,
     getBorderEffect
 } from '../shared';
 
 /**
- * PatternsSkillCard - Handles the Patterns skill with Simon Says game
- * Features: Axolotl ring, compass needle, sequence playback/input
+ * PatternsSkillCard - Handles the Patterns skill with axolotl memory game
+ * Features: Axolotl ring, clock hand pointer, sequence playback/input, rotating ring nightmare mode
  */
 const PatternsSkillCard = ({
     config,
@@ -27,7 +25,6 @@ const PatternsSkillCard = ({
     isCenter,
     isBattling,
     mobName,
-    mobAura,
     damageNumbers,
     onStartBattle,
     onEndBattle,
@@ -36,26 +33,23 @@ const PatternsSkillCard = ({
     setDifficulty,
     unlockedDifficulty,
     selectedBorder,
-    borderColor,
-    bossHealing,
-    actionPoints,
-    mobAttacking
+    borderColor
 }) => {
-    const [isHit, setIsHit] = useState(false);
     const prevDamageCount = useRef(0);
 
-    // Simon Says state
+    // Game state
     const [simonSequence, setSimonSequence] = useState([]);
     const [playerIndex, setPlayerIndex] = useState(0);
     const [isShowingSequence, setIsShowingSequence] = useState(false);
     const [completedRounds, setCompletedRounds] = useState(0);
     const [litAxolotl, setLitAxolotl] = useState(null);
     const [simonGameActive, setSimonGameActive] = useState(false);
+    const [showInstructions, setShowInstructions] = useState(true);
+    const [ringRotation, setRingRotation] = useState(0); // Ring rotation in degrees
+    const [clockHandAngle, setClockHandAngle] = useState(0); // Persisted clock hand angle
+    const [nightmareClockOffset, setNightmareClockOffset] = useState(0); // Random clock drift in nightmare
     const simonSessionStartedRef = useRef(false);
-
-    const mobHealth = data.mobHealth || 100;
-    const mobMaxHealth = data.mobMaxHealth || 100;
-    const hpPercent = Math.round((mobHealth / mobMaxHealth) * 100);
+    const nightmareRotationRef = useRef(null);
 
     const { borderClass, levelTextColor } = getLevelStyling(data.level);
     const { appliedBorderEffect, borderStyle } = getBorderEffect(isCenter, selectedBorder, borderColor);
@@ -63,23 +57,13 @@ const PatternsSkillCard = ({
     const skillThemeConfig = themeData.skills[config.id] || {};
     const skillName = skillThemeConfig.name || config.name;
 
-    let mobSrc = HOSTILE_MOBS[mobName] || BOSS_MOBS[mobName] || MINIBOSS_MOBS[mobName] || themeData.assets.mobs[mobName];
-    let displayMobName = mobName;
-    if (!mobSrc) {
-        displayMobName = 'Zombie';
-        mobSrc = HOSTILE_MOBS[displayMobName] || BASE_ASSETS.axolotls.Pink;
-    }
-
-    const displayMobNameWithAura = isBattling && mobAura && AURA_ADJECTIVES[mobAura]
-        ? `${AURA_ADJECTIVES[mobAura]} ${displayMobName}` : displayMobName;
-
     const gemStyle = {};
     const buttonStyle = getButtonStyle(config.colorStyle);
 
     // Pattern config based on difficulty
     const patternConfig = DIFFICULTY_CONTENT.patterns[difficulty] || DIFFICULTY_CONTENT.patterns[1];
     const axolotlCount = patternConfig.axolotlCount || 2;
-    const shouldResetSequence = patternConfig.resetSequence || false;
+    const isNightmareMode = difficulty >= 7;
 
     const axolotlColors = useMemo(() => {
         const allAxolotlColors = Object.keys(BASE_ASSETS.axolotls);
@@ -97,6 +81,29 @@ const PatternsSkillCard = ({
         }
     }, []);
 
+    // Nightmare mode: constant slow rotation of ring and clock arm drift
+    useEffect(() => {
+        if (isNightmareMode && simonGameActive && !showInstructions) {
+            // Start constant rotation
+            nightmareRotationRef.current = setInterval(() => {
+                setRingRotation(prev => prev + 3); // ~15 deg/second at 60fps would be 0.25, but we're at 200ms interval = 3 deg
+                // Random clock drift - slowly wanders
+                setNightmareClockOffset(prev => prev + (Math.random() - 0.5) * 4);
+            }, 200);
+            return () => {
+                if (nightmareRotationRef.current) {
+                    clearInterval(nightmareRotationRef.current);
+                    nightmareRotationRef.current = null;
+                }
+            };
+        } else {
+            if (nightmareRotationRef.current) {
+                clearInterval(nightmareRotationRef.current);
+                nightmareRotationRef.current = null;
+            }
+        }
+    }, [isNightmareMode, simonGameActive, showInstructions]);
+
     const playSequence = useCallback((sequence) => {
         setIsShowingSequence(true);
         setPlayerIndex(0);
@@ -105,10 +112,20 @@ const PatternsSkillCard = ({
 
         const playNext = () => {
             if (i < sequence.length) {
-                setLitAxolotl(sequence[i]);
-                playAxolotlNote(sequence[i]);
+                const currentColor = sequence[i];
+                setLitAxolotl(currentColor);
+                playAxolotlNote(currentColor);
+
+                // Update clock hand angle to point at current axolotl (persist it)
+                const idx = axolotlColors.indexOf(currentColor);
+                if (idx !== -1) {
+                    const anglePerAxolotl = 360 / axolotlColors.length;
+                    setClockHandAngle(idx * anglePerAxolotl);
+                }
+
                 setTimeout(() => {
                     setLitAxolotl(null);
+                    // Don't reset clock hand - keep it pointing at last position
                     i++;
                     setTimeout(playNext, offDelay);
                 }, onDelay);
@@ -117,7 +134,7 @@ const PatternsSkillCard = ({
             }
         };
         setTimeout(playNext, 500);
-    }, [completedRounds, difficulty, playAxolotlNote]);
+    }, [completedRounds, difficulty, playAxolotlNote, axolotlColors]);
 
     const startSimonGame = useCallback(() => {
         const firstColor = axolotlColors[Math.floor(Math.random() * axolotlColors.length)];
@@ -126,12 +143,27 @@ const PatternsSkillCard = ({
         setPlayerIndex(0);
         setCompletedRounds(0);
         setSimonGameActive(true);
+        setShowInstructions(false);
+        setRingRotation(0);
+        setNightmareClockOffset(0);
         playSequence(newSequence);
     }, [axolotlColors, playSequence]);
 
     const handleAxolotlClick = (color) => {
         if (isShowingSequence || !simonGameActive) return;
+
+        // Light up the clicked axolotl briefly and update clock hand
+        setLitAxolotl(color);
         playAxolotlNote(color);
+
+        // Update clock hand to point at clicked axolotl
+        const idx = axolotlColors.indexOf(color);
+        if (idx !== -1) {
+            const anglePerAxolotl = 360 / axolotlColors.length;
+            setClockHandAngle(idx * anglePerAxolotl);
+        }
+
+        setTimeout(() => setLitAxolotl(null), 200);
 
         if (color === simonSequence[playerIndex]) {
             if (playerIndex === simonSequence.length - 1) {
@@ -146,18 +178,12 @@ const PatternsSkillCard = ({
                 const xpMultiplier = Math.max(0.5, Math.min(3, 0.3 + (newRounds * 0.25)));
                 setTimeout(() => onMathSubmit("WIN", damage, xpMultiplier), 300);
 
-                let newSequence;
-                if (shouldResetSequence) {
-                    newSequence = [];
-                    for (let i = 0; i < simonSequence.length + 1; i++) {
-                        newSequence.push(axolotlColors[Math.floor(Math.random() * axolotlColors.length)]);
-                    }
-                } else {
-                    const nextColor = axolotlColors[Math.floor(Math.random() * axolotlColors.length)];
-                    newSequence = [...simonSequence, nextColor];
-                }
+                // Add next color to sequence
+                const nextColor = axolotlColors[Math.floor(Math.random() * axolotlColors.length)];
+                const newSequence = [...simonSequence, nextColor];
                 setSimonSequence(newSequence);
                 setPlayerIndex(0);
+
                 setTimeout(() => playSequence(newSequence), 800);
             } else {
                 setPlayerIndex(playerIndex + 1);
@@ -171,17 +197,9 @@ const PatternsSkillCard = ({
     };
 
     useEffect(() => {
-        if (damageNumbers.length > prevDamageCount.current) {
-            setIsHit(true);
-            setTimeout(() => setIsHit(false), 400);
-        }
-        prevDamageCount.current = damageNumbers.length;
-    }, [damageNumbers]);
-
-    useEffect(() => {
         if (isBattling && !simonSessionStartedRef.current) {
             simonSessionStartedRef.current = true;
-            startSimonGame();
+            setShowInstructions(true);
         } else if (!isBattling) {
             simonSessionStartedRef.current = false;
             setSimonSequence([]);
@@ -190,137 +208,263 @@ const PatternsSkillCard = ({
             setCompletedRounds(0);
             setLitAxolotl(null);
             setSimonGameActive(false);
+            setShowInstructions(true);
+            setRingRotation(0);
+            setClockHandAngle(0);
+            setNightmareClockOffset(0);
         }
-    }, [isBattling, startSimonGame]);
+    }, [isBattling]);
 
     const isBattlingCenter = isBattling && isCenter;
 
-    // Calculate compass needle rotation based on lit axolotl
-    const getCompassRotation = () => {
-        if (!litAxolotl) return 0;
-        const idx = axolotlColors.indexOf(litAxolotl);
-        if (idx === -1) return 0;
-        return (idx / axolotlColors.length) * 360;
-    };
-
+    // Non-battling card content (carousel view) - CIRCULAR LAYOUT
     const cardContent = (
         <div
-            className={`bg-[#2b2b2b] border-4 rounded-lg overflow-visible flex flex-col transition-all duration-500 ${isCenter ? `${appliedBorderEffect} ${!appliedBorderEffect ? borderClass : ''}` : 'border-stone-700'} w-[300px] ${isBattlingCenter ? 'h-[550px]' : 'h-[600px]'} ${!isBattlingCenter ? 'relative' : ''}`}
+            className={`bg-[#2b2b2b] border-4 rounded-lg overflow-visible flex flex-col transition-all duration-500 ${isCenter ? `${appliedBorderEffect} ${!appliedBorderEffect ? borderClass : ''}` : 'border-stone-700'} w-[300px] h-[600px] relative`}
             style={isCenter ? borderStyle : {}}
         >
             {isCenter && data.level >= PRESTIGE_LEVEL_THRESHOLD && <div className="gem-socket"><div className="gem-stone" style={gemStyle}></div></div>}
-            {!isBattling && (
-                <div className="h-[55%] relative flex items-center justify-center overflow-hidden rounded-t-sm" style={config.colorStyle}>
-                    <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                    <div className="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-white border border-white/20 z-20">
-                        <div className="text-xs text-gray-400 uppercase">{skillName}</div>
-                        <div className="text-lg leading-none">{config.fantasyName}</div>
-                    </div>
-                    <div className="absolute top-2 right-2 z-20">
-                        <div className={`bg-black/60 px-3 py-1 rounded border border-white/20 text-3xl font-bold ${levelTextColor}`}>Lvl {data.level}</div>
-                    </div>
-                    <div className="relative z-10 flex items-center justify-center h-full max-h-[200px] w-full">
-                        {mobAura ? (
-                            <MobWithAura mobSrc={mobSrc} aura={mobAura} displayName={displayMobNameWithAura} size="100%" isHit={isHit} bossHealing={bossHealing} />
-                        ) : (
-                            <SafeImage key={displayMobName} src={mobSrc} alt={displayMobName} className={`relative z-10 max-w-full max-h-full object-contain drop-shadow-[4px_4px_0_rgba(0,0,0,0.5)] transition-transform duration-100 ${isHit ? 'animate-knockback' : bossHealing ? 'animate-shake' : 'animate-bob'} ${bossHealing ? 'brightness-150 hue-rotate-90' : ''}`} />
-                        )}
-                        {damageNumbers.map(dmg => (
-                            <div key={dmg.id} className="absolute text-5xl font-bold text-red-500 animate-bounce pointer-events-none whitespace-nowrap" style={{ left: `calc(50% + ${dmg.x}px)`, top: `calc(50% + ${dmg.y}px)`, textShadow: '2px 2px 0 #000' }}>-{dmg.val}</div>
-                        ))}
-                    </div>
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 px-6 py-2 rounded-full text-white border-2 border-white/30 text-xl font-bold tracking-wide z-10 shadow-lg whitespace-nowrap min-w-max">{displayMobName}</div>
+            <div className="h-[55%] relative flex items-center justify-center overflow-hidden rounded-t-sm" style={config.colorStyle}>
+                <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                <div className="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-white border border-white/20 z-20">
+                    <div className="text-xs text-gray-400 uppercase">{skillName}</div>
+                    <div className="text-lg leading-none">{config.fantasyName}</div>
                 </div>
-            )}
-            {!isBattling && (
-                <div className="bg-[#1a1a1a] p-2 border-t-4 border-b-4 border-black relative">
-                    <div className="flex justify-between text-gray-400 text-xs mb-1 uppercase"><span>HP</span><span>{hpPercent}%</span></div>
-                    <div className="w-full h-6 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative">
-                        <div className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-200" style={{ width: `${hpPercent}%` }}></div>
-                    </div>
+                <div className="absolute top-2 right-2 z-20">
+                    <div className={`bg-black/60 px-3 py-1 rounded border border-white/20 text-3xl font-bold ${levelTextColor}`}>Lvl {data.level}</div>
                 </div>
-            )}
-            <div className={isBattling ? 'h-full bg-[#3a3a3a] p-4 flex flex-col relative rounded-lg' : 'flex-1 bg-[#3a3a3a] p-4 flex flex-col relative rounded-b-sm'}>
-                {isBattling ? (
-                    <div className="flex flex-col h-full animate-in slide-in-from-bottom-10 duration-300">
-                        <div className="flex-1 flex flex-col items-center justify-center">
-                            <div className="w-full flex flex-col items-center gap-1 relative">
-                                <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-slate-700 rounded-lg"></div>
-                                {/* Round counter */}
-                                <div className="relative z-10 bg-black/60 px-3 py-1 rounded-full border border-yellow-500/50 mb-2">
-                                    <span className="text-yellow-400 font-bold">Round: {completedRounds + 1}</span>
-                                </div>
-                                {/* Axolotl ring with compass needle */}
-                                <div className="relative w-[280px] h-[280px] flex items-center justify-center">
-                                    {/* Compass needle in center */}
-                                    <div className="absolute z-20 w-16 h-16 flex items-center justify-center">
-                                        <svg viewBox="0 0 64 64" className="w-full h-full transition-transform duration-300" style={{ transform: `rotate(${getCompassRotation() - 90}deg)` }}>
-                                            <polygon points="32,4 40,32 32,28 24,32" fill="#e11d48" stroke="#881337" strokeWidth="1" />
-                                            <polygon points="32,60 40,32 32,36 24,32" fill="#94a3b8" stroke="#475569" strokeWidth="1" />
-                                            <circle cx="32" cy="32" r="6" fill="#1e293b" stroke="#475569" strokeWidth="1" />
-                                        </svg>
-                                    </div>
-                                    {/* Axolotl buttons arranged in circle */}
-                                    {axolotlColors.map((color, idx) => {
-                                        const angle = (idx / axolotlColors.length) * 2 * Math.PI - Math.PI / 2;
-                                        const radius = 100;
-                                        const x = Math.cos(angle) * radius;
-                                        const y = Math.sin(angle) * radius;
-                                        const isLit = litAxolotl === color;
-                                        return (
-                                            <button key={color} onClick={() => handleAxolotlClick(color)} disabled={isShowingSequence} className={`absolute w-16 h-16 rounded-full border-4 transition-all duration-150 flex items-center justify-center ${isLit ? 'border-yellow-400 scale-125 brightness-150' : 'border-slate-600 hover:border-slate-400'} ${!simonGameActive && !isShowingSequence ? 'opacity-50' : ''}`} style={{ transform: `translate(${x}px, ${y}px)`, boxShadow: isLit ? '0 0 20px rgba(250, 204, 21, 0.8)' : 'none' }}>
-                                                <SafeImage src={BASE_ASSETS.axolotls[color]} alt={color} className="w-12 h-12 object-contain" />
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                {/* Status indicator */}
-                                <div className="relative z-10 text-center text-sm mt-2">
-                                    {isShowingSequence ? (
-                                        <span className="text-yellow-400">Watch the pattern...</span>
-                                    ) : simonGameActive ? (
-                                        <span className="text-green-400">Your turn! ({playerIndex + 1}/{simonSequence.length})</span>
-                                    ) : (
-                                        <span className="text-red-400">Game Over! Click outside to exit.</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                        {/* XP indicator */}
-                        {(() => {
-                            const xpToLevel = calculateXPToLevel(difficulty, data.level);
-                            const xpPercent = Math.min(100, (data.xp / xpToLevel) * 100);
-                            const cappedAP = Math.min(5, actionPoints || 0);
+                <div className="relative z-10 flex items-center justify-center h-full w-full">
+                    {/* Circular axolotl preview based on difficulty */}
+                    <div className="relative" style={{ width: '180px', height: '180px' }}>
+                        {axolotlColors.map((color, idx) => {
+                            const angle = (idx / axolotlColors.length) * 2 * Math.PI - Math.PI / 2;
+                            const radius = 65;
+                            const x = Math.cos(angle) * radius;
+                            const y = Math.sin(angle) * radius;
                             return (
-                                <div className="mt-2 flex gap-2 items-center">
-                                    <div className="bg-[#1a1a1a] p-2 rounded border border-[#333] flex-1" style={{ width: '80%' }}>
-                                        <div className="flex justify-between text-gray-400 text-xs mb-1 uppercase"><span>XP</span><span>{data.xp} / {xpToLevel}</span></div>
-                                        <div className="w-full h-3 bg-[#333] rounded-full overflow-hidden border border-[#555] relative">
-                                            <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all duration-300" style={{ width: `${xpPercent}%` }}></div>
-                                        </div>
-                                    </div>
-                                    <div className="bg-[#1a1a1a] px-2 py-1 rounded border border-[#333] flex items-center justify-center" style={{ width: '20%', minHeight: '40px' }}>
-                                        <div className="flex items-center gap-1 text-yellow-300 text-xs uppercase font-bold"><span>AP:</span><span className="text-xs">{cappedAP}/5</span></div>
+                                <div
+                                    key={color}
+                                    className="absolute"
+                                    style={{
+                                        width: '48px',
+                                        height: '48px',
+                                        left: `calc(50% + ${x}px)`,
+                                        top: `calc(50% + ${y}px)`,
+                                        marginLeft: '-24px',
+                                        marginTop: '-24px'
+                                    }}
+                                >
+                                    {/* Inner div for animation - separate from positioning */}
+                                    <div
+                                        className="animate-bob w-full h-full"
+                                        style={{ animationDelay: `${idx * 0.1}s` }}
+                                    >
+                                        <SafeImage
+                                            src={BASE_ASSETS.axolotls[color]}
+                                            alt={color}
+                                            className="w-full h-full object-contain"
+                                        />
                                     </div>
                                 </div>
                             );
-                        })()}
+                        })}
                     </div>
-                ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                        <p className="text-gray-400 text-center mb-4 px-2">{config.taskDescription}</p>
-                        <button onClick={isCenter ? onStartBattle : undefined} disabled={!isCenter} style={buttonStyle} className={`w-full text-white text-3xl font-bold py-6 rounded-lg active:shadow-none active:translate-y-[6px] transition-all border-2 uppercase tracking-wider ${!isCenter ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                            {config.actionName}
-                        </button>
-                    </div>
-                )}
+                </div>
+            </div>
+            <div className="bg-[#1a1a1a] p-2 border-t-4 border-b-4 border-black relative">
+                <div className="flex justify-between text-gray-400 text-xs mb-1 uppercase"><span>Difficulty</span><span>{difficulty}</span></div>
+                <div className="w-full h-6 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative">
+                    <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 transition-all duration-200" style={{ width: `${(difficulty / 7) * 100}%` }}></div>
+                </div>
+            </div>
+            <div className="flex-1 bg-[#3a3a3a] p-4 flex flex-col relative rounded-b-sm">
+                <div className="flex-1 flex flex-col items-center justify-center">
+                    <p className="text-gray-400 text-center mb-4 px-2">{config.taskDescription}</p>
+                    <button onClick={isCenter ? onStartBattle : undefined} disabled={!isCenter} style={buttonStyle} className={`w-full text-white text-3xl font-bold py-6 rounded-lg active:shadow-none active:translate-y-[6px] transition-all border-2 uppercase tracking-wider ${!isCenter ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        {config.actionName}
+                    </button>
+                </div>
             </div>
         </div>
     );
 
+    // When battling, render single large card in portal
+    if (isBattlingCenter) {
+        const xpToLevel = calculateXPToLevel(difficulty, data.level);
+        const xpPercent = Math.min(100, (data.xp / xpToLevel) * 100);
+
+        // Calculate effective clock hand angle (with nightmare drift)
+        const effectiveClockAngle = clockHandAngle + (isNightmareMode ? nightmareClockOffset : 0);
+
+        return ReactDOM.createPortal(
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                onClick={onEndBattle}
+                style={{ zIndex: 50 }}
+            >
+                {/* Large centered game card */}
+                <div
+                    className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 border-purple-600 rounded-xl overflow-hidden flex flex-col pointer-events-auto"
+                    style={{
+                        width: '95vw',
+                        maxWidth: '1200px',
+                        height: 'calc(100vh - 120px)',
+                        maxHeight: '850px',
+                        boxShadow: '0 0 60px rgba(147, 51, 234, 0.4), inset 0 0 40px rgba(100,100,100,0.1)'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Full background cube texture */}
+                    <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" style={{ backgroundSize: '60px 60px' }}></div>
+
+                    {/* Corner accents */}
+                    <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-yellow-400"></div>
+                    <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-yellow-400"></div>
+                    <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-yellow-400"></div>
+                    <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-yellow-400"></div>
+
+                    {/* Header */}
+                    <div className="bg-gradient-to-b from-purple-700 to-purple-800 p-3 border-b-4 border-slate-700 relative flex-shrink-0 z-10">
+                        <div className="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                        <div className="text-purple-100 text-2xl font-black uppercase tracking-wider text-center relative z-10" style={{ textShadow: '2px 2px 0 #000' }}>
+                            🎵 {config.fantasyName} 🎵
+                        </div>
+                    </div>
+
+                    {/* Main content area with corner-positioned UI */}
+                    <div className="flex-1 flex flex-col items-center justify-center p-4 relative z-10 overflow-hidden">
+                        {/* Round counter - top left (only during game) */}
+                        {!showInstructions && (
+                            <div className="absolute top-4 left-4 bg-black/60 px-6 py-2 rounded-full border-2 border-yellow-500/50">
+                                <span className="text-yellow-400 text-xl font-bold">Round: {completedRounds + 1}</span>
+                                {isNightmareMode && <span className="text-red-400 ml-2 text-sm">🌀 NIGHTMARE</span>}
+                            </div>
+                        )}
+
+                        {/* Status indicator - top right (only during game) */}
+                        {!showInstructions && (
+                            <div className="absolute top-4 right-4">
+                                {isShowingSequence ? (
+                                    <div className="bg-black/60 px-4 py-2 rounded-full border-2 border-yellow-500/50">
+                                        <span className="text-yellow-400 animate-pulse">👀 Watch the pattern...</span>
+                                    </div>
+                                ) : simonGameActive ? (
+                                    <div className="bg-black/60 px-4 py-2 rounded-full border-2 border-green-500/50">
+                                        <span className="text-green-400">🎯 Your turn! ({playerIndex + 1}/{simonSequence.length})</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-black/60 px-4 py-2 rounded-full border-2 border-red-500/50">
+                                            <span className="text-red-400">❌ Game Over!</span>
+                                        </div>
+                                        <button
+                                            onClick={startSimonGame}
+                                            className="bg-purple-600 hover:bg-purple-500 text-white text-lg font-bold py-2 px-6 rounded-lg shadow-[0_3px_0_#581c87] active:shadow-none active:translate-y-[3px] transition-all"
+                                        >
+                                            🔄 Play Again?
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {showInstructions ? (
+                            /* Instructions overlay */
+                            <div className="bg-black/80 rounded-xl p-6 max-w-lg text-center border-2 border-purple-500">
+                                <h2 className="text-yellow-400 text-3xl font-bold mb-4">🎮 How to Play</h2>
+                                <div className="text-white text-lg space-y-3 mb-6">
+                                    <p>1. 👀 <span className="text-yellow-300">Watch</span> the axolotls light up in sequence</p>
+                                    <p>2. 🎯 <span className="text-green-300">Repeat</span> the pattern by clicking them in order</p>
+                                    <p>3. 📈 Each round adds <span className="text-purple-300">one more</span> to the sequence</p>
+                                    <p>4. ⚡ Go as far as you can to <span className="text-green-300">gain more XP!</span></p>
+                                </div>
+                                {isNightmareMode && (
+                                    <div className="text-red-400 text-sm mb-4 p-2 bg-red-900/30 rounded border border-red-500/50">
+                                        ⚠️ NIGHTMARE MODE: The ring constantly rotates and the clock hand drifts!
+                                    </div>
+                                )}
+                                <button
+                                    onClick={startSimonGame}
+                                    className="bg-green-600 hover:bg-green-500 text-white text-2xl font-bold py-4 px-8 rounded-lg shadow-[0_4px_0_#166534] active:shadow-none active:translate-y-[4px] transition-all"
+                                >
+                                    Start Game! 🚀
+                                </button>
+                            </div>
+                        ) : (
+                            /* Game area */
+                            <div className="flex flex-col items-center justify-center flex-1 w-full">
+
+                                <div
+                                    className="relative flex items-center justify-center transition-transform duration-200"
+                                    style={{
+                                        width: 'min(75vh, 600px)',
+                                        height: 'min(75vh, 600px)',
+                                        transform: `rotate(${ringRotation}deg)`
+                                    }}
+                                >
+                                    {/* Center dot only - clock arrow removed */}
+                                    <div
+                                        className="absolute z-20 w-10 h-10 bg-slate-800 rounded-full border-4 border-yellow-500 shadow-lg flex items-center justify-center"
+                                        style={{ boxShadow: '0 0 15px rgba(250, 204, 21, 0.4)' }}
+                                    >
+                                    </div>
+
+                                    {/* Axolotl buttons arranged in circle */}
+                                    {axolotlColors.map((color, idx) => {
+                                        const angle = (idx / axolotlColors.length) * 2 * Math.PI - Math.PI / 2;
+                                        const radius = 240; // Increased for larger circle
+                                        const x = Math.cos(angle) * radius;
+                                        const y = Math.sin(angle) * radius;
+                                        const isLit = litAxolotl === color;
+                                        return (
+                                            <button
+                                                key={color}
+                                                onClick={() => handleAxolotlClick(color)}
+                                                disabled={isShowingSequence}
+                                                className={`absolute rounded-full border-4 transition-all duration-150 flex items-center justify-center ${isLit ? 'border-yellow-400 scale-125 brightness-150' : 'border-slate-500 hover:border-slate-300 hover:scale-110'} ${!simonGameActive && !isShowingSequence ? 'opacity-50' : ''}`}
+                                                style={{
+                                                    width: '120px',
+                                                    height: '120px',
+                                                    transform: `translate(${x}px, ${y}px) rotate(${-ringRotation}deg)`,
+                                                    boxShadow: isLit ? '0 0 30px rgba(250, 204, 21, 0.9)' : '0 4px 8px rgba(0,0,0,0.4)'
+                                                }}
+                                            >
+                                                <SafeImage src={BASE_ASSETS.axolotls[color]} alt={color} className="w-20 h-20 object-contain" />
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Status moved to top-right corner, this space now empty */}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* XP bar - full width */}
+                    <div className="bg-[#1a1a1a] p-3 border-t-4 border-slate-700 flex-shrink-0 relative z-10">
+                        <div className="flex justify-between text-gray-400 text-sm mb-1 uppercase font-bold">
+                            <span>Level {data.level} XP</span>
+                            <span>{data.xp} / {xpToLevel}</span>
+                        </div>
+                        <div className="w-full h-4 bg-[#333] rounded-full overflow-hidden border-2 border-[#555] relative">
+                            <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all duration-300" style={{ width: `${xpPercent}%` }}></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Click to exit text */}
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-yellow-400 text-2xl font-bold pointer-events-none" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                    Click outside to exit
+                </div>
+            </div>,
+            document.body
+        );
+    }
+
+    // Non-battling state
     return (
         <div className="relative">
-            {(!isBattling) && unlockedDifficulty > 1 && (
+            {unlockedDifficulty > 1 && (
                 <div className="absolute -top-10 left-0 flex items-center gap-2 z-20">
                     <button onClick={() => setDifficulty(Math.max(1, difficulty - 1))} className="bg-stone-700 text-white rounded p-1 border border-stone-500 hover:bg-stone-600"><Minus size={16} /></button>
                     <div className="relative">

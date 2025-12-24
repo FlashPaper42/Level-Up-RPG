@@ -1,8 +1,8 @@
-import { 
-    Target, Trophy, Zap, Heart, Skull, Swords, 
+import {
+    Target, Trophy, Zap, Heart, Skull, Swords,
     Crown, Shield, Sparkles, Paintbrush, Frame,
     CheckCircle, Timer, Calendar, TrendingUp, Award,
-    Ghost, Users, Gem
+    Ghost, Users, Gem, Flame, Star, Moon
 } from 'lucide-react';
 
 /**
@@ -62,6 +62,17 @@ export const SKILL_MASTERY_TIERS = [
     { level: 160, tierName: 'Mythic Transcendent' }
 ];
 
+export const DEDICATED_TIERS = [
+    { level: 3, tierName: 'Bronze Dedication' },
+    { level: 7, tierName: 'Silver Dedication' },
+    { level: 14, tierName: 'Gold Dedication' },
+    { level: 30, tierName: 'Platinum Dedication' },
+    { level: 60, tierName: 'Emerald Dedication' },
+    { level: 90, tierName: 'Diamond Dedication' },
+    { level: 180, tierName: 'Legendary Dedication' },
+    { level: 365, tierName: 'Mythic Dedication' }
+];
+
 // ============================================
 // ALL ACHIEVEMENTS
 // ============================================
@@ -78,7 +89,7 @@ export const ACHIEVEMENTS = {
         tiers: PHANTOM_HUNTER_TIERS,
         getProgress: (stats) => stats.phantomsCaught || 0
     },
-    
+
     combined_levels: {
         id: 'combined_levels',
         name: 'Power Overwhelming',
@@ -91,7 +102,7 @@ export const ACHIEVEMENTS = {
             return Object.values(skills).reduce((sum, skill) => sum + (skill.level || 0), 0);
         }
     },
-    
+
     skill_mastery: {
         id: 'skill_mastery',
         name: 'Jack of All Trades',
@@ -111,7 +122,25 @@ export const ACHIEVEMENTS = {
             return `${count}/6 skills at level ${minLevel}+`;
         }
     },
-    
+
+    dedicated: {
+        id: 'dedicated',
+        name: 'Dedicated',
+        description: 'Play on multiple days',
+        icon: Calendar,
+        category: 'engagement',
+        isTiered: true,
+        tiers: DEDICATED_TIERS,
+        getProgress: (stats) => {
+            const loginDates = stats.loginDates || [];
+            return loginDates.length;
+        },
+        getProgressText: (stats) => {
+            const loginDates = stats.loginDates || [];
+            return `${loginDates.length} days played`;
+        }
+    },
+
     // One-Time Achievements
     first_steps: {
         id: 'first_steps',
@@ -122,7 +151,7 @@ export const ACHIEVEMENTS = {
         isTiered: false,
         checkUnlock: (stats) => (stats.totalMobsDefeated || 0) >= 1
     },
-    
+
     level_up: {
         id: 'level_up',
         name: 'Level Up!',
@@ -134,7 +163,7 @@ export const ACHIEVEMENTS = {
             return Object.values(skills).some(s => (s.level || 0) >= 2);
         }
     },
-    
+
     fashion_forward: {
         id: 'fashion_forward',
         name: 'Fashion Forward',
@@ -144,7 +173,7 @@ export const ACHIEVEMENTS = {
         isTiered: false,
         checkUnlock: (stats) => (stats.themeChanges || 0) >= 1
     },
-    
+
     framed: {
         id: 'framed',
         name: 'Framed!',
@@ -154,7 +183,7 @@ export const ACHIEVEMENTS = {
         isTiered: false,
         checkUnlock: (stats) => (stats.borderChanges || 0) >= 1
     },
-    
+
     ouch: {
         id: 'ouch',
         name: 'Ouch!',
@@ -164,7 +193,7 @@ export const ACHIEVEMENTS = {
         isTiered: false,
         checkUnlock: (stats) => (stats.totalDeaths || 0) >= 1
     },
-    
+
     dragon_slayer: {
         id: 'dragon_slayer',
         name: 'Dragon Slayer',
@@ -174,7 +203,7 @@ export const ACHIEVEMENTS = {
         isTiered: false,
         checkUnlock: (stats) => (stats.totalBossesDefeated || 0) >= 1
     },
-    
+
     mini_menace: {
         id: 'mini_menace',
         name: 'Mini Menace',
@@ -184,7 +213,7 @@ export const ACHIEVEMENTS = {
         isTiered: false,
         checkUnlock: (stats) => (stats.totalMinibossesDefeated || 0) >= 1
     },
-    
+
     mini_master: {
         id: 'mini_master',
         name: 'Mini Master',
@@ -199,7 +228,7 @@ export const ACHIEVEMENTS = {
             return requiredMinibosses.every(mb => defeated.includes(mb));
         }
     },
-    
+
     world_ender: {
         id: 'world_ender',
         name: 'World Ender',
@@ -214,7 +243,7 @@ export const ACHIEVEMENTS = {
             return requiredBosses.every(b => defeated.includes(b));
         }
     },
-    
+
     monster_manual: {
         id: 'monster_manual',
         name: 'Monster Manual',
@@ -225,16 +254,16 @@ export const ACHIEVEMENTS = {
         checkUnlock: (stats) => {
             // 20 hostile mobs from HOSTILE_MOBS
             const requiredMobs = [
-                'Blaze', 'Bogged', 'Breeze', 'Creeper', 'Drowned', 'Enderman', 
+                'Blaze', 'Bogged', 'Breeze', 'Creeper', 'Drowned', 'Enderman',
                 'Evoker', 'Ghast', 'Guardian', 'Hoglin', 'Magma Cube', 'Parched',
-                'Phantom', 'Piglin', 'Pillager', 'Skeleton', 'Slime', 'Spider', 
+                'Phantom', 'Piglin', 'Pillager', 'Skeleton', 'Slime', 'Spider',
                 'Witch', 'Zombie'
             ];
             const defeated = stats.uniqueMobsDefeated || [];
             return requiredMobs.every(m => defeated.includes(m));
         }
     },
-    
+
     perfectionist: {
         id: 'perfectionist',
         name: 'Perfectionist',
@@ -244,7 +273,7 @@ export const ACHIEVEMENTS = {
         isTiered: false,
         checkUnlock: (stats) => (stats.perfectMemoryGames || 0) >= 1
     },
-    
+
     speed_demon: {
         id: 'speed_demon',
         name: 'Speed Demon',
@@ -254,20 +283,7 @@ export const ACHIEVEMENTS = {
         isTiered: false,
         checkUnlock: (stats) => (stats.battlesThisSession || 0) >= 10
     },
-    
-    dedicated: {
-        id: 'dedicated',
-        name: 'Dedicated',
-        description: 'Play on 3 different days',
-        icon: Calendar,
-        category: 'engagement',
-        isTiered: false,
-        checkUnlock: (stats) => {
-            const loginDates = stats.loginDates || [];
-            return loginDates.length >= 3;
-        }
-    },
-    
+
     high_roller: {
         id: 'high_roller',
         name: 'High Roller',
@@ -279,7 +295,7 @@ export const ACHIEVEMENTS = {
             return Object.values(skills).some(s => (s.difficulty || 1) >= 7);
         }
     },
-    
+
     badge_collector: {
         id: 'badge_collector',
         name: 'Badge Collector',
@@ -288,12 +304,12 @@ export const ACHIEVEMENTS = {
         category: 'progression',
         isTiered: false,
         checkUnlock: (stats, skills) => {
-            return Object.values(skills).some(s => 
+            return Object.values(skills).some(s =>
                 (s.earnedBadges && s.earnedBadges.length > 0)
             );
         }
     },
-    
+
     full_set: {
         id: 'full_set',
         name: 'Full Set',
@@ -302,10 +318,66 @@ export const ACHIEVEMENTS = {
         category: 'progression',
         isTiered: false,
         checkUnlock: (stats, skills) => {
-            return Object.values(skills).some(s => 
+            return Object.values(skills).some(s =>
                 (s.earnedBadges && s.earnedBadges.length >= 8)
             );
         }
+    },
+
+    // NEW ACHIEVEMENTS
+    nightmare_conqueror: {
+        id: 'nightmare_conqueror',
+        name: 'Nightmare Conqueror',
+        description: 'Complete a Nightmare difficulty challenge',
+        icon: Moon,
+        category: 'combat',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.nightmareVictories || 0) >= 1
+    },
+
+    nightmare_master: {
+        id: 'nightmare_master',
+        name: 'Nightmare Master',
+        description: 'Complete Nightmare difficulty on all minigame skills',
+        icon: Flame,
+        category: 'completion',
+        isTiered: false,
+        checkUnlock: (stats) => {
+            // Patterns and Memory are minigames
+            const minigameVictories = stats.nightmareMinigameVictories || [];
+            const requiredMinigames = ['patterns', 'memory'];
+            return requiredMinigames.every(m => minigameVictories.includes(m));
+        }
+    },
+
+    streak_master: {
+        id: 'streak_master',
+        name: 'Streak Master',
+        description: 'Reach a 10-round streak in Pattern Recognition',
+        icon: Star,
+        category: 'skill',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.maxPatternStreak || 0) >= 10
+    },
+
+    memory_master: {
+        id: 'memory_master',
+        name: 'Memory Master',
+        description: 'Complete a memory game in under 30 seconds',
+        icon: Timer,
+        category: 'skill',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.fastMemoryGames || 0) >= 1
+    },
+
+    clean_champion: {
+        id: 'clean_champion',
+        name: 'Clean Champion',
+        description: 'Complete 10 chores total',
+        icon: CheckCircle,
+        category: 'engagement',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.totalChoresCompleted || 0) >= 10
     }
 };
 

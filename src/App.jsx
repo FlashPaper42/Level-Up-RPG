@@ -32,7 +32,7 @@ import {
     getBGMManager, setSfxVolume,
     playClick,
     playDeath, playFail, playLevelUp, playNotification, playSuccessfulHit,
-    playMobHurt, playMobDeath, playAchievement
+    playMobHurt, playMobDeath, playMobSay, playAchievement
 } from './utils/soundManager';
 import {
     getDefaultStats, getNewlyUnlockedAchievements, getNewTierAchievements,
@@ -920,9 +920,9 @@ const App = () => {
         }
 
         // Generate next challenge for continuous gameplay (only if mob wasn't defeated)
-        // Check if battle is still active before generating new challenge
-        setTimeout(() => {
-            if (battlingSkillId === skillId && skillConfig.hasChallenge && skillConfig.id !== 'memory') {
+        // Use functional update to avoid stale closure issue with battlingSkillId
+        setBattlingSkillId(currentBattlingSkillId => {
+            if (currentBattlingSkillId === skillId && skillConfig.hasChallenge && skillConfig.id !== 'memory') {
                 // Use the stored battle difficulty for consistent challenge generation throughout the battle
                 // This ensures bosses don't change difficulty mid-fight and miniboss difficulty+1 is maintained
                 const challengeDiff = battleDifficulty || skillDifficulty;
@@ -932,10 +932,12 @@ const App = () => {
                     setSpokenText('');
                 }
             } else if (skillConfig.id === 'memory') {
-                setBattlingSkillId(null);
+                // End memory battle after completion
                 setBattleDifficulty(null);
+                return null;
             }
-        }, 0);
+            return currentBattlingSkillId; // Return unchanged value
+        });
     };
 
     // Calculate mob action for Reading skill - randomly chooses: +1 DMG, +1 ARMOR, or +1 HEAL
@@ -985,21 +987,18 @@ const App = () => {
             setMobNextAction({ skillId, action: calculateMobAction(skillId) });
 
             // Then deal damage to mob (after setting up mob action)
+            // Note: handleSuccessHit already generates new challenges in its setTimeout
             handleSuccessHit(skillId);
 
             // Check if battle is still active before mob acts
             setTimeout(() => {
-                // Only act if battle is still active
-                if (battlingSkillId !== skillId) return;
-
-                // Show mob attack animation with action type
+                // Show mob attack animation with action type and play mob sound
                 setMobAttacking({ skillId, type: mobAction.type });
+                // Play mob sound effect (use the current mob's name)
+                playMobSay(skillState.currentMob);
 
                 // Apply action after animation plays (increased duration for visibility)
                 setTimeout(() => {
-                    // Check again if battle is still active
-                    if (battlingSkillId !== skillId) return;
-
                     setMobAttacking(null);
 
                     if (mobAction.type === 'armor') {
@@ -1142,8 +1141,9 @@ const App = () => {
                 // Only act if battle is still active
                 if (battlingSkillId !== skillId) return;
 
-                // Show mob attack animation with action type
+                // Show mob attack animation with action type and play mob sound
                 setMobAttacking({ skillId, type: mobAction.type });
+                playMobSay(skillState.currentMob);
 
                 setTimeout(() => {
                     // Check again if battle is still active
@@ -1557,54 +1557,59 @@ const App = () => {
             )}
 
             {/* Profile Picture Display - Bottom Left */}
-            <div
-                className="absolute z-40"
-                style={{ bottom: '48px', left: '48px' }}
-            >
-                <ProfilePicture
-                    avatar={getAvatarEmoji(selectedAvatar)}
-                    border={selectedBorder}
-                    borderColor={borderColor}
-                    totalLevel={Object.values(skills).reduce((sum, skill) => sum + (skill.level || 0), 0)}
-                    size="large"
-                    skillColorStyle={{ background: profileBgColor }}
-                    onClickPicture={() => {
-                        setIsAvatarModalOpen(true);
-                        playClick();
-                    }}
-                    onClickLevel={() => {
-                        setIsMenuOpen(true);
-                        playClick();
-                        // Set highlight state for total level
-                        setTimeout(() => {
-                            setHighlightTotalLevel(true);
-                            setTimeout(() => setHighlightTotalLevel(false), 2000);
-                        }, 300);
-                    }}
-                />
-            </div>
+            {/* Profile picture selector - hide during patterns minigame */}
+            {battlingSkillId !== 'patterns' && (
+                <div
+                    className="absolute z-40"
+                    style={{ bottom: '48px', left: '48px' }}
+                >
+                    <ProfilePicture
+                        avatar={getAvatarEmoji(selectedAvatar)}
+                        border={selectedBorder}
+                        borderColor={borderColor}
+                        totalLevel={Object.values(skills).reduce((sum, skill) => sum + (skill.level || 0), 0)}
+                        size="large"
+                        skillColorStyle={{ background: profileBgColor }}
+                        onClickPicture={() => {
+                            setIsAvatarModalOpen(true);
+                            playClick();
+                        }}
+                        onClickLevel={() => {
+                            setIsMenuOpen(true);
+                            playClick();
+                            // Set highlight state for total level
+                            setTimeout(() => {
+                                setHighlightTotalLevel(true);
+                                setTimeout(() => setHighlightTotalLevel(false), 2000);
+                            }, 300);
+                        }}
+                    />
+                </div>
+            )}
 
-            {/* Player Health Display - Centered with Armor Shields overlaying Hearts */}
-            <div className="absolute z-30 flex gap-1.5" style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
-                {Array(10).fill(0).map((_, i) => {
-                    // Hearts always show (filled or empty based on health)
-                    const isFilledHeart = i < playerHealth;
-                    // Shields overlay the leftmost hearts (up to armorPoints)
-                    const hasShield = i < armorPoints;
-                    return (
-                        <div key={i} className="relative">
-                            {/* Always show heart */}
-                            <PixelHeart size={48} filled={isFilledHeart} />
-                            {/* Shield overlays the heart if armor exists */}
-                            {hasShield && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <PixelShield size={48} filled={true} />
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+            {/* Player Health Display - Centered with Armor Shields overlaying Hearts - hide during patterns minigame */}
+            {battlingSkillId !== 'patterns' && (
+                <div className="absolute z-50 flex gap-1.5" style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
+                    {Array(10).fill(0).map((_, i) => {
+                        // Hearts always show (filled or empty based on health)
+                        const isFilledHeart = i < playerHealth;
+                        // Shields overlay the leftmost hearts (up to armorPoints)
+                        const hasShield = i < armorPoints;
+                        return (
+                            <div key={i} className="relative">
+                                {/* Always show heart */}
+                                <PixelHeart size={48} filled={isFilledHeart} />
+                                {/* Shield overlays the heart if armor exists */}
+                                {hasShield && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <PixelShield size={48} filled={true} />
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* Cosmetics drawer overlay - click to close */}
             {isCosmeticsOpen && (
@@ -1727,14 +1732,16 @@ const App = () => {
             )}
             <MenuDrawer isOpen={isMenuOpen} skills={skills} stats={stats} />
 
-            {/* Bottom Right Bug Report Button */}
-            <button
-                onClick={() => { setIsMenuOpen(false); setIsCosmeticsOpen(false); setIsSettingsOpen(false); setIsBugReportOpen(true); playClick(); }}
-                className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
-                style={{ bottom: '24px', right: '24px' }}
-            >
-                <Bug size={48} className="text-red-400" />
-            </button>
+            {/* Bottom Right Bug Report Button - hide during patterns minigame */}
+            {battlingSkillId !== 'patterns' && (
+                <button
+                    onClick={() => { setIsMenuOpen(false); setIsCosmeticsOpen(false); setIsSettingsOpen(false); setIsBugReportOpen(true); playClick(); }}
+                    className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
+                    style={{ bottom: '24px', right: '24px' }}
+                >
+                    <Bug size={48} className="text-red-400" />
+                </button>
+            )}
 
             {/* Backdrop overlay when battling - click to exit */}
             {battlingSkillId && (
@@ -1787,7 +1794,7 @@ const App = () => {
                 />
             </main>
 
-            {lootBox && <div className="fixed bottom-8 left-1/2 z-50 animate-toast w-full max-w-2xl pointer-events-none transform -translate-x-1/2"><div className="bg-black/80 border-4 border-yellow-500 rounded-full p-4 px-12 flex items-center justify-between shadow-[0_0_30px_rgba(255,215,0,0.6)] backdrop-blur-md mx-4"><div className="flex items-center gap-4"><div className="bg-yellow-500/20 p-3 rounded-full border-2 border-yellow-400"><Gift size={32} className="text-yellow-300 animate-bounce" /></div><div className="text-left"><h2 className="text-2xl text-yellow-400 font-bold leading-none mb-1">LEVEL {lootBox.level} REACHED!</h2><p className="text-stone-300 text-sm">{lootBox.skillName}</p></div></div><div className="text-right pl-8 border-l-2 border-stone-600 flex items-center gap-4"><SafeImage src={lootBox.img} alt="Badge" className="w-12 h-12 object-contain" /><div><p className="text-stone-400 text-xs uppercase tracking-wider">Unlocked</p><p className="text-2xl text-green-400 font-bold">{lootBox.item}</p></div></div></div></div>}
+            {lootBox && <div className="fixed bottom-8 left-1/2 z-[9999] animate-toast w-full max-w-2xl pointer-events-none transform -translate-x-1/2"><div className="bg-black/80 border-4 border-yellow-500 rounded-full p-4 px-12 flex items-center justify-between shadow-[0_0_30px_rgba(255,215,0,0.6)] backdrop-blur-md mx-4"><div className="flex items-center gap-4"><div className="bg-yellow-500/20 p-3 rounded-full border-2 border-yellow-400"><Gift size={32} className="text-yellow-300 animate-bounce" /></div><div className="text-left"><h2 className="text-2xl text-yellow-400 font-bold leading-none mb-1">LEVEL {lootBox.level} REACHED!</h2><p className="text-stone-300 text-sm">{lootBox.skillName}</p></div></div><div className="text-right pl-8 border-l-2 border-stone-600 flex items-center gap-4"><SafeImage src={lootBox.img} alt="Badge" className="w-12 h-12 object-contain" /><div><p className="text-stone-400 text-xs uppercase tracking-wider">Unlocked</p><p className="text-2xl text-green-400 font-bold">{lootBox.item}</p></div></div></div></div>}
 
             {/* Achievement Toast */}
             {

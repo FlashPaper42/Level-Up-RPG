@@ -304,7 +304,7 @@ const ReadingSkillCard = ({
                                                                 <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all duration-300" style={{ width: `${xpPercent}%` }}></div>
                                                             </div>
                                                         </div>
-                                                        <div className="bg-[#1a1a1a] px-2 py-1 rounded border border-[#333] flex items-center justify-center" style={{ width: '20%', minHeight: '40px' }}>
+                                                        <div className="bg-[#1a1a1a] p-2 rounded border border-[#333] flex items-center justify-center" style={{ width: '20%', minHeight: '52px' }}>
                                                             <div className="flex items-center gap-1 text-yellow-300 text-xs uppercase font-bold">
                                                                 <span>AP:</span>
                                                                 <span className="text-xs">{cappedAP}/5</span>

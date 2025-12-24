@@ -27,7 +27,9 @@ const SkillCarousel = ({
     generateChallengeAtDifficulty,
     mobAttacking,
     playerDamageIndicator,
-    onPerfectMemoryGame
+    onPerfectMemoryGame,
+    calculateMobAction,
+    mobNextAction
 }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
@@ -250,9 +252,11 @@ const SkillCarousel = ({
                                 playerHealth={playerHealth}
                                 handleCombatAction={handleCombatAction}
                                 generateChallengeAtDifficulty={generateChallengeAtDifficulty}
-                                mobAttacking={mobAttacking === item.id}
+                                mobAttacking={mobAttacking?.skillId === item.id ? mobAttacking : null}
                                 playerDamageIndicator={playerDamageIndicator}
                                 onPerfectMemoryGame={onPerfectMemoryGame}
+                                calculateMobAction={calculateMobAction}
+                                mobNextAction={mobNextAction}
                             />
                         </div>
                     );

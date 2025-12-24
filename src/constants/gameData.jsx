@@ -132,12 +132,12 @@ export const DIFFICULTY_CONTENT = {
         7: { targetLength: 9 }
     },
     patterns: {
-        1: { axolotlCount: 2 },
-        2: { axolotlCount: 3 },
-        3: { axolotlCount: 4 },
-        4: { axolotlCount: 5 },
-        5: { axolotlCount: 6 },
-        6: { axolotlCount: 7 },
+        1: { axolotlCount: 3 },
+        2: { axolotlCount: 4 },
+        3: { axolotlCount: 5 },
+        4: { axolotlCount: 6 },
+        5: { axolotlCount: 7 },
+        6: { axolotlCount: 8 },
         7: { axolotlCount: 8, resetSequence: true }
     },
     memory: {
@@ -418,5 +418,5 @@ export const SKILL_DATA = [
     { id: 'writing', name: 'Writing', class: 'Spelling', fantasyName: 'Crafting Table', actionName: 'Craft!', taskDescription: "Spell out the recipe to forge legendary weapons and armor!", img: BASE_ASSETS.skillIcons['Writing'], colorStyle: { background: 'linear-gradient(to bottom, #0369a1, #1e40af)' }, accent: 'text-cyan-400', boss: 'The Warden', hasChallenge: true, challengeType: 'writing', mobOffset: 8 },
     { id: 'cleaning', name: 'Cleaning', class: 'Cleaning', fantasyName: 'Chest Management', actionName: 'Organize!', taskDescription: "Sort your loot and prepare your inventory for the adventures ahead!", img: BASE_ASSETS.skillIcons['Cleaning'], colorStyle: { background: 'linear-gradient(to bottom, #059669, #15803d)' }, accent: 'text-emerald-400', boss: 'Ender Chest', hasChallenge: true, challengeType: 'cleaning', mobOffset: 12 },
     { id: 'memory', name: 'Memory', class: 'Memory', fantasyName: 'Match n\' Hatch', actionName: 'Match!', taskDescription: "Find the matching pairs to hatch rare creatures for your farm!", img: BASE_ASSETS.skillIcons['Memory'], colorStyle: { background: 'linear-gradient(to bottom, #db2777, #be123c)' }, accent: 'text-pink-400', boss: 'Axolotl Mascot', hasChallenge: true, challengeType: 'memory', mobOffset: 16 },
-    { id: 'patterns', name: 'Patterns', class: 'Patterns', fantasyName: 'Logic Building', actionName: 'Solve!', taskDescription: "Decipher the sequence to unlock ancient mechanisms and hidden treasures!", img: BASE_ASSETS.skillIcons['Patterns'], colorStyle: { background: 'linear-gradient(to bottom, #ea580c, #c2410c)' }, accent: 'text-orange-400', boss: 'Iron Golem', hasChallenge: true, challengeType: 'patterns', mobOffset: 20 },
+    { id: 'patterns', name: 'Patterns', class: 'Patterns', fantasyName: 'Axolotl Farming', actionName: 'Solve!', taskDescription: "Decipher the sequence to unlock ancient mechanisms and hidden treasures!", img: BASE_ASSETS.skillIcons['Patterns'], colorStyle: { background: 'linear-gradient(to bottom, #ea580c, #c2410c)' }, accent: 'text-orange-400', boss: 'Iron Golem', hasChallenge: true, challengeType: 'patterns', mobOffset: 20 },
 ];

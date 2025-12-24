@@ -1,10 +1,12 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { Trophy } from 'lucide-react';
 import { ACHIEVEMENTS, TIER_COLORS, TIER_NAMES } from '../../constants/achievements';
 
 /**
  * AchievementToast Component
  * Displays a celebratory toast when an achievement is unlocked
+ * Uses portal to render above all other elements
  */
 const AchievementToast = ({ achievementId, tierIndex = null }) => {
     const achievement = ACHIEVEMENTS[achievementId];
@@ -27,7 +29,7 @@ const AchievementToast = ({ achievementId, tierIndex = null }) => {
     const borderColor = tierColor ? tierColor.border : '#FFD700';
     const bgColor = tierColor ? tierColor.bg : 'rgba(255, 215, 0, 0.1)';
 
-    return (
+    return ReactDOM.createPortal(
         <div
             className="fixed bottom-8 left-1/2 z-[9999] animate-achievement-toast w-full max-w-2xl pointer-events-none transform -translate-x-1/2"
         >
@@ -75,7 +77,8 @@ const AchievementToast = ({ achievementId, tierIndex = null }) => {
                     />
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
