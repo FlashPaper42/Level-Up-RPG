@@ -86,7 +86,8 @@ const App = () => {
 
     const {
         skills, stats, setSkills, setStats, checkAchievements: checkAchievementsFromContext,
-        achievementToast // Consuming toast from context
+        achievementToast, // Consuming toast from context
+        setAchievementToast // Needed for clearing toast
     } = useProgression();
 
     const {
@@ -338,6 +339,7 @@ const App = () => {
             if (battlingSkillId) {
                 const currentSkillState = skills[battlingSkillId];
                 const encounterType = getEncounterType(currentSkillState.level);
+                const skillConfig = SKILL_DATA.find(s => s.id === battlingSkillId);
 
                 // Boss fights: heal the boss instead of damaging the player
                 if (encounterType === 'boss') {
@@ -361,15 +363,17 @@ const App = () => {
                     return;
                 }
 
-                // For Reading skill: Execute mob's stored action on player failure
-                const skillConfig = SKILL_DATA.find(s => s.id === battlingSkillId);
-                if (skillConfig && skillConfig.id === 'reading' && mobNextAction?.skillId === battlingSkillId) {
+                // For Combat Skills (Reading, etc): Execute mob's stored action on player failure
+                // This replaces the generic damage penalty with the actual mob turn
+                if (skillConfig && checkIsCombatSkill(skillConfig.id) && mobNextAction?.skillId === battlingSkillId) {
                     const mobAction = mobNextAction.action;
                     console.log('[Mob Action] Player failed - executing stored action:', mobAction);
 
                     // Show mob action animation
                     setMobAttacking({ skillId: battlingSkillId, type: mobAction.type });
                     playMobSay(currentSkillState.currentMob);
+
+                    playFail(); // Indicate wrong answer
 
                     setTimeout(() => {
                         setMobAttacking(null);
@@ -387,6 +391,7 @@ const App = () => {
                                     }
                                 };
                             });
+                            // Play sound for armor/heal?
                         } else if (mobAction.type === 'heal') {
                             // Mob heals itself
                             setSkills(prev => {
@@ -399,27 +404,39 @@ const App = () => {
                                     }
                                 };
                             });
+                        } else if (mobAction.type === 'damage') {
+                            // Mob Attacks Player (Now the source of damage on failure, instead of generic penalty)
+                            const mobDamage = mobAction.value;
+                            const damageResult = calculatePlayerDamage(playerHealth, mobDamage, armorPoints);
+
+                            // Update State
+                            setArmorPoints(damageResult.newArmor);
+                            setPlayerHealth(damageResult.newHealth);
+
+                            // Play Sound & Show Indicator
+                            if (damageResult.playerDied) {
+                                processPlayerDeath(battlingSkillId);
+                            } else {
+                                // Already played playFail() above, maybe add hit sound?
+                                // playFail() is good for "User Error", but maybe we want a hit sound too?
+                                // Keeping it simple for now, the fail sound + health drop is clear.
+                            }
+
+                            setPlayerDamageIndicator({
+                                amount: damageResult.fullyBlocked ? damageResult.absorbed : damageResult.actualDamage,
+                                blocked: damageResult.fullyBlocked
+                            });
+                            setTimeout(() => setPlayerDamageIndicator(null), 1000);
                         }
-                        // Note: For damage type, the player already takes damage below
 
                         // Calculate next mob action for display
                         setMobNextAction({ skillId: battlingSkillId, action: calculateMobAction(battlingSkillId) });
                     }, 600);
+                } else {
+                    // Fallback for non-combat skills or if no mob action ready (just play fail sound)
+                    playFail();
                 }
             }
-
-            // Non-boss encounters: damage player
-            setPlayerHealth(h => {
-                const newH = h - 1;
-                if (newH <= 0) {
-                    // Death sequence - play UI death sound
-                    processPlayerDeath(battlingSkillId);
-                    return 10; // Heal to full health
-                }
-                // Player takes damage but doesn't die - play fail sound
-                playFail();
-                return newH;
-            });
             return;
         }
 

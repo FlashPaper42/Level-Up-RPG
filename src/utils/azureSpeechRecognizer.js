@@ -13,6 +13,9 @@ const SPEECH_REGION = 'centralus';
 // Module state
 let recognizer = null;
 let isListening = false;
+let isStopping = false;
+
+/* ... (startAzureSpeechRecognition implementation remains mostly same, just checking context) ... */
 
 /**
  * Start continuous speech recognition
@@ -26,6 +29,11 @@ export function startAzureSpeechRecognition(onRecognizing, onRecognized, onError
     if (isListening && recognizer) {
         console.log('[Azure Speech] Already listening');
         return true;
+    }
+
+    if (isStopping) {
+        console.log('[Azure Speech] Cannot start - currently stopping previous session');
+        return false;
     }
 
     try {
@@ -148,24 +156,59 @@ export function startAzureSpeechRecognition(onRecognizing, onRecognized, onError
  * Stop speech recognition
  */
 export function stopAzureSpeechRecognition() {
-    if (recognizer) {
+    if (recognizer && !isStopping) {
         console.log('[Azure Speech] Stopping recognition...');
-        recognizer.stopContinuousRecognitionAsync(
-            () => {
-                console.log('[Azure Speech] Recognition stopped');
-                recognizer.close();
-                recognizer = null;
-                isListening = false;
-            },
-            (error) => {
-                console.error('[Azure Speech] Error stopping:', error);
-                recognizer.close();
-                recognizer = null;
-                isListening = false;
+        isStopping = true;
+
+        // Safety check before calling async method
+        try {
+            recognizer.stopContinuousRecognitionAsync(
+                () => {
+                    console.log('[Azure Speech] Recognition stopped');
+                    if (recognizer) {
+                        try {
+                            recognizer.close();
+                        } catch (e) {
+                            console.warn('[Azure Speech] Error closing recognizer:', e);
+                        }
+                    }
+                    recognizer = null;
+                    isListening = false;
+                    isStopping = false;
+                },
+                (error) => {
+                    console.error('[Azure Speech] Error stopping:', error);
+                    if (recognizer) {
+                        try {
+                            recognizer.close();
+                        } catch (e) {
+                            console.warn('[Azure Speech] Error closing recognizer after error:', e);
+                        }
+                    }
+                    recognizer = null;
+                    isListening = false;
+                    isStopping = false;
+                }
+            );
+        } catch (e) {
+            console.error('[Azure Speech] Exception starting stop sequence:', e);
+            // Force cleanup
+            if (recognizer) {
+                try {
+                    recognizer.close();
+                } catch (closeError) { /* ignore */ }
             }
-        );
+            recognizer = null;
+            isListening = false;
+            isStopping = false;
+        }
     } else {
-        isListening = false;
+        if (isStopping) {
+            console.log('[Azure Speech] Stop ignored - already stopping');
+        } else {
+            // Not listening
+            isListening = false;
+        }
     }
 }
 
