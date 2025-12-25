@@ -379,15 +379,17 @@ const App = () => {
                         setMobAttacking(null);
 
                         if (mobAction.type === 'armor') {
-                            // Mob gains armor
+                            // Mob gains armor (Bug 1 fix: use mobMaxHealth, not hardcoded 10)
                             setSkills(prev => {
                                 const current = prev[battlingSkillId];
                                 const currentArmor = current.mobArmor || 0;
+                                const armorCap = current.mobMaxHealth || 60; // Cap armor at mob's max health
+                                console.log(`[Combat] Mob SHIELD: adding ${mobAction.value} armor (cap: ${armorCap})`);
                                 return {
                                     ...prev,
                                     [battlingSkillId]: {
                                         ...current,
-                                        mobArmor: Math.min(10, currentArmor + mobAction.value)
+                                        mobArmor: Math.min(armorCap, currentArmor + mobAction.value)
                                     }
                                 };
                             });
@@ -828,15 +830,21 @@ const App = () => {
             if (actionPoints < 5) return;
             setActionPoints(prev => prev - 5);
 
+            // Calculate base damage for this difficulty level
+            const skillDifficulty = skillState.difficulty || 1;
+            const baseDamage = calculateDamage(skillState.level, skillDifficulty);
+            const specialDamage = baseDamage * 3; // SPECIAL deals 3x base damage
+            console.log(`[Combat] SPECIAL attack: baseDamage=${baseDamage}, specialDamage=${specialDamage}`);
+
             if (encounterType === 'boss') {
                 // Execute 3 hits directly using internal logic to bypass debounce
-                // Pass custom damage 3 (if standard damage is 1, this represents 3x)
-                setTimeout(() => executeCombatTurn(skillId, false, 3, 3), 0);
-                setTimeout(() => executeCombatTurn(skillId, false, 3, 3), 250);
-                setTimeout(() => executeCombatTurn(skillId, false, 3, 3), 500);
+                // Each hit deals base damage (total = 3x base damage over 3 hits)
+                setTimeout(() => executeCombatTurn(skillId, false, baseDamage, 3), 0);
+                setTimeout(() => executeCombatTurn(skillId, false, baseDamage, 3), 250);
+                setTimeout(() => executeCombatTurn(skillId, false, baseDamage, 3), 500);
             } else {
-                const instantKillDamage = skillState.mobHealth;
-                executeCombatTurn(skillId, false, instantKillDamage, 1.5);
+                // Non-boss: instant kill with scaled damage
+                executeCombatTurn(skillId, false, specialDamage, 1.5);
             }
             playSuccessfulHit();
 
@@ -852,6 +860,14 @@ const App = () => {
             setActionPoints(prev => prev - 2);
             setPlayerHealth(10);
             playNotification();
+            console.log('[Combat] HEAL action: player healed to full');
+
+            // Get mob action and execute mob turn (Bug 4 fix: mob gets a turn after heal)
+            const mobAction = mobNextAction?.skillId === skillId
+                ? mobNextAction.action
+                : calculateMobAction(skillId);
+            setMobNextAction({ skillId, action: calculateMobAction(skillId) });
+            executeMobTurn(mobAction);
 
             if (skillConfig.hasChallenge) {
                 const challengeDiff = battleDifficulty || skillState.difficulty || 1;

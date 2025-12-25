@@ -81,24 +81,37 @@ const PatternsSkillCard = ({
         }
     }, []);
 
-    // Nightmare mode: constant slow rotation of ring and clock arm drift
+    // Nightmare mode: constant slow rotation of ring and clock arm drift (Bug 7 fix: use requestAnimationFrame for smooth animation)
     useEffect(() => {
         if (isNightmareMode && simonGameActive && !showInstructions) {
-            // Start constant rotation
-            nightmareRotationRef.current = setInterval(() => {
-                setRingRotation(prev => prev + 3); // ~15 deg/second at 60fps would be 0.25, but we're at 200ms interval = 3 deg
+            let lastTimestamp = 0;
+            const ROTATION_SPEED = 15; // degrees per second
+            const DRIFT_SPEED = 2; // clock drift per second
+
+            const animate = (timestamp) => {
+                if (lastTimestamp === 0) lastTimestamp = timestamp;
+                const deltaTime = (timestamp - lastTimestamp) / 1000; // Convert to seconds
+                lastTimestamp = timestamp;
+
+                // Smooth rotation based on delta time
+                setRingRotation(prev => prev + ROTATION_SPEED * deltaTime);
+
                 // Random clock drift - slowly wanders
-                setNightmareClockOffset(prev => prev + (Math.random() - 0.5) * 4);
-            }, 200);
+                setNightmareClockOffset(prev => prev + (Math.random() - 0.5) * DRIFT_SPEED * deltaTime);
+
+                nightmareRotationRef.current = requestAnimationFrame(animate);
+            };
+
+            nightmareRotationRef.current = requestAnimationFrame(animate);
             return () => {
                 if (nightmareRotationRef.current) {
-                    clearInterval(nightmareRotationRef.current);
+                    cancelAnimationFrame(nightmareRotationRef.current);
                     nightmareRotationRef.current = null;
                 }
             };
         } else {
             if (nightmareRotationRef.current) {
-                clearInterval(nightmareRotationRef.current);
+                cancelAnimationFrame(nightmareRotationRef.current);
                 nightmareRotationRef.current = null;
             }
         }

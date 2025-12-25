@@ -333,9 +333,9 @@ const MemorySkillCard = ({
                                     }}
                                 >
                                     <div className="absolute inset-0 backface-hidden w-full h-full" style={{ backfaceVisibility: 'hidden' }}>
-                                        <SafeImage src={themeData.assets.cardBack} className="w-full h-full object-contain rounded-xl border-4 border-slate-600 shadow-lg" />
+                                        <SafeImage src={themeData.assets.cardBack} className="w-full h-full object-contain rounded-xl shadow-lg" />
                                     </div>
-                                    <div className="absolute inset-0 backface-hidden w-full h-full rotate-y-180 bg-slate-800 rounded-xl border-4 border-teal-500/50 flex items-center justify-center shadow-lg" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                                    <div className="absolute inset-0 backface-hidden w-full h-full rotate-y-180 bg-slate-800 rounded-xl flex items-center justify-center shadow-lg" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                                         <SafeImage src={card.img} className="w-full h-full object-contain p-3" />
                                     </div>
                                 </div>

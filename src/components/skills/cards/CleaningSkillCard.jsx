@@ -151,7 +151,7 @@ const CleaningSkillCard = ({
                         <div className="flex items-center justify-center gap-16 relative max-w-[95vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                             {/* Left Card - Instructions */}
                             <div className="flex-shrink-0">
-                                <div className="relative w-[280px] bg-gradient-to-br from-cyan-900 via-slate-800 to-cyan-900 border-4 border-cyan-600 rounded-lg overflow-hidden" style={{ boxShadow: '0 0 40px rgba(0,150,150,0.5), inset 0 0 30px rgba(100,200,200,0.1)', height: '480px' }}>
+                                <div className="relative w-[280px] bg-gradient-to-br from-cyan-900 via-slate-800 to-cyan-900 border-4 border-cyan-600 rounded-lg overflow-hidden" style={{ boxShadow: '0 0 40px rgba(0,150,150,0.5), inset 0 0 30px rgba(100,200,200,0.1)', height: '530px' }}>
                                     <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-cyan-400"></div>
                                     <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-cyan-400"></div>
                                     <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-cyan-400"></div>
@@ -219,7 +219,7 @@ const CleaningSkillCard = ({
 
                             {/* Right Card - Interactive Bounty List */}
                             <div className="flex-shrink-0">
-                                <div className="relative w-[280px] bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-50 border-4 border-amber-800 rounded-lg overflow-hidden" style={{ boxShadow: '0 0 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(251,191,36,0.2)', height: '480px' }}>
+                                <div className="relative w-[280px] bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-50 border-4 border-amber-800 rounded-lg overflow-hidden" style={{ boxShadow: '0 0 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(251,191,36,0.2)', height: '530px' }}>
                                     <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-700"></div>
                                     <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-700"></div>
                                     <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-700"></div>

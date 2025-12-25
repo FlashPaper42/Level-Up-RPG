@@ -32,12 +32,16 @@ export const useProfile = () => {
         safeGet('heroParentStatus_v1', { 1: false, 2: false, 3: false })
     );
 
+    const [pinCodes, setPinCodes] = useState(() =>
+        safeGet('heroPinCodes_v1', { 1: null, 2: null, 3: null })
+    );
+
     const [isLoading, setIsLoading] = useState(true);
 
     // Load settings asynchronously on mount
     useEffect(() => {
         let isMounted = true;
-        
+
         const loadSettings = async () => {
             try {
                 const settings = await loadProfileSettings();
@@ -45,6 +49,7 @@ export const useProfile = () => {
                     setCurrentProfileState(settings.currentProfile);
                     setProfileNames(settings.profileNames);
                     setParentStatus(settings.parentStatus);
+                    setPinCodes(settings.pinCodes || { 1: null, 2: null, 3: null });
                     setIsLoading(false);
                 }
             } catch (error) {
@@ -54,9 +59,9 @@ export const useProfile = () => {
                 }
             }
         };
-        
+
         loadSettings();
-        
+
         return () => {
             isMounted = false;
         };
@@ -65,17 +70,18 @@ export const useProfile = () => {
     // Persistence Effect (debounced)
     useEffect(() => {
         if (isLoading) return; // Don't save during initial load
-        
+
         const timeoutId = setTimeout(() => {
             saveProfileSettings({
                 currentProfile,
                 profileNames,
-                parentStatus
+                parentStatus,
+                pinCodes
             });
         }, 500); // Debounce saves by 500ms
-        
+
         return () => clearTimeout(timeoutId);
-    }, [currentProfile, profileNames, parentStatus, isLoading]);
+    }, [currentProfile, profileNames, parentStatus, pinCodes, isLoading]);
 
     // Helpers
     const setCurrentProfile = useCallback((id) => {
@@ -90,6 +96,22 @@ export const useProfile = () => {
         setParentStatus(prev => ({ ...prev, [id]: !prev[id] }));
     }, []);
 
+    // PIN management helpers
+    const setPinCode = useCallback((id, pin) => {
+        console.log(`[useProfile] Setting PIN for profile ${id}: ${pin ? '****' : 'cleared'}`);
+        setPinCodes(prev => ({ ...prev, [id]: pin }));
+    }, []);
+
+    const verifyPin = useCallback((id, enteredPin) => {
+        const storedPin = pinCodes[id];
+        if (!storedPin) return true; // No PIN set, always allow
+        return storedPin === enteredPin;
+    }, [pinCodes]);
+
+    const hasPin = useCallback((id) => {
+        return pinCodes[id] !== null && pinCodes[id] !== '';
+    }, [pinCodes]);
+
     return {
         currentProfile,
         setCurrentProfile,
@@ -99,6 +121,11 @@ export const useProfile = () => {
         parentStatus,
         setParentStatus,
         toggleParentStatus,
+        pinCodes,
+        setPinCodes,
+        setPinCode,
+        verifyPin,
+        hasPin,
         isLoading
     };
 };

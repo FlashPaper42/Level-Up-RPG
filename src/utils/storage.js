@@ -9,7 +9,7 @@ const isElectron = () => {
 
 // Storage cache to avoid excessive file reads
 const storageCache = new Map();
-const settingsCache = { currentProfile: null, profileNames: null, parentStatus: null };
+const settingsCache = { currentProfile: null, profileNames: null, parentStatus: null, pinCodes: null };
 
 /**
  * Load profile data (skills, theme, stats)
@@ -92,7 +92,8 @@ export const loadProfileSettings = async () => {
         return {
           currentProfile: settingsCache.currentProfile,
           profileNames: settingsCache.profileNames,
-          parentStatus: settingsCache.parentStatus
+          parentStatus: settingsCache.parentStatus,
+          pinCodes: settingsCache.pinCodes
         };
       }
 
@@ -101,24 +102,28 @@ export const loadProfileSettings = async () => {
         settingsCache.currentProfile = result.data.currentProfile ?? 1;
         settingsCache.profileNames = result.data.profileNames ?? { 1: "Player 1", 2: "Player 2", 3: "Player 3" };
         settingsCache.parentStatus = result.data.parentStatus ?? { 1: false, 2: false, 3: false };
+        settingsCache.pinCodes = result.data.pinCodes ?? { 1: null, 2: null, 3: null };
         return result.data;
       }
       // Return defaults if no data
       const defaults = {
         currentProfile: 1,
         profileNames: { 1: "Player 1", 2: "Player 2", 3: "Player 3" },
-        parentStatus: { 1: false, 2: false, 3: false }
+        parentStatus: { 1: false, 2: false, 3: false },
+        pinCodes: { 1: null, 2: null, 3: null }
       };
       settingsCache.currentProfile = defaults.currentProfile;
       settingsCache.profileNames = defaults.profileNames;
       settingsCache.parentStatus = defaults.parentStatus;
+      settingsCache.pinCodes = defaults.pinCodes;
       return defaults;
     } catch (error) {
       console.warn('Failed to load profile settings from file:', error);
       return {
         currentProfile: 1,
         profileNames: { 1: "Player 1", 2: "Player 2", 3: "Player 3" },
-        parentStatus: { 1: false, 2: false, 3: false }
+        parentStatus: { 1: false, 2: false, 3: false },
+        pinCodes: { 1: null, 2: null, 3: null }
       };
     }
   } else {
@@ -133,13 +138,17 @@ export const loadProfileSettings = async () => {
       const parentStatus = localStorage.getItem('heroParentStatus_v1')
         ? JSON.parse(localStorage.getItem('heroParentStatus_v1'))
         : { 1: false, 2: false, 3: false };
-      return { currentProfile, profileNames, parentStatus };
+      const pinCodes = localStorage.getItem('heroPinCodes_v1')
+        ? JSON.parse(localStorage.getItem('heroPinCodes_v1'))
+        : { 1: null, 2: null, 3: null };
+      return { currentProfile, profileNames, parentStatus, pinCodes };
     } catch (e) {
       console.warn('Failed to load profile settings:', e);
       return {
         currentProfile: 1,
         profileNames: { 1: "Player 1", 2: "Player 2", 3: "Player 3" },
-        parentStatus: { 1: false, 2: false, 3: false }
+        parentStatus: { 1: false, 2: false, 3: false },
+        pinCodes: { 1: null, 2: null, 3: null }
       };
     }
   }
@@ -157,6 +166,7 @@ export const saveProfileSettings = async (settings) => {
         settingsCache.currentProfile = settings.currentProfile ?? settingsCache.currentProfile;
         settingsCache.profileNames = settings.profileNames ?? settingsCache.profileNames;
         settingsCache.parentStatus = settings.parentStatus ?? settingsCache.parentStatus;
+        settingsCache.pinCodes = settings.pinCodes ?? settingsCache.pinCodes;
         return true;
       }
       return false;
@@ -176,6 +186,9 @@ export const saveProfileSettings = async (settings) => {
       if (settings.parentStatus !== undefined) {
         localStorage.setItem('heroParentStatus_v1', JSON.stringify(settings.parentStatus));
       }
+      if (settings.pinCodes !== undefined) {
+        localStorage.setItem('heroPinCodes_v1', JSON.stringify(settings.pinCodes));
+      }
       return true;
     } catch (e) {
       console.warn('Failed to save profile settings:', e);
@@ -192,6 +205,7 @@ export const clearCache = () => {
   settingsCache.currentProfile = null;
   settingsCache.profileNames = null;
   settingsCache.parentStatus = null;
+  settingsCache.pinCodes = null;
 };
 
 /**
