@@ -35,6 +35,17 @@ const ParentalVerificationModal = ({ isOpen, onClose, onVerified }) => {
         if (val.length <= correctAnswerNoSpaces.length) {
             setAnswer(val);
             setError(false);
+            
+            // Auto-submit when all characters are filled
+            if (val.length === correctAnswerNoSpaces.length) {
+                if (val === correctAnswerNoSpaces) {
+                    onVerified();
+                    setAnswer('');
+                    setError(false);
+                } else {
+                    setError(true);
+                }
+            }
         }
     };
 
@@ -89,22 +100,24 @@ const ParentalVerificationModal = ({ isOpen, onClose, onVerified }) => {
                                 maxLength={correctAnswerNoSpaces.length}
                             />
                             <div className={`flex gap-1 flex-wrap justify-center cursor-pointer ${error ? 'animate-shake' : ''}`}>
-                                {correctAnswer.split('').map((char, i) => (
-                                    char === ' ' ? (
-                                        <div key={i} className="w-4"></div>
-                                    ) : (
+                                {correctAnswer.split('').map((char, i) => {
+                                    if (char === ' ') return <div key={i} className="w-4"></div>;
+                                    const inputIndex = getInputIndexForDisplay(i);
+                                    const isFilled = isSlotFilled(i);
+                                    const isActiveEmpty = inputIndex === answer.length;
+                                    return (
                                         <div
                                             key={i}
                                             className={`w-7 h-9 border-b-4 flex items-center justify-center text-lg font-mono font-bold text-white bg-black/20 rounded-t ${
                                                 error ? 'border-red-500 bg-red-900/30' : (
-                                                    isSlotFilled(i) ? 'border-green-500' : 'border-gray-600'
+                                                    isFilled ? 'border-green-500' : 'border-gray-600'
                                                 )
-                                            }`}
+                                            } ${isActiveEmpty && !error ? 'animate-blink-box' : ''}`}
                                         >
                                             {getDisplayChar(i)}
                                         </div>
-                                    )
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                         {error && <p className="text-red-400 text-sm mb-4">Incorrect answer. Try again!</p>}

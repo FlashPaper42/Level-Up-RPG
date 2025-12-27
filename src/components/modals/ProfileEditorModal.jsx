@@ -1,16 +1,108 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Info, TrendingUp, HelpCircle } from 'lucide-react';
-import { SKILL_DATA } from '../../constants/gameData';
+import { SKILL_DATA, DIFFICULTY_CONTENT } from '../../constants/gameData';
 import { loadProfileData, saveProfileData, getDataDirectory } from '../../utils/storage';
 import { getDefaultStats } from '../../utils/achievementUtils';
 import { calculateXPToLevel, calculateMobHealth } from '../../utils/gameUtils';
+
+// Skill-specific difficulty descriptions for parent info popups
+// Level 7 descriptions are replaced with just "NIGHTMARE!" to keep it mysterious
+const SKILL_DIFFICULTY_INFO = {
+    reading: {
+        name: 'Reading',
+        popupDirection: 'down',
+        isList: false, // Use visual progression instead of list
+        progression: ['3', '4', '5', '6', '7', '8', 'NIGHTMARE!'],
+        progressionLabel: 'Letter words',
+        difficulties: [
+            { level: '1-19', diff: 1, desc: 'Single-digit addition (0-9)' },
+            { level: '20-39', diff: 2, desc: 'Addition (0-20)' },
+            { level: '40-59', diff: 3, desc: 'Addition & subtraction (0-20)' },
+            { level: '60-79', diff: 4, desc: 'Add, subtract, multiply (0-20)' },
+            { level: '80-99', diff: 5, desc: 'All operations including division' },
+            { level: '100-119', diff: 6, desc: 'Order of operations (PEMDAS)' },
+            { level: '120+', diff: 7, desc: 'NIGHTMARE!' }
+        ]
+    },
+    math: {
+        name: 'Math',
+        popupDirection: 'down',
+        isList: true, // Keep as detailed list
+        difficulties: [
+            { level: '1-19', diff: 1, desc: 'Single-digit addition (0-9)' },
+            { level: '20-39', diff: 2, desc: 'Addition (0-20)' },
+            { level: '40-59', diff: 3, desc: 'Addition & subtraction (0-20)' },
+            { level: '60-79', diff: 4, desc: 'Add, subtract, multiply (0-20)' },
+            { level: '80-99', diff: 5, desc: 'All operations including division' },
+            { level: '100-119', diff: 6, desc: 'Order of operations (PEMDAS)' },
+            { level: '120+', diff: 7, desc: 'NIGHTMARE!' }
+        ]
+    },
+    writing: {
+        name: 'Writing',
+        popupDirection: 'down',
+        isList: false,
+        progression: ['3', '4', '5', '6', '7', '8', 'NIGHTMARE!'],
+        progressionLabel: 'Letter words to spell',
+        difficulties: [
+            { level: '1-19', diff: 1, desc: 'Spell 3-letter words' },
+            { level: '20-39', diff: 2, desc: 'Spell 4-letter words' },
+            { level: '40-59', diff: 3, desc: 'Spell 5-letter words' },
+            { level: '60-79', diff: 4, desc: 'Spell 6-letter words' },
+            { level: '80-99', diff: 5, desc: 'Spell 7-letter words' },
+            { level: '100-119', diff: 6, desc: 'Spell 8-letter words' },
+            { level: '120+', diff: 7, desc: 'NIGHTMARE!' }
+        ]
+    },
+    patterns: {
+        name: 'Patterns',
+        popupDirection: 'up',
+        isList: false,
+        progression: ['3', '4', '5', '6', '7', '8', 'NIGHTMARE!'],
+        progressionLabel: 'Axolotls in ring',
+        difficulties: [
+            { level: '1-19', diff: 1, desc: '3 axolotls in ring' },
+            { level: '20-39', diff: 2, desc: '4 axolotls in ring' },
+            { level: '40-59', diff: 3, desc: '5 axolotls in ring' },
+            { level: '60-79', diff: 4, desc: '6 axolotls in ring' },
+            { level: '80-99', diff: 5, desc: '7 axolotls in ring' },
+            { level: '100-119', diff: 6, desc: '8 axolotls in ring' },
+            { level: '120+', diff: 7, desc: 'NIGHTMARE!' }
+        ]
+    },
+    memory: {
+        name: 'Memory',
+        popupDirection: 'up',
+        isList: false,
+        progression: ['6', '8', '10', '12', '14', '16', 'NIGHTMARE!'],
+        progressionLabel: 'Cards to match',
+        difficulties: [
+            { level: '1-19', diff: 1, desc: '6 cards (3 pairs)' },
+            { level: '20-39', diff: 2, desc: '8 cards (4 pairs)' },
+            { level: '40-59', diff: 3, desc: '10 cards (5 pairs)' },
+            { level: '60-79', diff: 4, desc: '12 cards (6 pairs)' },
+            { level: '80-99', diff: 5, desc: '14 cards (7 pairs)' },
+            { level: '100-119', diff: 6, desc: '16 cards (8 pairs)' },
+            { level: '120+', diff: 7, desc: 'NIGHTMARE!' }
+        ]
+    },
+    cleaning: {
+        name: 'Cleaning',
+        popupDirection: 'up',
+        isList: false,
+        message: 'Level has no gameplay significance for this Skill Card.',
+        difficulties: [
+            { level: '-', diff: '-', desc: 'Level has no gameplay significance for this Skill Card.' }
+        ]
+    }
+};
 
 const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave }) => {
     const [profileData, setProfileData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [dataPath, setDataPath] = useState(null);
-    const [showCheatSheet, setShowCheatSheet] = useState(false);
+    const [activeSkillInfo, setActiveSkillInfo] = useState(null); // Track which skill info popup is open
 
     useEffect(() => {
         if (isOpen && profileId) {
@@ -71,11 +163,17 @@ const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave })
         }
     };
 
-    const updateSkillLevel = (skillId, newLevel) => {
-        const level = Math.max(1, Math.min(200, parseInt(newLevel) || 1));
-        // Calculate difficulty based on level: every 20 levels unlocks a new difficulty, cap at 7
-        const difficulty = Math.min(7, Math.floor(level / 20) + 1);
-        // Reset XP to 0 when changing level
+    // Calculate level from difficulty (lowest level of that difficulty range)
+    const getLevelFromDifficulty = (difficulty) => {
+        if (difficulty <= 1) return 1;
+        if (difficulty >= 7) return 120;
+        return (difficulty - 1) * 20 + 1;
+    };
+
+    const updateSkillDifficulty = (skillId, newDifficulty) => {
+        const difficulty = Math.max(1, Math.min(7, parseInt(newDifficulty) || 1));
+        const level = getLevelFromDifficulty(difficulty);
+        // Reset XP to 0 when changing difficulty
         const xp = 0;
         // Calculate mob health based on difficulty
         const mobMaxHealth = calculateMobHealth(difficulty);
@@ -117,95 +215,147 @@ const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave })
     const skills = profileData.skills || {};
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="relative bg-slate-900 border-4 border-yellow-400 rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] shadow-2xl flex flex-col">
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10">
-                    <X size={24} />
-                </button>
-
-                <div className="flex-shrink-0 mb-4">
-                    <h2 className="text-3xl font-bold text-yellow-400 uppercase tracking-wider mb-2 flex items-center gap-3">
-                        <TrendingUp size={28} />
-                        Edit Levels: {profileName}
-                    </h2>
-                    <p className="text-sm text-slate-400">
-                        Adjust player levels for each skill. Difficulty unlocks automatically based on level.
-                    </p>
-                </div>
-
-                {/* Cheat Sheet Toggle */}
-                <button
-                    onClick={() => setShowCheatSheet(!showCheatSheet)}
-                    className="mb-4 flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors text-sm font-bold uppercase"
-                >
-                    <HelpCircle size={16} />
-                    {showCheatSheet ? 'Hide' : 'Show'} Level & Difficulty Guide
-                </button>
-
-                {/* Cheat Sheet */}
-                {showCheatSheet && (
-                    <div className="mb-4 bg-slate-800/80 p-4 rounded-lg border-2 border-blue-600/50">
-                        <h3 className="text-lg text-blue-300 font-bold mb-3 uppercase">📖 How Levels Work</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <h4 className="text-yellow-400 font-bold mb-2">Level → Difficulty Unlock</h4>
-                                <ul className="text-slate-300 space-y-1">
-                                    <li>• Level 1-19: Difficulty 1</li>
-                                    <li>• Level 20-39: Difficulty 2</li>
-                                    <li>• Level 40-59: Difficulty 3</li>
-                                    <li>• Level 60-79: Difficulty 4</li>
-                                    <li>• Level 80-99: Difficulty 5</li>
-                                    <li>• Level 100-119: Difficulty 6</li>
-                                    <li>• Level 120+: Difficulty 7 (Nightmare)</li>
-                                </ul>
+        <>
+            {/* Large Info Popup - Fixed position on right side of screen */}
+            {activeSkillInfo && (() => {
+                const skillInfo = SKILL_DIFFICULTY_INFO[activeSkillInfo];
+                if (!skillInfo) return null;
+                const skillData = skills[activeSkillInfo] || { level: 1, difficulty: 1 };
+                const level = skillData.level || 1;
+                const currentDiff = level <= 0 ? 1 : Math.min(7, Math.ceil(level / 20));
+                
+                return (
+                    <div 
+                        className="fixed inset-0 z-[60] flex items-center justify-end pr-4 pointer-events-none"
+                        onClick={() => setActiveSkillInfo(null)}
+                    >
+                        <div 
+                            className="skill-info-popup bg-slate-900 border-4 border-blue-500 rounded-2xl p-8 shadow-2xl w-[500px] max-w-[90vw] max-h-[85vh] overflow-y-auto pointer-events-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h4 className="text-blue-400 font-bold uppercase text-3xl">{skillInfo.name} Difficulties</h4>
+                                <button
+                                    onClick={() => setActiveSkillInfo(null)}
+                                    className="text-slate-400 hover:text-white p-2 transition-colors"
+                                >
+                                    <X size={28} />
+                                </button>
                             </div>
-                            <div>
-                                <h4 className="text-yellow-400 font-bold mb-2">Special Encounters</h4>
-                                <ul className="text-slate-300 space-y-1">
-                                    <li>• <span className="text-purple-400">Miniboss</span>: Every 20 levels starting at 10</li>
-                                    <li className="text-xs text-slate-400 ml-4">(Lvl 10, 30, 50, 70...)</li>
-                                    <li>• <span className="text-red-400">Boss</span>: Every 20 levels starting at 20</li>
-                                    <li className="text-xs text-slate-400 ml-4">(Lvl 20, 40, 60, 80...)</li>
-                                </ul>
-                                <h4 className="text-yellow-400 font-bold mb-2 mt-3">Difficulty Effects</h4>
-                                <ul className="text-slate-300 space-y-1">
-                                    <li>• Higher difficulty = Harder challenges</li>
-                                    <li>• Higher difficulty = More XP rewards</li>
-                                    <li>• Higher difficulty = Stronger mobs</li>
-                                </ul>
-                            </div>
+                            
+                            {/* Visual progression format for non-Math skills */}
+                            {!skillInfo.isList && skillInfo.progression && (
+                                <div className="space-y-6">
+                                    <p className="text-slate-300 text-xl mb-6 font-medium">{skillInfo.progressionLabel}:</p>
+                                    <div className="flex items-center justify-center gap-4 flex-wrap">
+                                        {skillInfo.progression.map((value, idx) => {
+                                            const diff = idx + 1;
+                                            const isCurrent = currentDiff === diff;
+                                            const isNightmare = value === 'NIGHTMARE!';
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    className={`flex flex-col items-center px-6 py-4 rounded-xl border-2 transition-all ${
+                                                        isCurrent
+                                                            ? 'bg-yellow-600/20 border-yellow-400 scale-110'
+                                                            : isNightmare
+                                                            ? 'bg-red-900/30 border-red-500'
+                                                            : 'bg-slate-800/50 border-slate-600'
+                                                    }`}
+                                                >
+                                                    <span className="text-sm text-slate-400 mb-2 font-medium">Difficulty {diff}</span>
+                                                    <span className={`text-4xl font-bold ${isNightmare ? 'text-red-500' : 'text-white'}`}>
+                                                        {value}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Cleaning special message */}
+                            {!skillInfo.isList && skillInfo.message && (
+                                <div className="text-center py-8">
+                                    <p className="text-slate-300 text-2xl">{skillInfo.message}</p>
+                                </div>
+                            )}
+
+                            {/* Detailed list format for Math */}
+                            {skillInfo.isList && (
+                                <div className="space-y-3 text-lg">
+                                    {skillInfo.difficulties.map((d, idx) => (
+                                        <div key={idx} className={`flex justify-between gap-4 py-3 px-4 rounded-lg ${currentDiff === d.diff ? 'bg-yellow-600/20' : 'bg-slate-800/30'}`}>
+                                            <span className="text-slate-400 whitespace-nowrap font-medium text-xl">Difficulty {d.diff}</span>
+                                            <span className={`text-right font-bold ${d.diff === 7 ? 'text-red-500 text-2xl' : 'text-slate-200 text-xl'}`}>{d.desc}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
-                )}
+                );
+            })()}
 
-                {/* Skills Grid */}
-                <div className="flex-1 overflow-y-auto scrollbar-hide">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
+                <div className="relative bg-slate-900 border-4 border-yellow-400 rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] shadow-2xl flex flex-col">
+                    <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10">
+                        <X size={28} />
+                    </button>
+
+                    <div className="flex-shrink-0 mb-6">
+                        <h2 className="text-4xl font-bold text-yellow-400 uppercase tracking-wider mb-3 flex items-center gap-4">
+                            <TrendingUp size={36} />
+                            Edit Difficulty: {profileName}
+                        </h2>
+                        <p className="text-lg text-slate-400">
+                            Select difficulty level (1-7) for each skill. The system will automatically set the appropriate level. Click the <HelpCircle size={16} className="inline text-blue-400" /> button to see what each difficulty includes.
+                        </p>
+                    </div>
+
+                    {/* Skills Grid */}
+                    <div className="flex-1 overflow-y-auto scrollbar-hide py-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {SKILL_DATA.map(skill => {
                             const skillData = skills[skill.id] || { level: 1, difficulty: 1 };
-                            const currentDiff = Math.min(7, Math.floor(skillData.level / 20) + 1);
+                            // Calculate difficulty: 1-19=1, 20-39=2, 40-59=3, etc.
+                            // Use: Math.ceil(level / 20) but cap at 7, with special handling for level 0
+                            const level = skillData.level || 1;
+                            const currentDiff = level <= 0 ? 1 : Math.min(7, Math.ceil(level / 20));
                             return (
-                                <div key={skill.id} className="bg-slate-800/50 p-4 rounded-lg border-2 border-slate-600">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div>
-                                            <span className="font-bold text-white uppercase text-lg">{skill.name}</span>
-                                            <span className="text-xs text-slate-400 ml-2">({skill.fantasyName})</span>
-                                        </div>
-                                        <div className="text-xs text-slate-400">
-                                            Diff: <span className={currentDiff >= 7 ? 'text-red-400' : 'text-blue-400'}>{currentDiff}</span>
-                                        </div>
+                                <div key={skill.id} className="bg-slate-800/50 p-5 rounded-xl border-2 border-slate-600 relative">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="font-bold text-white uppercase text-2xl">{skill.name}</span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveSkillInfo(activeSkillInfo === skill.id ? null : skill.id);
+                                            }}
+                                            className="p-2 rounded-full bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 hover:text-white transition-colors"
+                                            title={`View ${skill.name} difficulty info`}
+                                        >
+                                            <HelpCircle size={20} />
+                                        </button>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <label className="text-sm text-yellow-400 font-bold uppercase whitespace-nowrap">Level:</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max="200"
-                                            value={skillData.level || 1}
-                                            onChange={(e) => updateSkillLevel(skill.id, e.target.value)}
-                                            className="flex-1 bg-slate-900 border-2 border-slate-600 rounded-lg px-4 py-2 text-white text-xl font-bold text-center focus:outline-none focus:border-yellow-400 transition-colors"
-                                        />
+                                    
+                                    <div className="flex items-center gap-4">
+                                        <label className="text-lg text-yellow-400 font-bold uppercase whitespace-nowrap">Difficulty:</label>
+                                        <select
+                                            value={currentDiff}
+                                            onChange={(e) => updateSkillDifficulty(skill.id, e.target.value)}
+                                            className={`w-16 h-16 bg-slate-900 border-2 border-slate-600 rounded-lg text-xl font-bold text-center focus:outline-none focus:border-yellow-400 transition-colors cursor-pointer ${
+                                                currentDiff === 7 ? 'text-red-400' : 'text-white'
+                                            }`}
+                                        >
+                                            <option value={1} className="text-white">1</option>
+                                            <option value={2} className="text-white">2</option>
+                                            <option value={3} className="text-white">3</option>
+                                            <option value={4} className="text-white">4</option>
+                                            <option value={5} className="text-white">5</option>
+                                            <option value={6} className="text-white">6</option>
+                                            <option value={7} className="text-red-400">7</option>
+                                        </select>
                                     </div>
                                 </div>
                             );
@@ -214,17 +364,17 @@ const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave })
                 </div>
 
                 {/* Footer */}
-                <div className="flex-shrink-0 mt-4 pt-4 border-t-2 border-slate-700 flex gap-4">
+                <div className="flex-shrink-0 mt-6 pt-6 border-t-2 border-slate-700 flex gap-6">
                     <button
                         onClick={onClose}
-                        className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 px-6 rounded-lg font-bold uppercase tracking-wider transition-all border-2 border-slate-500"
+                        className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-4 px-8 rounded-xl font-bold uppercase tracking-wider transition-all border-2 border-slate-500 text-lg"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className={`flex-1 py-3 px-6 rounded-lg font-bold uppercase tracking-wider transition-all border-2 flex items-center justify-center gap-2 ${
+                        className={`flex-1 py-4 px-8 rounded-xl font-bold uppercase tracking-wider transition-all border-2 flex items-center justify-center gap-3 text-lg ${
                             isSaving
                                 ? 'bg-slate-800 text-slate-500 border-slate-600 cursor-not-allowed'
                                 : 'bg-yellow-600 hover:bg-yellow-500 text-white border-yellow-400 cursor-pointer'
@@ -232,12 +382,12 @@ const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave })
                     >
                         {isSaving ? (
                             <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                                 Saving...
                             </>
                         ) : (
                             <>
-                                <Save size={16} />
+                                <Save size={20} />
                                 Save Changes
                             </>
                         )}
@@ -245,6 +395,7 @@ const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave })
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

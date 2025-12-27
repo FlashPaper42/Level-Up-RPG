@@ -37,7 +37,8 @@ const ACTION_SOUNDS = {
     heal: 'assets/sounds/battle/actions/heal.wav',
     special: 'assets/sounds/battle/actions/special.wav',
     playerHitArmor: 'assets/sounds/battle/actions/playerHitArmor.wav',
-    playerHitHealth: 'assets/sounds/battle/actions/playerHitHealth.wav'
+    playerHitHealth: 'assets/sounds/battle/actions/playerHitHealth.wav',
+    ambush: 'assets/sounds/battle/ambush.wav'
 };
 
 // Mob name to folder name mapping
@@ -236,6 +237,11 @@ export const playPlayerHitArmor = () => playActionSound('playerHitArmor');
  * Play player hit health sound (mob attacked and hit player's health)
  */
 export const playPlayerHitHealth = () => playActionSound('playerHitHealth');
+
+/**
+ * Play ambush sound (miniboss/boss appears mid-battle)
+ */
+export const playAmbush = () => playActionSound('ambush');
 
 /**
  * Play actioncard left sound

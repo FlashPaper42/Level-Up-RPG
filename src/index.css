@@ -68,16 +68,59 @@
   animation: slowSpin 8s linear infinite;
 }
 
-/* Blinking cursor animation for active input boxes */
-@keyframes blink {
-  0%, 50% {
-    border-bottom-color: currentColor;
+/* Blinking animation for active empty input boxes */
+@keyframes blinkBox {
+  0%, 49% {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-bottom-color: #9ca3af;
   }
-  51%, 100% {
-    border-bottom-color: transparent;
+  50%, 100% {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom-color: #4b5563;
   }
 }
 
-.animate-blink-cursor {
-  animation: blink 1s step-end infinite;
+.animate-blink-box {
+  animation: blinkBox 1s ease-in-out infinite;
+}
+
+/* Ambush animation for miniboss/boss surprise encounters */
+@keyframes ambushFlash {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  100% {
+    transform: scale(1.05);
+    filter: brightness(1.3);
+  }
+}
+
+@keyframes ambushEntry {
+  0% {
+    transform: scale(0.3) rotate(-10deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-ambush {
+  animation: ambushEntry 0.5s ease-out forwards;
+}
+
+/* Shake animation for error states */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
 }

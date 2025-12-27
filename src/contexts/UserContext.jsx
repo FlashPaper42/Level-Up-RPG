@@ -31,6 +31,13 @@ export const UserProvider = ({ children }) => {
         } catch (e) { console.error(e); return { 1: false, 2: false, 3: false }; }
     });
 
+    // Profile PINs for account protection (4-digit codes)
+    const [profilePins, setProfilePins] = useState(() => {
+        try {
+            return localStorage.getItem('heroProfilePins_v1') ? JSON.parse(localStorage.getItem('heroProfilePins_v1')) : { 1: null, 2: null, 3: null };
+        } catch (e) { console.error(e); return { 1: null, 2: null, 3: null }; }
+    });
+
     // Theme state (Managed here as it's user-specific preference)
     // Note: In App.jsx this was loaded from 'heroSkills_v23_pX' but that mixes progression with settings.
     // For now, we will expose the activeTheme state, but the actual LOADING might still need to depend on 
@@ -52,6 +59,10 @@ export const UserProvider = ({ children }) => {
         localStorage.setItem('heroParentStatus_v1', JSON.stringify(parentStatus));
     }, [parentStatus]);
 
+    useEffect(() => {
+        localStorage.setItem('heroProfilePins_v1', JSON.stringify(profilePins));
+    }, [profilePins]);
+
     // --- Actions ---
     const updateProfileName = (id, name) => {
         setProfileNames(prev => ({ ...prev, [id]: name }));
@@ -59,6 +70,30 @@ export const UserProvider = ({ children }) => {
 
     const toggleParentStatus = (id) => {
         setParentStatus(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    // PIN management functions
+    const setProfilePin = (id, pin) => {
+        // Pin should be 4 digits or null to clear
+        if (pin === null || (typeof pin === 'string' && /^\d{4}$/.test(pin))) {
+            setProfilePins(prev => ({ ...prev, [id]: pin }));
+            return true;
+        }
+        return false;
+    };
+
+    const verifyProfilePin = (id, pin) => {
+        const savedPin = profilePins[id];
+        if (!savedPin) return true; // No PIN set, always allow
+        return savedPin === pin;
+    };
+
+    const clearProfilePin = (id) => {
+        setProfilePins(prev => ({ ...prev, [id]: null }));
+    };
+
+    const hasProfilePin = (id) => {
+        return profilePins[id] !== null;
     };
 
     // --- Cosmetics State ---
@@ -94,11 +129,17 @@ export const UserProvider = ({ children }) => {
         currentProfile,
         profileNames,
         parentStatus,
+        profilePins,
         activeTheme,
         setActiveTheme, // Exposed for App.jsx to sync with legacy load logic for now
         updateProfileName,
         toggleParentStatus,
         switchProfile,
+        // PIN management
+        setProfilePin,
+        verifyProfilePin,
+        clearProfilePin,
+        hasProfilePin,
         // Cosmetics
         selectedBorder, setSelectedBorder,
         borderColor, setBorderColor,

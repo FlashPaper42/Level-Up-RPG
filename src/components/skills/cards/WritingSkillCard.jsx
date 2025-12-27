@@ -240,8 +240,10 @@ const WritingSkillCard = ({
                                                                         for (let j = 0; j < i; j++) {
                                                                             if (challenge?.answer[j] !== ' ') inputIndex++;
                                                                         }
+                                                                        const isFilled = inputIndex < letterInput.length;
+                                                                        const isActiveEmpty = inputIndex === letterInput.length;
                                                                         return (
-                                                                            <div key={i} className={`${answerLength > 6 ? 'w-5 h-7 text-sm' : 'w-7 h-9 text-lg'} border-b-4 flex items-center justify-center font-mono font-bold text-white bg-black/20 rounded-t ${isWrong ? 'border-red-500 bg-red-900/30' : (inputIndex < letterInput.length ? 'border-green-500' : 'border-gray-600')}`}>
+                                                                            <div key={i} className={`${answerLength > 6 ? 'w-5 h-7 text-sm' : 'w-7 h-9 text-lg'} border-b-4 flex items-center justify-center font-mono font-bold text-white bg-black/20 rounded-t ${isWrong ? 'border-red-500 bg-red-900/30' : (isFilled ? 'border-green-500' : 'border-gray-600')} ${isActiveEmpty && !isWrong ? 'animate-blink-box' : ''}`}>
                                                                                 {letterInput[inputIndex] || ''}
                                                                             </div>
                                                                         );

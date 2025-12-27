@@ -51,7 +51,7 @@ import {
     playClick,
     playDeath, playFail, playLevelUp, playNotification, playSuccessfulHit,
     playMobHurt, playMobDeath, playMobSay, playAchievement,
-    playArmorGain, playHealSound, playSpecialAttack, playPlayerHitArmor, playPlayerHitHealth
+    playArmorGain, playHealSound, playSpecialAttack, playPlayerHitArmor, playPlayerHitHealth, playAmbush
 } from './utils/soundManager';
 import {
     getDefaultStats, getNewlyUnlockedAchievements, getNewTierAchievements,
@@ -77,6 +77,8 @@ const App = () => {
     const {
         currentProfile, profileNames, parentStatus, activeTheme,
         setActiveTheme, // For theme switching
+        // PIN management
+        setProfilePin, verifyProfilePin, clearProfilePin, hasProfilePin,
         switchProfile, updateProfileName, toggleParentStatus,
         // Cosmetics
         selectedBorder, setSelectedBorder,
@@ -121,6 +123,7 @@ const App = () => {
 
     const [damageNumbers, setDamageNumbers] = useState([]);
     const [showLevelRestored, setShowLevelRestored] = useState(false);
+    const [showAmbush, setShowAmbush] = useState(null); // { skillId, encounterType: 'miniboss' | 'boss' }
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [bossHealing, setBossHealing] = useState(null);
 
@@ -348,8 +351,106 @@ const App = () => {
                 const encounterType = getEncounterType(currentSkillState.level);
                 const skillConfig = SKILL_DATA.find(s => s.id === battlingSkillId);
 
-                // Boss fights: heal the boss instead of damaging the player
+                // Helper function to execute mob's turn (used for both regular mobs and bosses)
+                const executeMobTurnOnFail = (delayMs = 0) => {
+                    setTimeout(() => {
+                        if (!skillConfig || !checkIsCombatSkill(skillConfig.id) || !mobNextAction?.skillId === battlingSkillId) {
+                            mobTurnPendingRef.current = false;
+                            return;
+                        }
+
+                        const mobAction = { ...mobNextAction.action }; // Clone to prevent mutation
+                        console.log('[Mob Action] Player failed - executing stored action:', mobAction);
+
+                        // Show mob action animation
+                        setMobAttacking({ skillId: battlingSkillId, type: mobAction.type });
+                        
+                        // Play appropriate sound for mob action type
+                        if (mobAction.type === 'armor') {
+                            playArmorGain();
+                        } else if (mobAction.type === 'heal') {
+                            playHealSound();
+                        } else {
+                            playMobSay(getMobForSkill(skillConfig, currentSkillState));
+                        }
+
+                        setTimeout(() => {
+                            setMobAttacking(null);
+
+                            if (mobAction.type === 'armor') {
+                                setSkills(prev => {
+                                    const current = prev[battlingSkillId];
+                                    const currentArmor = current.mobArmor || 0;
+                                    const armorCap = current.mobMaxHealth || 60;
+                                    console.log(`[Combat] Mob ARMOR on fail: ${currentArmor} + ${mobAction.value}`);
+                                    return {
+                                        ...prev,
+                                        [battlingSkillId]: {
+                                            ...current,
+                                            mobArmor: Math.min(armorCap, currentArmor + mobAction.value)
+                                        }
+                                    };
+                                });
+                            } else if (mobAction.type === 'heal') {
+                                setSkills(prev => {
+                                    const current = prev[battlingSkillId];
+                                    const newHealth = Math.min(current.mobMaxHealth, current.mobHealth + mobAction.value);
+                                    console.log(`[Combat] Mob HEAL on fail: ${current.mobHealth} + ${mobAction.value} = ${newHealth}`);
+                                    return {
+                                        ...prev,
+                                        [battlingSkillId]: {
+                                            ...current,
+                                            mobHealth: newHealth
+                                        }
+                                    };
+                                });
+                            } else if (mobAction.type === 'damage') {
+                                // Mob damage is always 1 - simple calculation
+                                const damage = mobAction.value; // Should be 1
+                                
+                                // Use functional updates to get fresh state
+                                setArmorPoints(currentArmor => {
+                                    if (currentArmor > 0) {
+                                        // Has armor - absorb the hit
+                                        playPlayerHitArmor();
+                                        setPlayerDamageIndicator({ amount: damage, blocked: true });
+                                        setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                                        return Math.max(0, currentArmor - damage);
+                                    } else {
+                                        // No armor - take health damage
+                                        setPlayerHealth(currentHealth => {
+                                            const newHealth = Math.max(0, currentHealth - damage);
+                                            if (newHealth <= 0) {
+                                                setTimeout(() => processPlayerDeath(battlingSkillId), 0);
+                                            } else {
+                                                playPlayerHitHealth();
+                                            }
+                                            setPlayerDamageIndicator({ amount: damage, blocked: false });
+                                            setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                                            return newHealth <= 0 ? 10 : newHealth; // Reset on death
+                                        });
+                                        return currentArmor;
+                                    }
+                                });
+                            }
+
+                            // Calculate next mob action AFTER this turn completes
+                            const nextAction = calculateMobAction(battlingSkillId);
+                            setMobNextAction({ skillId: battlingSkillId, action: nextAction });
+                            mobTurnPendingRef.current = false;
+                        }, 600);
+                    }, delayMs);
+                };
+
+                // Boss fights: heal the boss AND the boss still takes their turn
                 if (encounterType === 'boss') {
+                    if (mobTurnPendingRef.current) {
+                        console.log('[Mob Action] Boss turn already pending, skipping');
+                        playFail();
+                        return;
+                    }
+                    mobTurnPendingRef.current = true;
+
                     setSkills(prev => {
                         const current = prev[battlingSkillId];
                         return {
@@ -367,103 +468,22 @@ const App = () => {
 
                     // Play fail sound to indicate mistake
                     playFail();
+                    
+                    // Boss takes their turn after the healing animation completes
+                    executeMobTurnOnFail(BOSS_HEALING_ANIMATION_DURATION + 200);
                     return;
                 }
 
                 // For Combat Skills (Reading, etc): Execute mob's stored action on player failure
-                // This replaces the generic damage penalty with the actual mob turn
                 if (skillConfig && checkIsCombatSkill(skillConfig.id) && mobNextAction?.skillId === battlingSkillId) {
-                    // Prevent double mob turns
                     if (mobTurnPendingRef.current) {
                         console.log('[Mob Action] Mob turn already pending on wrong answer, skipping');
                         playFail();
                         return;
                     }
                     mobTurnPendingRef.current = true;
-
-                    const mobAction = { ...mobNextAction.action }; // Clone to prevent mutation
-                    console.log('[Mob Action] Player failed - executing stored action:', mobAction);
-
-                    // Show mob action animation
-                    setMobAttacking({ skillId: battlingSkillId, type: mobAction.type });
-                    
-                    // Play appropriate sound for mob action type
-                    if (mobAction.type === 'armor') {
-                        playArmorGain();
-                    } else if (mobAction.type === 'heal') {
-                        playHealSound();
-                    } else {
-                        // Get correct mob name for this skill (readingMob, mathMob, etc.)
-                        playMobSay(getMobForSkill(skillConfig, currentSkillState));
-                    }
-
-                    playFail(); // Also play fail to indicate wrong answer
-
-                    setTimeout(() => {
-                        setMobAttacking(null);
-
-                        if (mobAction.type === 'armor') {
-                            // Mob gains armor
-                            setSkills(prev => {
-                                const current = prev[battlingSkillId];
-                                const currentArmor = current.mobArmor || 0;
-                                const armorCap = current.mobMaxHealth || 60;
-                                console.log(`[Combat] Mob ARMOR on fail: ${currentArmor} + ${mobAction.value}`);
-                                return {
-                                    ...prev,
-                                    [battlingSkillId]: {
-                                        ...current,
-                                        mobArmor: Math.min(armorCap, currentArmor + mobAction.value)
-                                    }
-                                };
-                            });
-                        } else if (mobAction.type === 'heal') {
-                            // Mob heals itself
-                            setSkills(prev => {
-                                const current = prev[battlingSkillId];
-                                const newHealth = Math.min(current.mobMaxHealth, current.mobHealth + mobAction.value);
-                                console.log(`[Combat] Mob HEAL on fail: ${current.mobHealth} + ${mobAction.value} = ${newHealth}`);
-                                return {
-                                    ...prev,
-                                    [battlingSkillId]: {
-                                        ...current,
-                                        mobHealth: newHealth
-                                    }
-                                };
-                            });
-                        } else if (mobAction.type === 'damage') {
-                            // Mob Attacks Player - use functional update for fresh state
-                            setPlayerHealth(currentHealth => {
-                                setArmorPoints(currentArmor => {
-                                    const damageResult = calculatePlayerDamage(currentHealth, mobAction.value, currentArmor);
-
-                                    // Play appropriate hit sound
-                                    if (damageResult.playerDied) {
-                                        setTimeout(() => processPlayerDeath(battlingSkillId), 0);
-                                    } else if (damageResult.fullyBlocked || damageResult.absorbed > 0) {
-                                        playPlayerHitArmor();
-                                    } else {
-                                        playPlayerHitHealth();
-                                    }
-
-                                    setPlayerDamageIndicator({
-                                        amount: damageResult.fullyBlocked ? damageResult.absorbed : damageResult.actualDamage,
-                                        blocked: damageResult.fullyBlocked
-                                    });
-                                    setTimeout(() => setPlayerDamageIndicator(null), 1000);
-
-                                    setTimeout(() => setPlayerHealth(damageResult.newHealth), 0);
-                                    return damageResult.newArmor;
-                                });
-                                return currentHealth;
-                            });
-                        }
-
-                        // Calculate next mob action AFTER this turn completes
-                        const nextAction = calculateMobAction(battlingSkillId);
-                        setMobNextAction({ skillId: battlingSkillId, action: nextAction });
-                        mobTurnPendingRef.current = false;
-                    }, 600);
+                    playFail();
+                    executeMobTurnOnFail(0);
                 } else {
                     // Fallback for non-combat skills or if no mob action ready (just play fail sound)
                     playFail();
@@ -605,6 +625,21 @@ const App = () => {
 
                 if (leveledUp) {
                     playLevelUp();
+                    
+                    // Check for AMBUSH: if new level is a miniboss or boss level
+                    const newEncounterType = getEncounterType(newLevel);
+                    if (newEncounterType === 'miniboss' || newEncounterType === 'boss') {
+                        // Trigger AMBUSH animation!
+                        setShowAmbush({ skillId, encounterType: newEncounterType });
+                        playAmbush();
+                        
+                        // Fully heal the player
+                        setPlayerHealth(10);
+                        setArmorPoints(0);
+                        
+                        // Clear ambush after animation
+                        setTimeout(() => setShowAmbush(null), 2500);
+                    }
                 }
 
                 // 3. Generate New Mob Data using combat system
@@ -797,37 +832,31 @@ const App = () => {
                     setMobAttacking(null);
 
                     if (currentMobAction.type === 'damage') {
-                        // DAMAGE LOGIC: Use functional update to get fresh state
-                        setPlayerHealth(currentHealth => {
-                            setArmorPoints(currentArmor => {
-                                const damageResult = calculatePlayerDamage(currentHealth, currentMobAction.value, currentArmor);
-                                
-                                // Play appropriate sound based on what got hit
-                                if (damageResult.playerDied) {
-                                    // Death sound will be played by processPlayerDeath
-                                    setTimeout(() => processPlayerDeath(skillId), 0);
-                                } else if (damageResult.fullyBlocked) {
-                                    playPlayerHitArmor();
-                                } else if (damageResult.absorbed > 0) {
-                                    // Partial armor absorption
-                                    playPlayerHitArmor();
-                                } else {
-                                    playPlayerHitHealth();
-                                }
-
-                                // Show damage indicator
-                                setPlayerDamageIndicator({
-                                    amount: damageResult.fullyBlocked ? damageResult.absorbed : damageResult.actualDamage,
-                                    blocked: damageResult.fullyBlocked
-                                });
+                        // Mob damage is always 1 - use functional updates for fresh state
+                        const damage = currentMobAction.value; // Should be 1
+                        
+                        setArmorPoints(currentArmor => {
+                            if (currentArmor > 0) {
+                                // Has armor - absorb the hit
+                                playPlayerHitArmor();
+                                setPlayerDamageIndicator({ amount: damage, blocked: true });
                                 setTimeout(() => setPlayerDamageIndicator(null), 1000);
-
-                                // Update health in the outer setState
-                                setTimeout(() => setPlayerHealth(damageResult.newHealth), 0);
-                                
-                                return damageResult.newArmor;
-                            });
-                            return currentHealth; // Will be updated by inner setTimeout
+                                return Math.max(0, currentArmor - damage);
+                            } else {
+                                // No armor - take health damage
+                                setPlayerHealth(currentHealth => {
+                                    const newHealth = Math.max(0, currentHealth - damage);
+                                    if (newHealth <= 0) {
+                                        setTimeout(() => processPlayerDeath(skillId), 0);
+                                    } else {
+                                        playPlayerHitHealth();
+                                    }
+                                    setPlayerDamageIndicator({ amount: damage, blocked: false });
+                                    setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                                    return newHealth <= 0 ? 10 : newHealth; // Reset on death
+                                });
+                                return currentArmor;
+                            }
                         });
                     } else if (currentMobAction.type === 'armor') {
                         // MOB GAINS ARMOR
@@ -1067,7 +1096,22 @@ const App = () => {
     // Helper for reset and profile stats
     const getStorageKey = (profileId) => `heroSkills_v23_p${profileId}`;
 
-    const getProfileStats = (id) => {
+    const getProfileStats = (id, liveSkills = null) => {
+        // If liveSkills are provided (for current profile), use them instead of localStorage
+        // This fixes the visual level swap bug when toggling profiles
+        if (liveSkills && Object.keys(liveSkills).length > 0) {
+            let totalLevel = 0;
+            let highestLevel = 0;
+            Object.values(liveSkills).forEach(s => {
+                if (s && typeof s.level === 'number') {
+                    totalLevel += s.level;
+                    if (s.level > highestLevel) highestLevel = s.level;
+                }
+            });
+            return { totalLevel, highestLevel, skills: liveSkills, theme: activeTheme || 'minecraft' };
+        }
+        
+        // Fall back to localStorage for non-current profiles
         const key = getStorageKey(id);
         let saved = localStorage.getItem(key);
         if (!saved && id === 1) saved = localStorage.getItem('heroSkills_v23');
@@ -1308,6 +1352,10 @@ const App = () => {
                 selectedAvatar={selectedAvatar}
                 selectedBorder={selectedBorder}
                 borderColor={borderColor}
+                hasProfilePin={hasProfilePin}
+                setProfilePin={setProfilePin}
+                verifyProfilePin={verifyProfilePin}
+                clearProfilePin={clearProfilePin}
             />
             <ResetModal isOpen={isResetOpen} onClose={() => setIsResetOpen(false)} onConfirm={handleReset} />
             <BugReportModal isOpen={isBugReportOpen} onClose={() => setIsBugReportOpen(false)} />
@@ -1460,6 +1508,32 @@ const App = () => {
                                 LEVEL RESTORED!
                             </h1>
                             <p className="text-2xl text-yellow-400 mt-4">Welcome back, hero!</p>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* AMBUSH! - Miniboss or Boss appears mid-battle */}
+            {
+                showAmbush && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+                        <div className="absolute inset-0 bg-black/70 animate-pulse"></div>
+                        <div className="relative text-center animate-ambush">
+                            <h1 
+                                className={`text-9xl font-black uppercase tracking-widest ${showAmbush.encounterType === 'boss' ? 'text-red-500' : 'text-purple-500'}`}
+                                style={{ 
+                                    textShadow: showAmbush.encounterType === 'boss' 
+                                        ? '0 0 40px rgba(255,0,0,0.9), 0 0 80px rgba(255,0,0,0.6), 6px 6px 0 #000' 
+                                        : '0 0 40px rgba(168,85,247,0.9), 0 0 80px rgba(168,85,247,0.6), 6px 6px 0 #000',
+                                    animation: 'ambushFlash 0.3s ease-in-out infinite alternate'
+                                }}
+                            >
+                                AMBUSH!
+                            </h1>
+                            <p className={`text-3xl font-bold mt-6 uppercase tracking-wider ${showAmbush.encounterType === 'boss' ? 'text-red-300' : 'text-purple-300'}`}>
+                                {showAmbush.encounterType === 'boss' ? '⚔️ A BOSS APPEARS! ⚔️' : '💀 MINIBOSS INCOMING! 💀'}
+                            </p>
+                            <p className="text-xl text-green-400 mt-4">Player fully healed!</p>
                         </div>
                     </div>
                 )

@@ -91,19 +91,33 @@ const PatternsSkillCard = ({
         }
     }, [isNightmareMode, simonGameActive, showInstructions]);
     
-    // Get border color for active elements (use player's custom border or default yellow)
-    const getActiveBorderStyle = () => {
-        if (selectedBorder === 'solid-picker' && borderColor) {
-            return { borderColor: borderColor, boxShadow: `0 0 20px ${borderColor}, 0 0 30px ${borderColor}` };
-        } else if (selectedBorder === 'solid') {
-            return { borderColor: '#FFD700', boxShadow: '0 0 20px #FFD700, 0 0 30px #FFD700' };
-        } else if (borderColor) {
-            return { borderColor: borderColor, boxShadow: `0 0 20px ${borderColor}, 0 0 30px ${borderColor}` };
+    // Get border effect class and style for active elements (use player's full border effect)
+    const getActiveBorderEffect = () => {
+        let effectClass = '';
+        let effectStyle = {};
+        
+        if (selectedBorder === 'solid' || selectedBorder === 'solid-picker') {
+            // For solid borders, use inline styles with glow
+            const effectiveColor = selectedBorder === 'solid' ? '#FFD700' : (borderColor || '#FFD700');
+            effectStyle = {
+                borderColor: effectiveColor,
+                boxShadow: `0 0 20px ${effectiveColor}, 0 0 30px ${effectiveColor}`
+            };
+        } else if (selectedBorder) {
+            // For animated borders (gradient, sparkle, etc.), use the CSS class
+            effectClass = `border-effect-${selectedBorder}`;
+            if (selectedBorder === 'gradient' || selectedBorder === 'sparkle') {
+                effectStyle = { '--border-color': borderColor || '#FFD700' };
+            }
+        } else {
+            // Default fallback
+            effectStyle = { borderColor: '#FFD700', boxShadow: '0 0 20px #FFD700, 0 0 30px #FFD700' };
         }
-        return { borderColor: '#FFD700', boxShadow: '0 0 20px #FFD700, 0 0 30px #FFD700' };
+        
+        return { effectClass, effectStyle };
     };
     
-    const activeBorderStyle = getActiveBorderStyle();
+    const { effectClass: activeBorderClass, effectStyle: activeBorderStyle } = getActiveBorderEffect();
 
     const playSequence = useCallback((sequence) => {
         setIsShowingSequence(true);
@@ -409,7 +423,7 @@ const PatternsSkillCard = ({
                                 >
                                     {/* Center dot with player's border theme */}
                                     <div
-                                        className="absolute z-20 w-10 h-10 bg-slate-800 rounded-full border-4 flex items-center justify-center"
+                                        className={`absolute z-20 w-10 h-10 bg-slate-800 rounded-full border-4 flex items-center justify-center ${activeBorderClass}`}
                                         style={activeBorderStyle}
                                     >
                                     </div>
@@ -426,7 +440,7 @@ const PatternsSkillCard = ({
                                                 key={color}
                                                 onClick={() => handleAxolotlClick(color)}
                                                 disabled={isShowingSequence}
-                                                className={`absolute rounded-full border-4 transition-all duration-150 flex items-center justify-center ${isLit ? 'scale-125 brightness-150' : 'border-slate-500 hover:border-slate-300 hover:scale-110'} ${!simonGameActive && !isShowingSequence ? 'opacity-50' : ''}`}
+                                                className={`absolute rounded-full border-4 transition-all duration-150 flex items-center justify-center ${isLit ? `scale-125 brightness-150 ${activeBorderClass}` : 'border-slate-500 hover:border-slate-300 hover:scale-110'} ${!simonGameActive && !isShowingSequence ? 'opacity-50' : ''}`}
                                                 style={{
                                                     width: '120px',
                                                     height: '120px',

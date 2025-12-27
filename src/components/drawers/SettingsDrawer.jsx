@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Users, Music, Trash2, AlertTriangle, Edit3, Crown } from 'lucide-react';
+import { Users, Music, Trash2, AlertTriangle, Edit3, Crown, LockOpen } from 'lucide-react';
 import ProfileCard from '../profile/ProfileCard';
 import ProfileEditorModal from '../modals/ProfileEditorModal';
 
-const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol, currentProfile, onSwitchProfile, profileNames, onRenameProfile, getProfileStats, parentStatus, onParentVerified, currentSkills, selectedAvatar, selectedBorder, borderColor }) => {
+const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol, currentProfile, onSwitchProfile, profileNames, onRenameProfile, getProfileStats, parentStatus, onParentVerified, currentSkills, selectedAvatar, selectedBorder, borderColor, hasProfilePin, setProfilePin, verifyProfilePin, clearProfilePin }) => {
     const [editingProfileId, setEditingProfileId] = useState(null);
     // Helper to get avatar for each profile
     const getProfileAvatar = (profileId) => {
@@ -71,6 +71,9 @@ const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol,
                                         selectedBorder={getProfileBorder(id)}
                                         borderColor={getProfileBorderColor(id)}
                                         profileBgColor={getProfileBgColor(id)}
+                                        hasPin={hasProfilePin && hasProfilePin(id)}
+                                        onSetPin={setProfilePin}
+                                        onVerifyPin={verifyProfilePin}
                                     />
                                 ))}
                             </div>
@@ -82,21 +85,58 @@ const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol,
                                 <h3 className="text-lg text-yellow-300 mb-3 font-bold flex items-center gap-2 uppercase tracking-wider">
                                     <Crown size={18} className="text-yellow-400" /> Parent Tools
                                 </h3>
-                                <div className="space-y-2 bg-slate-900/50 p-3 rounded-xl border-2 border-yellow-600/50">
-                                    <p className="text-slate-400 text-xs mb-2">
-                                        Edit profile data to adjust skill levels and achievements.
-                                    </p>
-                                    <div className="flex gap-2">
-                                        {[1, 2, 3].map(id => (
-                                            <button
-                                                key={id}
-                                                onClick={() => setEditingProfileId(id)}
-                                                className="flex-1 bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-400 p-2 rounded-lg border border-yellow-600/50 hover:border-yellow-500 font-bold text-sm flex items-center justify-center gap-1 transition-all"
-                                            >
-                                                <Edit3 size={14} />
-                                                {profileNames[id]}
-                                            </button>
-                                        ))}
+                                <div className="space-y-4 bg-slate-900/50 p-4 rounded-xl border-2 border-yellow-600/50">
+                                    {/* Edit Levels Section */}
+                                    <div>
+                                        <p className="text-slate-400 text-sm mb-2 font-medium">
+                                            Edit skill levels for each profile:
+                                        </p>
+                                        <div className="flex gap-2">
+                                            {[1, 2, 3].map(id => (
+                                                <button
+                                                    key={id}
+                                                    onClick={() => setEditingProfileId(id)}
+                                                    className="flex-1 bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-400 p-2 rounded-lg border border-yellow-600/50 hover:border-yellow-500 font-bold text-sm flex items-center justify-center gap-1 transition-all"
+                                                >
+                                                    <Edit3 size={14} />
+                                                    {profileNames[id]}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Reset PIN Section */}
+                                    <div className="pt-3 border-t border-yellow-600/30">
+                                        <p className="text-slate-400 text-sm mb-2 font-medium">
+                                            Reset forgotten profile PINs:
+                                        </p>
+                                        <div className="flex gap-2">
+                                            {[1, 2, 3].map(id => (
+                                                <button
+                                                    key={id}
+                                                    onClick={() => {
+                                                        if (hasProfilePin && hasProfilePin(id)) {
+                                                            if (clearProfilePin) {
+                                                                clearProfilePin(id);
+                                                            }
+                                                        }
+                                                    }}
+                                                    disabled={!hasProfilePin || !hasProfilePin(id)}
+                                                    className={`flex-1 p-2 rounded-lg border font-bold text-sm flex items-center justify-center gap-1 transition-all ${
+                                                        hasProfilePin && hasProfilePin(id)
+                                                            ? 'bg-red-600/20 hover:bg-red-600/30 text-red-400 border-red-600/50 hover:border-red-500'
+                                                            : 'bg-slate-800/50 text-slate-600 border-slate-700 cursor-not-allowed'
+                                                    }`}
+                                                    title={hasProfilePin && hasProfilePin(id) ? 'Click to remove PIN' : 'No PIN set'}
+                                                >
+                                                    <LockOpen size={14} />
+                                                    {profileNames[id]}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-slate-500 text-xs mt-2 italic">
+                                            Only profiles with a PIN set can be reset. Grayed-out profiles have no PIN.
+                                        </p>
                                     </div>
                                 </div>
                             </div>

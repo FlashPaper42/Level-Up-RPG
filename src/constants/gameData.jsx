@@ -32,6 +32,7 @@ export const FRIENDLY_MOBS = {
     'Chicken': 'assets/mobs/friendly/chicken.png',
     'Copper Golem': 'assets/mobs/friendly/coppergolem.png',
     'Cow': 'assets/mobs/friendly/cow.png',
+    'Dolphin': 'assets/mobs/friendly/dolphin.gif',
     'Fish': 'assets/mobs/friendly/fish.png',
     'Frog': 'assets/mobs/friendly/frog.gif',
     'Glow Squid': 'assets/mobs/friendly/glowsquid.gif',
@@ -49,6 +50,7 @@ export const FRIENDLY_MOBS = {
     'Squid': 'assets/mobs/friendly/squid.gif',
     'Strider': 'assets/mobs/friendly/strider.gif',
     'Turtle': 'assets/mobs/friendly/turtle.png',
+    'Villager': 'assets/mobs/friendly/villager.png',
     'Wolf': 'assets/mobs/friendly/wolf.png'
 };
 

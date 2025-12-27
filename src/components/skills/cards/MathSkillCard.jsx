@@ -248,11 +248,15 @@ const MathSkillCard = ({
                                                                 disabled={isWrong}
                                                             />
                                                             <div className={`flex gap-2 ${isWrong ? 'animate-shake' : ''}`}>
-                                                                {String(challenge?.answer).split('').map((char, i) => (
-                                                                    <div key={i} className={`w-10 h-12 border-b-4 flex items-center justify-center text-2xl font-mono font-bold text-white bg-black/20 rounded-t ${isWrong ? 'border-red-500 bg-red-900/30' : (i < mathInput.length ? 'border-green-500' : 'border-gray-600')}`}>
-                                                                        {mathInput[i] || ''}
-                                                                    </div>
-                                                                ))}
+                                                                {String(challenge?.answer).split('').map((char, i) => {
+                                                                    const isFilled = i < mathInput.length;
+                                                                    const isActiveEmpty = i === mathInput.length;
+                                                                    return (
+                                                                        <div key={i} className={`w-10 h-12 border-b-4 flex items-center justify-center text-2xl font-mono font-bold text-white bg-black/20 rounded-t ${isWrong ? 'border-red-500 bg-red-900/30' : (isFilled ? 'border-green-500' : 'border-gray-600')} ${isActiveEmpty && !isWrong ? 'animate-blink-box' : ''}`}>
+                                                                            {mathInput[i] || ''}
+                                                                        </div>
+                                                                    );
+                                                                })}
                                                             </div>
                                                         </div>
                                                         <button onClick={() => { setSelectedAction(null); playClick(); }} className="w-full text-xs text-gray-500 underline hover:text-white mt-2">Cancel Action</button>
