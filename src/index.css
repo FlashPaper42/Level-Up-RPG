@@ -53,3 +53,31 @@
     left: -120px;
   }
 }
+
+/* Slow constant spin for nightmare mode patterns */
+@keyframes slowSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: slowSpin 8s linear infinite;
+}
+
+/* Blinking cursor animation for active input boxes */
+@keyframes blink {
+  0%, 50% {
+    border-bottom-color: currentColor;
+  }
+  51%, 100% {
+    border-bottom-color: transparent;
+  }
+}
+
+.animate-blink-cursor {
+  animation: blink 1s step-end infinite;
+}

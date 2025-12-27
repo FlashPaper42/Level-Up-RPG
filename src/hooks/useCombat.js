@@ -12,6 +12,7 @@ import {
     getRandomFriendlyMob,
     getRandomMiniboss,
     getRandomBoss,
+    getMobForSkill,
     addUniqueToArray, // Ensure this is exported from utils/gameUtils or utils/achievementUtils
     getRandomAura
 } from '../utils/gameUtils';
@@ -132,7 +133,8 @@ export const useCombat = ({
         const currentSkillState = skills[skillId];
         const skillDifficulty = currentSkillState.difficulty || 1;
         const playerLevel = currentSkillState.level;
-        const currentMobName = currentSkillState.currentMob;
+        // Get the correct mob name for this skill (reading uses readingMob, math uses mathMob, etc.)
+        const currentMobName = getMobForSkill(skillConfig, currentSkillState);
 
         const damage = calculateDamage(playerLevel, skillDifficulty);
         const encounterType = getEncounterType(playerLevel);

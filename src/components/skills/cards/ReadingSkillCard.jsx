@@ -321,11 +321,12 @@ const ReadingSkillCard = ({
                             {/* Center - Mob Card */}
                             <div className="flex-shrink-0 absolute left-1/2 pointer-events-auto" style={{ transform: 'translateX(-50%)' }} onClick={(e) => e.stopPropagation()}>
                                 <div
-                                    className="relative w-[534px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg overflow-hidden flex flex-col"
+                                    className={`relative w-[534px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 rounded-lg overflow-hidden flex flex-col ${appliedBorderEffect || 'border-slate-600'}`}
                                     style={{
                                         boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(100,100,100,0.2)',
                                         top: '0px',
                                         height: 'calc(100vh - 230px)',
+                                        ...borderStyle
                                     }}
                                 >
                                     <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-purple-600"></div>

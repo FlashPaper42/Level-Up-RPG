@@ -56,16 +56,13 @@ const CosmeticsDrawer = ({
         >
             <div className="p-6 h-full flex flex-col justify-start gap-6 overflow-y-auto scrollbar-hide text-slate-200 font-sans">
                 <div className="flex justify-between items-center border-b-2 border-slate-700 pb-4 shrink-0">
-                    <h2 className="text-4xl text-yellow-400 font-bold uppercase tracking-widest drop-shadow-md" style={{ fontFamily: '"VT323", monospace' }}>
-                        Themes & Cosmetics
+                    <h2 className="text-4xl text-yellow-400 font-bold uppercase tracking-widest drop-shadow-md flex items-center gap-3" style={{ fontFamily: '"VT323", monospace' }}>
+                        <Sparkles size={32} /> Border Effects
                     </h2>
                 </div>
 
                 {/* Border Effect Selection - Optimized Grid Layout */}
                 <div>
-                    <h3 className="text-xl text-blue-300 mb-4 font-bold flex items-center gap-3 uppercase tracking-wider">
-                        <Sparkles size={20} /> Border Effects
-                    </h3>
                     <div className="grid grid-cols-3 gap-3">
                         {/* All border effects (badge-unlocked and achievement-unlocked) */}
                         {BORDER_EFFECTS.map((effect, index) => {

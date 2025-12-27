@@ -26,6 +26,7 @@ export const ProgressionProvider = ({ children }) => {
     const [skills, setSkills] = useState({});
     const [stats, setStats] = useState(getDefaultStats());
     const [achievements, setAchievements] = useState([]); // This might be derived from stats/skills usually, but state is fine
+    const [hasLoaded, setHasLoaded] = useState(false); // Prevent saving before initial load completes
 
     // --- Load Logic (Mirrored from App.jsx) ---
     const loadData = useCallback(() => {
@@ -84,26 +85,37 @@ export const ProgressionProvider = ({ children }) => {
                 if (parsed.theme) {
                     setActiveTheme(parsed.theme);
                 }
+                
+                // Mark as loaded to enable persistence
+                setHasLoaded(true);
             } catch (e) {
                 console.error("Failed to load progression data:", e);
                 setSkills(initialSkills);
+                setHasLoaded(true);
             }
         } else {
             setSkills(initialSkills);
             setStats(getDefaultStats());
             setActiveTheme('minecraft');
+            setHasLoaded(true);
         }
     }, [currentProfile, setActiveTheme]);
 
     // Reload when profile changes
+    // Reset hasLoaded when profile changes to prevent stale saves
     useEffect(() => {
+        setHasLoaded(false);
         loadData();
     }, [loadData]);
 
 
     // --- Persistence ---
+    // Only save AFTER initial load completes to prevent overwriting saved data with empty state
     useEffect(() => {
-        if (!currentProfile) return;
+        if (!currentProfile || !hasLoaded) return;
+        
+        // Don't save if skills is empty (shouldn't happen after load, but safety check)
+        if (Object.keys(skills).length === 0) return;
 
         const dataToSave = {
             skills,
@@ -117,7 +129,7 @@ export const ProgressionProvider = ({ children }) => {
         if (currentProfile === 1) {
             localStorage.setItem('heroSkills_v23', JSON.stringify(dataToSave));
         }
-    }, [skills, stats, activeTheme, currentProfile]);
+    }, [skills, stats, activeTheme, currentProfile, hasLoaded]);
 
 
     // --- Actions ---

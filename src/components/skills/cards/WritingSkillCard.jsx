@@ -112,13 +112,15 @@ const WritingSkillCard = ({
             }
             setLetterInput('');
         } else if (val.length === answerNoSpaces.length) {
+            // Wrong answer - forfeit turn, no retry
             setIsWrong(true);
             playMismatch();
             onMathSubmit('WRONG');
             setTimeout(() => {
                 setIsWrong(false);
                 setLetterInput('');
-                setTimeout(() => inputRef.current?.focus(), 10);
+                // Forfeit turn: deselect action so player must choose again
+                setSelectedAction(null);
             }, 500);
         }
     };
@@ -275,7 +277,7 @@ const WritingSkillCard = ({
                                                                 <span className={actionPoints >= 5 ? 'text-yellow-300' : 'text-red-400'}>{actionPoints >= 5 ? '5 AP' : `${actionPoints}/5 AP`} ✨</span>
                                                             </div>
                                                         </button>
-                                                        <button onClick={() => { if (actionPoints >= 2) { handleCombatAction && handleCombatAction(config.id, 'heal', true); playClick(); } }} disabled={actionPoints < 2} className={`text-white text-xl font-bold py-3 px-2 rounded border-2 active:shadow-none active:translate-y-[2px] transition-all flex flex-col items-center justify-center relative ${actionPoints >= 2 ? 'bg-green-600 hover:bg-green-500 border-green-700 shadow-[0_2px_0_#14532d]' : 'bg-green-900/50 border-green-900 cursor-not-allowed'}`} style={actionPoints >= 2 ? { backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")', backgroundSize: '40px 40px', opacity: 0.9 } : {}}>
+                                                        <button onClick={() => { if (actionPoints >= 2) { setSelectedAction('heal'); playClick(); } }} disabled={actionPoints < 2} className={`text-white text-xl font-bold py-3 px-2 rounded border-2 active:shadow-none active:translate-y-[2px] transition-all flex flex-col items-center justify-center relative ${actionPoints >= 2 ? 'bg-green-600 hover:bg-green-500 border-green-700 shadow-[0_2px_0_#14532d]' : 'bg-green-900/50 border-green-900 cursor-not-allowed'}`} style={actionPoints >= 2 ? { backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")', backgroundSize: '40px 40px', opacity: 0.9 } : {}}>
                                                             {actionPoints >= 2 && <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-60" style={{ backgroundSize: '40px 40px' }}></div>}
                                                             <span className="relative z-10 uppercase">Heal</span>
                                                             <div className="relative z-10 flex items-center justify-center gap-2 mt-1 text-base">
@@ -315,8 +317,8 @@ const WritingSkillCard = ({
                             {/* Center - Mob Card */}
                             <div className="flex-shrink-0 absolute left-1/2 pointer-events-auto" style={{ transform: 'translateX(-50%)' }} onClick={(e) => e.stopPropagation()}>
                                 <div
-                                    className="relative w-[534px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg overflow-hidden flex flex-col"
-                                    style={{ boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(100,100,100,0.2)', height: 'calc(100vh - 230px)' }}
+                                    className={`relative w-[534px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 rounded-lg overflow-hidden flex flex-col ${appliedBorderEffect || 'border-slate-600'}`}
+                                    style={{ boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(100,100,100,0.2)', height: 'calc(100vh - 230px)', ...borderStyle }}
                                 >
                                     <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-green-600"></div>
                                     <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-green-600"></div>

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, FileText, Award, TrendingUp } from 'lucide-react';
+import { X, Save, Info, TrendingUp, HelpCircle } from 'lucide-react';
 import { SKILL_DATA } from '../../constants/gameData';
 import { loadProfileData, saveProfileData, getDataDirectory } from '../../utils/storage';
 import { getDefaultStats } from '../../utils/achievementUtils';
+import { calculateXPToLevel, calculateMobHealth } from '../../utils/gameUtils';
 
 const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave }) => {
     const [profileData, setProfileData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [dataPath, setDataPath] = useState(null);
-    const [activeTab, setActiveTab] = useState('skills'); // 'skills' or 'achievements'
+    const [showCheatSheet, setShowCheatSheet] = useState(false);
 
     useEffect(() => {
         if (isOpen && profileId) {
@@ -30,7 +31,6 @@ const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave })
                     initialSkills[skill.id] = {
                         level: 1,
                         xp: 0,
-                        xpToLevel: 10,
                         difficulty: 1,
                         earnedBadges: []
                     };
@@ -71,27 +71,27 @@ const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave })
         }
     };
 
-    const updateSkill = (skillId, field, value) => {
+    const updateSkillLevel = (skillId, newLevel) => {
+        const level = Math.max(1, Math.min(200, parseInt(newLevel) || 1));
+        // Calculate difficulty based on level: every 20 levels unlocks a new difficulty, cap at 7
+        const difficulty = Math.min(7, Math.floor(level / 20) + 1);
+        // Reset XP to 0 when changing level
+        const xp = 0;
+        // Calculate mob health based on difficulty
+        const mobMaxHealth = calculateMobHealth(difficulty);
+        
         setProfileData(prev => ({
             ...prev,
             skills: {
                 ...prev.skills,
                 [skillId]: {
                     ...prev.skills[skillId],
-                    [field]: field === 'level' || field === 'xp' || field === 'xpToLevel' || field === 'difficulty'
-                        ? parseInt(value) || 0
-                        : value
+                    level,
+                    xp,
+                    difficulty,
+                    mobHealth: mobMaxHealth,
+                    mobMaxHealth
                 }
-            }
-        }));
-    };
-
-    const updateStat = (statKey, value) => {
-        setProfileData(prev => ({
-            ...prev,
-            stats: {
-                ...prev.stats,
-                [statKey]: typeof value === 'number' ? (parseInt(value) || 0) : value
             }
         }));
     };
@@ -115,204 +115,102 @@ const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave })
     if (!profileData) return null;
 
     const skills = profileData.skills || {};
-    const stats = profileData.stats || getDefaultStats();
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="relative bg-slate-900 border-4 border-yellow-400 rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] shadow-2xl flex flex-col">
+            <div className="relative bg-slate-900 border-4 border-yellow-400 rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] shadow-2xl flex flex-col">
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10">
                     <X size={24} />
                 </button>
 
                 <div className="flex-shrink-0 mb-4">
-                    <h2 className="text-3xl font-bold text-yellow-400 uppercase tracking-wider mb-2">
-                        Profile Editor: {profileName}
+                    <h2 className="text-3xl font-bold text-yellow-400 uppercase tracking-wider mb-2 flex items-center gap-3">
+                        <TrendingUp size={28} />
+                        Edit Levels: {profileName}
                     </h2>
-                    {dataPath && (
-                        <p className="text-xs text-slate-400">
-                            Data Location: {dataPath}
-                        </p>
-                    )}
+                    <p className="text-sm text-slate-400">
+                        Adjust player levels for each skill. Difficulty unlocks automatically based on level.
+                    </p>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex gap-2 mb-4 border-b-2 border-slate-700">
-                    <button
-                        onClick={() => setActiveTab('skills')}
-                        className={`px-4 py-2 font-bold uppercase tracking-wider transition-all ${
-                            activeTab === 'skills'
-                                ? 'text-yellow-400 border-b-2 border-yellow-400'
-                                : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                    >
-                        <TrendingUp size={16} className="inline mr-2" />
-                        Skills & Levels
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('achievements')}
-                        className={`px-4 py-2 font-bold uppercase tracking-wider transition-all ${
-                            activeTab === 'achievements'
-                                ? 'text-yellow-400 border-b-2 border-yellow-400'
-                                : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                    >
-                        <Award size={16} className="inline mr-2" />
-                        Achievements & Stats
-                    </button>
-                </div>
+                {/* Cheat Sheet Toggle */}
+                <button
+                    onClick={() => setShowCheatSheet(!showCheatSheet)}
+                    className="mb-4 flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors text-sm font-bold uppercase"
+                >
+                    <HelpCircle size={16} />
+                    {showCheatSheet ? 'Hide' : 'Show'} Level & Difficulty Guide
+                </button>
 
-                {/* Content */}
+                {/* Cheat Sheet */}
+                {showCheatSheet && (
+                    <div className="mb-4 bg-slate-800/80 p-4 rounded-lg border-2 border-blue-600/50">
+                        <h3 className="text-lg text-blue-300 font-bold mb-3 uppercase">📖 How Levels Work</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <h4 className="text-yellow-400 font-bold mb-2">Level → Difficulty Unlock</h4>
+                                <ul className="text-slate-300 space-y-1">
+                                    <li>• Level 1-19: Difficulty 1</li>
+                                    <li>• Level 20-39: Difficulty 2</li>
+                                    <li>• Level 40-59: Difficulty 3</li>
+                                    <li>• Level 60-79: Difficulty 4</li>
+                                    <li>• Level 80-99: Difficulty 5</li>
+                                    <li>• Level 100-119: Difficulty 6</li>
+                                    <li>• Level 120+: Difficulty 7 (Nightmare)</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="text-yellow-400 font-bold mb-2">Special Encounters</h4>
+                                <ul className="text-slate-300 space-y-1">
+                                    <li>• <span className="text-purple-400">Miniboss</span>: Every 20 levels starting at 10</li>
+                                    <li className="text-xs text-slate-400 ml-4">(Lvl 10, 30, 50, 70...)</li>
+                                    <li>• <span className="text-red-400">Boss</span>: Every 20 levels starting at 20</li>
+                                    <li className="text-xs text-slate-400 ml-4">(Lvl 20, 40, 60, 80...)</li>
+                                </ul>
+                                <h4 className="text-yellow-400 font-bold mb-2 mt-3">Difficulty Effects</h4>
+                                <ul className="text-slate-300 space-y-1">
+                                    <li>• Higher difficulty = Harder challenges</li>
+                                    <li>• Higher difficulty = More XP rewards</li>
+                                    <li>• Higher difficulty = Stronger mobs</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Skills Grid */}
                 <div className="flex-1 overflow-y-auto scrollbar-hide">
-                    {activeTab === 'skills' && (
-                        <div className="space-y-4">
-                            <div className="bg-slate-800/50 p-4 rounded-lg border-2 border-slate-700">
-                                <h3 className="text-xl text-blue-300 font-bold mb-4 uppercase">Edit Skill Levels</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {SKILL_DATA.map(skill => {
-                                        const skillData = skills[skill.id] || { level: 1, xp: 0, xpToLevel: 10, difficulty: 1 };
-                                        return (
-                                            <div key={skill.id} className="bg-slate-900/50 p-4 rounded-lg border border-slate-600">
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <span className="font-bold text-white uppercase">{skill.name}</span>
-                                                    <span className="text-xs text-slate-400">({skill.fantasyName})</span>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <div>
-                                                        <label className="text-xs text-slate-400 uppercase block mb-1">Level</label>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            max="200"
-                                                            value={skillData.level || 1}
-                                                            onChange={(e) => updateSkill(skill.id, 'level', e.target.value)}
-                                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs text-slate-400 uppercase block mb-1">XP</label>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            value={skillData.xp || 0}
-                                                            onChange={(e) => updateSkill(skill.id, 'xp', e.target.value)}
-                                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs text-slate-400 uppercase block mb-1">XP to Next Level</label>
-                                                        <input
-                                                            type="number"
-                                                            min="10"
-                                                            value={skillData.xpToLevel || 10}
-                                                            onChange={(e) => updateSkill(skill.id, 'xpToLevel', e.target.value)}
-                                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs text-slate-400 uppercase block mb-1">Difficulty (1-7)</label>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            max="7"
-                                                            value={skillData.difficulty || 1}
-                                                            onChange={(e) => updateSkill(skill.id, 'difficulty', e.target.value)}
-                                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'achievements' && (
-                        <div className="space-y-4">
-                            <div className="bg-slate-800/50 p-4 rounded-lg border-2 border-slate-700">
-                                <h3 className="text-xl text-blue-300 font-bold mb-4 uppercase">Game Statistics</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-xs text-slate-400 uppercase block mb-1">Phantoms Caught</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={stats.phantomsCaught || 0}
-                                            onChange={(e) => updateStat('phantomsCaught', e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
-                                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {SKILL_DATA.map(skill => {
+                            const skillData = skills[skill.id] || { level: 1, difficulty: 1 };
+                            const currentDiff = Math.min(7, Math.floor(skillData.level / 20) + 1);
+                            return (
+                                <div key={skill.id} className="bg-slate-800/50 p-4 rounded-lg border-2 border-slate-600">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div>
+                                            <span className="font-bold text-white uppercase text-lg">{skill.name}</span>
+                                            <span className="text-xs text-slate-400 ml-2">({skill.fantasyName})</span>
+                                        </div>
+                                        <div className="text-xs text-slate-400">
+                                            Diff: <span className={currentDiff >= 7 ? 'text-red-400' : 'text-blue-400'}>{currentDiff}</span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="text-xs text-slate-400 uppercase block mb-1">Total Mobs Defeated</label>
+                                    <div className="flex items-center gap-3">
+                                        <label className="text-sm text-yellow-400 font-bold uppercase whitespace-nowrap">Level:</label>
                                         <input
                                             type="number"
-                                            min="0"
-                                            value={stats.totalMobsDefeated || 0}
-                                            onChange={(e) => updateStat('totalMobsDefeated', e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs text-slate-400 uppercase block mb-1">Total Bosses Defeated</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={stats.totalBossesDefeated || 0}
-                                            onChange={(e) => updateStat('totalBossesDefeated', e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs text-slate-400 uppercase block mb-1">Total Minibosses Defeated</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={stats.totalMinibossesDefeated || 0}
-                                            onChange={(e) => updateStat('totalMinibossesDefeated', e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs text-slate-400 uppercase block mb-1">Total Deaths</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={stats.totalDeaths || 0}
-                                            onChange={(e) => updateStat('totalDeaths', e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs text-slate-400 uppercase block mb-1">Perfect Memory Games</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={stats.perfectMemoryGames || 0}
-                                            onChange={(e) => updateStat('perfectMemoryGames', e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
+                                            min="1"
+                                            max="200"
+                                            value={skillData.level || 1}
+                                            onChange={(e) => updateSkillLevel(skill.id, e.target.value)}
+                                            className="flex-1 bg-slate-900 border-2 border-slate-600 rounded-lg px-4 py-2 text-white text-xl font-bold text-center focus:outline-none focus:border-yellow-400 transition-colors"
                                         />
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="bg-slate-800/50 p-4 rounded-lg border-2 border-slate-700">
-                                <h3 className="text-xl text-blue-300 font-bold mb-4 uppercase">Raw Data</h3>
-                                <p className="text-xs text-slate-400 mb-2">
-                                    For advanced editing, you can view and edit the JSON file directly at: {dataPath || 'Loading...'}
-                                </p>
-                                <details className="mt-2">
-                                    <summary className="cursor-pointer text-yellow-400 hover:text-yellow-300 text-sm font-bold uppercase">
-                                        View JSON Data
-                                    </summary>
-                                    <pre className="mt-2 p-3 bg-slate-900 rounded text-xs text-slate-300 overflow-auto max-h-64">
-                                        {JSON.stringify(profileData, null, 2)}
-                                    </pre>
-                                </details>
-                            </div>
-                        </div>
-                    )}
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* Footer */}
@@ -351,4 +249,3 @@ const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave })
 };
 
 export default ProfileEditorModal;
-

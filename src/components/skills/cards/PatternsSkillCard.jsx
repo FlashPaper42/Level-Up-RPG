@@ -46,11 +46,9 @@ const PatternsSkillCard = ({
     const [litAxolotl, setLitAxolotl] = useState(null);
     const [simonGameActive, setSimonGameActive] = useState(false);
     const [showInstructions, setShowInstructions] = useState(true);
-    const [ringRotation, setRingRotation] = useState(0); // Ring rotation in degrees
+    const [ringRotation, setRingRotation] = useState(0); // 0 = no rotation, 1 = rotating (CSS handles animation)
     const [clockHandAngle, setClockHandAngle] = useState(0); // Persisted clock hand angle
-    const [nightmareClockOffset, setNightmareClockOffset] = useState(0); // Random clock drift in nightmare
     const simonSessionStartedRef = useRef(false);
-    const nightmareRotationRef = useRef(null);
 
     const { borderClass, levelTextColor } = getLevelStyling(data.level);
     const { appliedBorderEffect, borderStyle } = getBorderEffect(isCenter, selectedBorder, borderColor);
@@ -82,41 +80,30 @@ const PatternsSkillCard = ({
         }
     }, []);
 
-    // Nightmare mode: constant slow rotation of ring and clock arm drift (Bug 7 fix: use requestAnimationFrame for smooth animation)
+    // Nightmare mode: simple constant rotation like a spinning wheel
+    // Uses CSS animation for smooth, GPU-accelerated rotation
     useEffect(() => {
         if (isNightmareMode && simonGameActive && !showInstructions) {
-            let lastTimestamp = 0;
-            const ROTATION_SPEED = 15; // degrees per second
-            const DRIFT_SPEED = 2; // clock drift per second
-
-            const animate = (timestamp) => {
-                if (lastTimestamp === 0) lastTimestamp = timestamp;
-                const deltaTime = (timestamp - lastTimestamp) / 1000; // Convert to seconds
-                lastTimestamp = timestamp;
-
-                // Smooth rotation based on delta time
-                setRingRotation(prev => prev + ROTATION_SPEED * deltaTime);
-
-                // Random clock drift - slowly wanders
-                setNightmareClockOffset(prev => prev + (Math.random() - 0.5) * DRIFT_SPEED * deltaTime);
-
-                nightmareRotationRef.current = requestAnimationFrame(animate);
-            };
-
-            nightmareRotationRef.current = requestAnimationFrame(animate);
-            return () => {
-                if (nightmareRotationRef.current) {
-                    cancelAnimationFrame(nightmareRotationRef.current);
-                    nightmareRotationRef.current = null;
-                }
-            };
+            // Start rotation - CSS handles the actual animation
+            setRingRotation(1); // Non-zero value triggers CSS animation class
         } else {
-            if (nightmareRotationRef.current) {
-                cancelAnimationFrame(nightmareRotationRef.current);
-                nightmareRotationRef.current = null;
-            }
+            setRingRotation(0);
         }
     }, [isNightmareMode, simonGameActive, showInstructions]);
+    
+    // Get border color for active elements (use player's custom border or default yellow)
+    const getActiveBorderStyle = () => {
+        if (selectedBorder === 'solid-picker' && borderColor) {
+            return { borderColor: borderColor, boxShadow: `0 0 20px ${borderColor}, 0 0 30px ${borderColor}` };
+        } else if (selectedBorder === 'solid') {
+            return { borderColor: '#FFD700', boxShadow: '0 0 20px #FFD700, 0 0 30px #FFD700' };
+        } else if (borderColor) {
+            return { borderColor: borderColor, boxShadow: `0 0 20px ${borderColor}, 0 0 30px ${borderColor}` };
+        }
+        return { borderColor: '#FFD700', boxShadow: '0 0 20px #FFD700, 0 0 30px #FFD700' };
+    };
+    
+    const activeBorderStyle = getActiveBorderStyle();
 
     const playSequence = useCallback((sequence) => {
         setIsShowingSequence(true);
@@ -159,7 +146,6 @@ const PatternsSkillCard = ({
         setSimonGameActive(true);
         setShowInstructions(false);
         setRingRotation(0);
-        setNightmareClockOffset(0);
         playSequence(newSequence);
     }, [axolotlColors, playSequence]);
 
@@ -234,7 +220,6 @@ const PatternsSkillCard = ({
             setShowInstructions(true);
             setRingRotation(0);
             setClockHandAngle(0);
-            setNightmareClockOffset(0);
         }
     }, [isBattling]);
 
@@ -316,8 +301,6 @@ const PatternsSkillCard = ({
         const xpToLevel = calculateXPToLevel(difficulty, data.level);
         const xpPercent = Math.min(100, (data.xp / xpToLevel) * 100);
 
-        // Calculate effective clock hand angle (with nightmare drift)
-        const effectiveClockAngle = clockHandAngle + (isNightmareMode ? nightmareClockOffset : 0);
 
         return ReactDOM.createPortal(
             <div
@@ -418,17 +401,16 @@ const PatternsSkillCard = ({
                             <div className="flex flex-col items-center justify-center flex-1 w-full">
 
                                 <div
-                                    className="relative flex items-center justify-center transition-transform duration-200"
+                                    className={`relative flex items-center justify-center ${ringRotation ? 'animate-spin-slow' : ''}`}
                                     style={{
                                         width: 'min(75vh, 600px)',
-                                        height: 'min(75vh, 600px)',
-                                        transform: `rotate(${ringRotation}deg)`
+                                        height: 'min(75vh, 600px)'
                                     }}
                                 >
-                                    {/* Center dot only - clock arrow removed */}
+                                    {/* Center dot with player's border theme */}
                                     <div
-                                        className="absolute z-20 w-10 h-10 bg-slate-800 rounded-full border-4 border-yellow-500 shadow-lg flex items-center justify-center"
-                                        style={{ boxShadow: '0 0 15px rgba(250, 204, 21, 0.4)' }}
+                                        className="absolute z-20 w-10 h-10 bg-slate-800 rounded-full border-4 flex items-center justify-center"
+                                        style={activeBorderStyle}
                                     >
                                     </div>
 
@@ -444,12 +426,12 @@ const PatternsSkillCard = ({
                                                 key={color}
                                                 onClick={() => handleAxolotlClick(color)}
                                                 disabled={isShowingSequence}
-                                                className={`absolute rounded-full border-4 transition-all duration-150 flex items-center justify-center ${isLit ? 'border-yellow-400 scale-125 brightness-150' : 'border-slate-500 hover:border-slate-300 hover:scale-110'} ${!simonGameActive && !isShowingSequence ? 'opacity-50' : ''}`}
+                                                className={`absolute rounded-full border-4 transition-all duration-150 flex items-center justify-center ${isLit ? 'scale-125 brightness-150' : 'border-slate-500 hover:border-slate-300 hover:scale-110'} ${!simonGameActive && !isShowingSequence ? 'opacity-50' : ''}`}
                                                 style={{
                                                     width: '120px',
                                                     height: '120px',
-                                                    transform: `translate(${x}px, ${y}px) rotate(${-ringRotation}deg)`,
-                                                    boxShadow: isLit ? '0 0 30px rgba(250, 204, 21, 0.9)' : '0 4px 8px rgba(0,0,0,0.4)'
+                                                    transform: `translate(${x}px, ${y}px)`,
+                                                    ...(isLit ? activeBorderStyle : { boxShadow: '0 4px 8px rgba(0,0,0,0.4)' })
                                                 }}
                                             >
                                                 <SafeImage src={BASE_ASSETS.axolotls[color]} alt={color} className="w-20 h-20 object-contain" />

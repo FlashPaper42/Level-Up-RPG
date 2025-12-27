@@ -148,9 +148,13 @@ const App = () => {
     // ProgressionContext saves Skills/Stats.
 
     // Enforce Parent Privileges (Level 200) when parent status changes or on load
+    // Only run when skills have been loaded (not empty) to prevent race conditions
     useEffect(() => {
-        if (parentStatus && parentStatus[currentProfile]) {
+        if (parentStatus && parentStatus[currentProfile] && Object.keys(skills).length > 0) {
             setSkills(prevSkills => {
+                // Double-check skills aren't empty to prevent accidental overwrites
+                if (Object.keys(prevSkills).length === 0) return prevSkills;
+                
                 let hasChanges = false;
                 const newSkills = { ...prevSkills };
 
@@ -174,7 +178,7 @@ const App = () => {
                 return hasChanges ? newSkills : prevSkills;
             });
         }
-    }, [parentStatus, currentProfile, setSkills]);
+    }, [parentStatus, currentProfile, setSkills, skills]);
 
     useEffect(() => {
         localStorage.setItem(`borderEffect_p${currentProfile}`, selectedBorder);
@@ -389,7 +393,8 @@ const App = () => {
                     } else if (mobAction.type === 'heal') {
                         playHealSound();
                     } else {
-                        playMobSay(currentSkillState.currentMob);
+                        // Get correct mob name for this skill (readingMob, mathMob, etc.)
+                        playMobSay(getMobForSkill(skillConfig, currentSkillState));
                     }
 
                     playFail(); // Also play fail to indicate wrong answer
@@ -472,7 +477,8 @@ const App = () => {
         const currentSkillState = skills[skillId];
         const skillDifficulty = currentSkillState.difficulty || 1;
         const playerLevel = currentSkillState.level;
-        const currentMobName = currentSkillState.currentMob;
+        // Get the correct mob name for this skill (reading uses readingMob, math uses mathMob, etc.)
+        const currentMobName = getMobForSkill(skillConfig, currentSkillState);
 
         // Calculate damage using new RPG formulas
         // Use custom damage if provided (for pattern recognition scaling)
@@ -776,7 +782,8 @@ const App = () => {
                 } else if (currentMobAction.type === 'heal') {
                     playHealSound();
                 } else {
-                    playMobSay(skillState.currentMob);
+                    // Get correct mob name for this skill (readingMob, mathMob, etc.)
+                    playMobSay(getMobForSkill(skillConfig, skillState));
                 }
 
                 // Apply action effect after animation
@@ -1201,8 +1208,8 @@ const App = () => {
             )}
 
             {/* Profile Picture Display - Bottom Left */}
-            {/* Profile picture selector - hide during patterns minigame */}
-            {battlingSkillId !== 'patterns' && (
+            {/* Profile picture selector - hide during gameplay (patterns, memory, cleaning) */}
+            {!battlingSkillId && (
                 <div
                     className="absolute z-40"
                     style={{ bottom: '48px', left: '48px' }}
@@ -1231,8 +1238,8 @@ const App = () => {
                 </div>
             )}
 
-            {/* Player Health Display - Centered with Armor Shields overlaying Hearts - hide during patterns minigame */}
-            {battlingSkillId !== 'patterns' && (
+            {/* Player Health Display - Centered with Armor Shields overlaying Hearts - hide during memory/patterns/cleaning */}
+            {battlingSkillId && battlingSkillId !== 'patterns' && battlingSkillId !== 'memory' && battlingSkillId !== 'cleaning' && (
                 <div className="absolute z-50 flex gap-1.5" style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
                     {Array(10).fill(0).map((_, i) => {
                         // Hearts always show (filled or empty based on health)
@@ -1355,8 +1362,8 @@ const App = () => {
             )}
             <MenuDrawer isOpen={isMenuOpen} skills={skills} stats={stats} />
 
-            {/* Bottom Right Bug Report Button - hide during patterns minigame */}
-            {battlingSkillId !== 'patterns' && (
+            {/* Bottom Right Bug Report Button - hide during gameplay */}
+            {!battlingSkillId && (
                 <button
                     onClick={() => { setIsMenuOpen(false); setIsCosmeticsOpen(false); setIsSettingsOpen(false); setIsBugReportOpen(true); playClick(); }}
                     className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"

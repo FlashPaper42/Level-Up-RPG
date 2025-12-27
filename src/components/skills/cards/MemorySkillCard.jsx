@@ -4,7 +4,7 @@ import { Plus, Minus } from 'lucide-react';
 import SafeImage from '../../ui/SafeImage';
 import { BASE_ASSETS, FRIENDLY_MOBS, DIFFICULTY_CONTENT, DIFFICULTY_IMAGES } from '../../../constants/gameData';
 import { FRIENDLY_MOBS_WITH_SAY } from '../../../systems/mobs';
-import { playClick, getSfxVolume } from '../../../utils/soundManager';
+import { playClick, getSfxVolume, playMobSay } from '../../../utils/soundManager';
 import { calculateXPToLevel } from '../../../utils/gameUtils';
 import {
     PRESTIGE_LEVEL_THRESHOLD,
@@ -193,7 +193,10 @@ const MemorySkillCard = ({
         if (isProcessingMatch || flippedIndices.includes(index) || matchedPairs.includes(memoryCards[index].color)) return;
         const newFlipped = [...flippedIndices, index];
         setFlippedIndices(newFlipped);
-        playClick();
+        
+        // Play the mob's "say" sound when flipped
+        const mobName = memoryCards[index].color;
+        playMobSay(mobName);
 
         if (newFlipped.length === 2) {
             setIsProcessingMatch(true);
