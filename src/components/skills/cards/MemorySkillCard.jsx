@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Plus, Minus } from 'lucide-react';
 import SafeImage from '../../ui/SafeImage';
 import { BASE_ASSETS, FRIENDLY_MOBS, DIFFICULTY_CONTENT, DIFFICULTY_IMAGES } from '../../../constants/gameData';
+import { FRIENDLY_MOBS_WITH_SAY } from '../../../systems/mobs';
 import { playClick, getSfxVolume } from '../../../utils/soundManager';
 import { calculateXPToLevel } from '../../../utils/gameUtils';
 import {
@@ -71,7 +72,8 @@ const MemorySkillCard = ({
     useEffect(() => {
         if (isBattling && !memorySessionStartedRef.current) {
             memorySessionStartedRef.current = true;
-            const allMobKeys = Object.keys(FRIENDLY_MOBS);
+            // Only use friendly mobs that have "say" sounds for the memory game
+            const allMobKeys = FRIENDLY_MOBS_WITH_SAY;
             const shuffledMobs = [...allMobKeys].sort(() => Math.random() - 0.5);
             const selectedMobs = shuffledMobs.slice(0, memoryPairs);
             const cardPairs = selectedMobs.flatMap((mob, idx) => [
@@ -406,7 +408,8 @@ const MemorySkillCard = ({
                                     setMismatchCount(0);
                                     setIsProcessingMatch(false);
                                     // Reinitialize cards
-                                    const allMobKeys = Object.keys(FRIENDLY_MOBS);
+                                    // Only use friendly mobs that have "say" sounds for the memory game
+                                    const allMobKeys = FRIENDLY_MOBS_WITH_SAY;
                                     const shuffledMobs = [...allMobKeys].sort(() => Math.random() - 0.5);
                                     const selectedMobs = shuffledMobs.slice(0, memoryPairs);
                                     const cardPairs = selectedMobs.flatMap((mob, idx) => [

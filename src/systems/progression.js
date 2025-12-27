@@ -128,6 +128,60 @@ export const getEncounterType = (level) => {
     return 'hostile';
 };
 
+// ===== Pattern Recognition XP System =====
+
+/**
+ * Calculate XP reward for Pattern Recognition skill
+ * XP is weighted heavily towards difficulty with exponential iteration scaling
+ * 
+ * @param {number} difficulty - Current difficulty setting (1-7)
+ * @param {number} playerLevel - Current player level
+ * @param {number} iterationsCompleted - Number of successful pattern rounds completed
+ * @returns {number} XP to award for this iteration
+ */
+export const calculatePatternXP = (difficulty, playerLevel, iterationsCompleted) => {
+    // Base XP per successful round
+    const BASE_PATTERN_XP = 30;
+    
+    // Difficulty factor: quadratic scaling (difficulty^2)
+    // Difficulty 1 = 1x, 2 = 4x, 3 = 9x, 4 = 16x, 5 = 25x, 6 = 36x, 7 = 49x
+    const difficultyFactor = Math.pow(difficulty, 2);
+    
+    // Iteration factor: exponential scaling (1.3^iterations)
+    // Round 1 = 1.3x, Round 2 = 1.69x, Round 3 = 2.2x, Round 4 = 2.86x, etc.
+    // This rewards players for longer streaks since each round is harder
+    const iterationFactor = Math.pow(1.3, iterationsCompleted);
+    
+    // Calculate expected difficulty based on player level
+    const expectedDifficulty = getExpectedDifficulty(playerLevel);
+    
+    // Apply difficulty penalty if playing below expected difficulty
+    // This ensures high-level players can't farm XP on low difficulties
+    let difficultyPenalty = 1.0;
+    if (difficulty < expectedDifficulty) {
+        const difficultyGap = expectedDifficulty - difficulty;
+        // Severe penalty: 25% per level below (0.25^gap)
+        difficultyPenalty = Math.pow(0.25, difficultyGap);
+    }
+    
+    // Calculate XP to level for penalty scaling
+    const xpToLevel = calculateXPToLevel(difficulty, playerLevel);
+    
+    // Final XP calculation
+    // Weight: 70% difficulty, 30% iterations (achieved through the quadratic vs linear scaling)
+    const rawXP = BASE_PATTERN_XP * difficultyFactor * iterationFactor;
+    const penalizedXP = rawXP * difficultyPenalty;
+    
+    // Cap XP per round to prevent ridiculous values at high iterations
+    // Max XP per round = 50% of XP to level (so you need at least 2 rounds at appropriate difficulty)
+    const maxXPPerRound = Math.floor(xpToLevel * 0.5);
+    const finalXP = Math.min(Math.floor(penalizedXP), maxXPPerRound);
+    
+    console.log(`[Pattern XP] Diff=${difficulty}, Iter=${iterationsCompleted}, Raw=${rawXP.toFixed(0)}, Penalty=${difficultyPenalty.toFixed(2)}, Final=${finalXP}`);
+    
+    return Math.max(1, finalXP); // Minimum 1 XP
+};
+
 // ===== Exported Constants (for external use) =====
 
 export const PROGRESSION_CONSTANTS = {

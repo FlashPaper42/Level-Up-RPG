@@ -29,11 +29,23 @@ export const getRandomMob = (exclude) => {
 };
 
 /**
+ * Friendly mobs that have "say" sounds for the Memory skill
+ * Only these mobs can be used in the memory game since they need to make sounds when clicked
+ * Max difficulty needs 10 pairs (20 cards), so we need at least 10 mobs with say sounds
+ */
+export const FRIENDLY_MOBS_WITH_SAY = [
+    'Cat', 'Chicken', 'Cow', 'Dolphin', 'Mooshroom', 
+    'Panda', 'Pig', 'Sheep', 'Villager', 'Wolf'
+];
+
+/**
  * Get a random friendly mob key for the Memory skill
+ * Only returns mobs that have "say" sounds
  */
 export const getRandomFriendlyMob = () => {
-    const friendlyMobKeys = Object.keys(FRIENDLY_MOBS);
-    return friendlyMobKeys.length > 0 ? friendlyMobKeys[Math.floor(Math.random() * friendlyMobKeys.length)] : 'Allay';
+    return FRIENDLY_MOBS_WITH_SAY.length > 0 
+        ? FRIENDLY_MOBS_WITH_SAY[Math.floor(Math.random() * FRIENDLY_MOBS_WITH_SAY.length)] 
+        : 'Cat';
 };
 
 /**

@@ -5,6 +5,7 @@ import SafeImage from '../../ui/SafeImage';
 import { BASE_ASSETS, DIFFICULTY_IMAGES, DIFFICULTY_CONTENT } from '../../../constants/gameData';
 import { playClick, getSfxVolume } from '../../../utils/soundManager';
 import { calculateXPToLevel } from '../../../utils/gameUtils';
+import { calculatePatternXP, calculateXPReward } from '../../../systems/progression';
 import {
     PRESTIGE_LEVEL_THRESHOLD,
     AXOLOTL_NOTE_MAP,
@@ -186,9 +187,18 @@ const PatternsSkillCard = ({
                 const newRounds = completedRounds + 1;
                 setCompletedRounds(newRounds);
 
-                const baseMultiplier = Math.max(0.5, Math.min(2, 0.3 + (newRounds * 0.2)));
-                const damage = Math.max(1, Math.round(newRounds * 1.5 * baseMultiplier));
-                const xpMultiplier = Math.max(0.5, Math.min(3, 0.3 + (newRounds * 0.25)));
+                // Calculate XP using the new difficulty-weighted exponential formula
+                // XP is weighted heavily towards difficulty with exponential iteration scaling
+                const patternXP = calculatePatternXP(difficulty, data.level, newRounds);
+                
+                // Calculate the XP multiplier to pass to the combat system
+                // We divide by base XP reward to get an effective multiplier
+                const baseXP = calculateXPReward(difficulty, data.level);
+                const xpMultiplier = baseXP > 0 ? patternXP / baseXP : 1;
+                
+                // Damage is used for mob defeat calculation - set high to ensure progression
+                const damage = Math.max(1, Math.round(newRounds * 2));
+                
                 setTimeout(() => onMathSubmit("WIN", damage, xpMultiplier), 300);
 
                 // Add next color to sequence

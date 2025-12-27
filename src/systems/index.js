@@ -16,6 +16,7 @@ export {
     calculateXPReward,
     calculateXPToLevel,
     getEncounterType,
+    calculatePatternXP,
     PROGRESSION_CONSTANTS
 } from './progression';
 

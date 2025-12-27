@@ -1,6 +1,12 @@
 /**
  * Sound Manager Utility
  * Centralized sound management for the game including BGM shuffle, UI sounds, and mob sounds.
+ * 
+ * Sound folder structure:
+ * - assets/sounds/battle/hostile/[mob]/hurt.wav, death.wav
+ * - assets/sounds/battle/friendly/[mob]/say.wav
+ * - assets/sounds/battle/miniboss/[mob]/death.wav (no hurt sounds - they die in one hit)
+ * - assets/sounds/battle/boss/[mob]/hurt.wav, death.wav
  */
 
 // BGM tracks discovered from public/assets/sounds/bgm/
@@ -25,60 +31,64 @@ const UI_SOUNDS = {
     successful_hit: 'assets/sounds/ui/successful_hit.wav'
 };
 
-// Mob name to folder name mapping (handles differences between display names and folder names)
+// Battle action sound paths (new structure)
+const ACTION_SOUNDS = {
+    armor: 'assets/sounds/battle/actions/armor.wav',
+    heal: 'assets/sounds/battle/actions/heal.wav',
+    special: 'assets/sounds/battle/actions/special.wav',
+    playerHitArmor: 'assets/sounds/battle/actions/playerHitArmor.wav',
+    playerHitHealth: 'assets/sounds/battle/actions/playerHitHealth.wav'
+};
+
+// Mob name to folder name mapping
+// Organized by mob type: hostile, friendly, miniboss, boss
 const MOB_FOLDER_MAP = {
-    // Hostile mobs
-    'Zombie': 'zombie',
-    'Creeper': 'creeper',
-    'Skeleton': 'skeleton',
-    'Spider': 'spider',
-    'Enderman': 'endermen',
-    'Blaze': 'blaze',
-    'Ghast': 'ghast',
-    'Slime': 'slime',
-    'Phantom': 'phantom',
-    'Piglin': 'piglin',
-    'Hoglin': 'hoglin',
-    'Drowned': 'drowned',
-    'Pillager': 'pillager',
-    'Evoker': 'evoker',
-    'Guardian': 'guardian',
-    'Magma Cube': 'magmacube',
-    'Witch': 'witch',
-    'Bogged': 'skeleton', // Maps to Skeleton sounds
-    // Boss mobs
-    'Ender Dragon': 'enderdragon',
-    'Wither': 'wither',
-    'Warden': 'warden',
-    // Miniboss mobs
-    'Elder Guardian': 'elderguardian',
-    'Ravager': 'ravager',
-    'Wither Skeleton': 'wither_skeleton',
-    'Creaking': 'creaking',
-    // Friendly mobs
-    'Cat': 'cat',
-    'Chicken': 'chicken',
-    'Cow': 'cow',
-    'Pig': 'pig',
-    'Sheep': 'sheep',
-    'Wolf': 'wolf',
-    'Dolphin': 'dolphin',
-    'Fox': 'fox',
-    'Panda': 'panda',
-    'Parrot': 'parrot',
-    'Horse': 'horse',
-    'Turtle': 'turtle',
-    'Rabbit': 'rabbit',
-    'Bunny': 'rabbit',
-    'Mooshroom': 'mooshroom',
-    'Polar Bear': 'polarbear',
-    'Llama': 'llama',
-    'Bat': 'bat',
-    'Bee': 'bee',
-    'Villager': 'villager',
-    'Iron Golem': 'irongolem',
-    'Wandering Trader': 'wandering_trader',
-    'Strider': 'strider'
+    // ===== HOSTILE MOBS =====
+    'Zombie': { type: 'hostile', folder: 'zombie' },
+    'Creeper': { type: 'hostile', folder: 'creeper' },
+    'Skeleton': { type: 'hostile', folder: 'skeleton' },
+    'Spider': { type: 'hostile', folder: 'spider' },
+    'Enderman': { type: 'hostile', folder: 'endermen' },
+    'Blaze': { type: 'hostile', folder: 'blaze' },
+    'Ghast': { type: 'hostile', folder: 'ghast' },
+    'Slime': { type: 'hostile', folder: 'slime' },
+    'Phantom': { type: 'hostile', folder: 'phantom' },
+    'Piglin': { type: 'hostile', folder: 'piglin' },
+    'Hoglin': { type: 'hostile', folder: 'hoglin' },
+    'Drowned': { type: 'hostile', folder: 'drowned' },
+    'Pillager': { type: 'hostile', folder: 'pillager' },
+    'Evoker': { type: 'hostile', folder: 'evoker' },
+    'Guardian': { type: 'hostile', folder: 'guardian' },
+    'Witch': { type: 'hostile', folder: 'witch' },
+    // Variants that use skeleton sounds
+    'Bogged': { type: 'hostile', folder: 'skeleton' },
+    'Breeze': { type: 'hostile', folder: 'skeleton' },
+    // Variant that uses slime sounds
+    'Magma Cube': { type: 'hostile', folder: 'slime' },
+    
+    // ===== FRIENDLY MOBS (only those with say sounds for memory game) =====
+    'Cat': { type: 'friendly', folder: 'cat' },
+    'Chicken': { type: 'friendly', folder: 'chicken' },
+    'Cow': { type: 'friendly', folder: 'cow' },
+    'Dolphin': { type: 'friendly', folder: 'dolphin' },
+    'Mooshroom': { type: 'friendly', folder: 'mooshroom' },
+    'Panda': { type: 'friendly', folder: 'panda' },
+    'Pig': { type: 'friendly', folder: 'pig' },
+    'Sheep': { type: 'friendly', folder: 'sheep' },
+    'Villager': { type: 'friendly', folder: 'villager' },
+    'Wolf': { type: 'friendly', folder: 'wolf' },
+    
+    // ===== MINIBOSS MOBS =====
+    'Elder Guardian': { type: 'miniboss', folder: 'elderguardian' },
+    'Ravager': { type: 'miniboss', folder: 'ravager' },
+    'Wither Skeleton': { type: 'miniboss', folder: 'wither_skeleton' },
+    'Creaking': { type: 'miniboss', folder: 'creaking' },
+    
+    // ===== BOSS MOBS =====
+    'Ender Dragon': { type: 'boss', folder: 'enderdragon' },
+    'Wither': { type: 'boss', folder: 'wither' },
+    'Warden': { type: 'boss', folder: 'warden' },
+    'Herobrine': { type: 'boss', folder: 'herobrine' }
 };
 
 // Class for managing BGM playback with shuffle
@@ -187,6 +197,47 @@ export const playUISound = (soundName) => {
 };
 
 /**
+ * Play an action sound (armor, heal, special, player hit effects)
+ * @param {string} actionName - Name of the action sound
+ */
+export const playActionSound = (actionName) => {
+    const path = ACTION_SOUNDS[actionName];
+    if (!path) {
+        console.warn(`[SoundManager] Unknown action sound: ${actionName}`);
+        return;
+    }
+
+    const audio = new Audio(path);
+    audio.volume = sfxVolume;
+    audio.play().catch(() => { });
+};
+
+/**
+ * Play armor gain sound (player or mob gains armor)
+ */
+export const playArmorGain = () => playActionSound('armor');
+
+/**
+ * Play heal sound (player or mob heals)
+ */
+export const playHealSound = () => playActionSound('heal');
+
+/**
+ * Play special attack sound
+ */
+export const playSpecialAttack = () => playActionSound('special');
+
+/**
+ * Play player hit armor sound (mob attacked and hit player's armor)
+ */
+export const playPlayerHitArmor = () => playActionSound('playerHitArmor');
+
+/**
+ * Play player hit health sound (mob attacked and hit player's health)
+ */
+export const playPlayerHitHealth = () => playActionSound('playerHitHealth');
+
+/**
  * Play actioncard left sound
  */
 export const playActionCardLeft = () => playUISound('actioncard_left');
@@ -233,12 +284,11 @@ export const playSuccessfulHit = () => playUISound('successful_hit');
 export const playAchievement = () => playUISound('notification');
 
 /**
- * Get the folder name for a mob
+ * Get the folder info for a mob
  * @param {string} mobName - Display name of the mob
- * @returns {string|null} - Folder name or null if not found/mapped
+ * @returns {{type: string, folder: string}|null} - Mob info or null if not found
  */
-const getMobFolder = (mobName) => {
-    // Only use explicit mappings to avoid loading non-existent files
+const getMobInfo = (mobName) => {
     return MOB_FOLDER_MAP[mobName] || null;
 };
 
@@ -247,13 +297,23 @@ const getMobFolder = (mobName) => {
  * @param {string} mobName - Display name of the mob
  */
 export const playMobHurt = (mobName) => {
-    const folder = getMobFolder(mobName);
-    if (!folder) return;
+    const mobInfo = getMobInfo(mobName);
+    if (!mobInfo) {
+        console.warn(`[SoundManager] No sound mapping for mob: ${mobName}`);
+        return;
+    }
 
-    // Use standardized naming (all files renamed to hurt.wav)
-    const audio = new Audio(`assets/sounds/mob/${folder}/hurt.wav`);
+    // Only hostile mobs and bosses have hurt sounds
+    if (mobInfo.type !== 'hostile' && mobInfo.type !== 'boss') {
+        console.warn(`[SoundManager] Mob ${mobName} (${mobInfo.type}) does not have hurt sounds`);
+        return;
+    }
+
+    const audio = new Audio(`assets/sounds/battle/${mobInfo.type}/${mobInfo.folder}/hurt.wav`);
     audio.volume = sfxVolume;
-    audio.play().catch(() => { });
+    audio.play().catch((err) => {
+        console.warn(`[SoundManager] Failed to play hurt sound for ${mobName}:`, err.message);
+    });
 };
 
 /**
@@ -261,28 +321,58 @@ export const playMobHurt = (mobName) => {
  * @param {string} mobName - Display name of the mob
  */
 export const playMobDeath = (mobName) => {
-    const folder = getMobFolder(mobName);
-    if (!folder) return;
+    const mobInfo = getMobInfo(mobName);
+    if (!mobInfo) {
+        console.warn(`[SoundManager] No sound mapping for mob: ${mobName}`);
+        return;
+    }
 
-    // Use standardized naming (all files renamed to death.wav)
-    const audio = new Audio(`assets/sounds/mob/${folder}/death.wav`);
+    // All mob types except friendly have death sounds
+    if (mobInfo.type === 'friendly') {
+        console.warn(`[SoundManager] Friendly mobs don't have death sounds`);
+        return;
+    }
+
+    const audio = new Audio(`assets/sounds/battle/${mobInfo.type}/${mobInfo.folder}/death.wav`);
     audio.volume = sfxVolume;
-    audio.play().catch(() => { });
+    audio.play().catch((err) => {
+        console.warn(`[SoundManager] Failed to play death sound for ${mobName}:`, err.message);
+    });
 };
 
 /**
- * Play mob say sound (for friendly mobs)
+ * Play mob say sound (for friendly mobs in memory game, or when mob takes action)
  * @param {string} mobName - Display name of the mob
  */
 export const playMobSay = (mobName) => {
-    const folder = getMobFolder(mobName);
-    if (!folder) return;
+    const mobInfo = getMobInfo(mobName);
+    if (!mobInfo) {
+        console.warn(`[SoundManager] No sound mapping for mob: ${mobName}`);
+        return;
+    }
 
-    // Use standardized naming (all files renamed to say.wav)
-    const audio = new Audio(`assets/sounds/mob/${folder}/say.wav`);
-    audio.volume = sfxVolume;
-    audio.play().catch(() => { });
+    // Friendly mobs have say sounds, hostile/boss mobs use say as action sound
+    if (mobInfo.type === 'friendly') {
+        const audio = new Audio(`assets/sounds/battle/${mobInfo.type}/${mobInfo.folder}/say.wav`);
+        audio.volume = sfxVolume;
+        audio.play().catch((err) => {
+            console.warn(`[SoundManager] Failed to play say sound for ${mobName}:`, err.message);
+        });
+    } else {
+        // For hostile/boss mobs, try say.wav first, fallback to hurt.wav
+        const sayAudio = new Audio(`assets/sounds/battle/${mobInfo.type}/${mobInfo.folder}/say.wav`);
+        sayAudio.volume = sfxVolume;
+        sayAudio.play().catch(() => {
+            // Fallback to hurt sound if say doesn't exist
+            if (mobInfo.type === 'hostile' || mobInfo.type === 'boss') {
+                const hurtAudio = new Audio(`assets/sounds/battle/${mobInfo.type}/${mobInfo.folder}/hurt.wav`);
+                hurtAudio.volume = sfxVolume;
+                hurtAudio.play().catch(() => { });
+            }
+        });
+    }
 };
 
 // Export UI sound names for reference
 export const UI_SOUND_NAMES = Object.keys(UI_SOUNDS);
+export const ACTION_SOUND_NAMES = Object.keys(ACTION_SOUNDS);

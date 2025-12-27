@@ -50,7 +50,8 @@ import {
     getBGMManager, setSfxVolume,
     playClick,
     playDeath, playFail, playLevelUp, playNotification, playSuccessfulHit,
-    playMobHurt, playMobDeath, playMobSay, playAchievement
+    playMobHurt, playMobDeath, playMobSay, playAchievement,
+    playArmorGain, playHealSound, playSpecialAttack, playPlayerHitArmor, playPlayerHitHealth
 } from './utils/soundManager';
 import {
     getDefaultStats, getNewlyUnlockedAchievements, getNewTierAchievements,
@@ -113,6 +114,8 @@ const App = () => {
 
     // Guard against double-firing of combat actions
     const processingHitRef = useRef(false);
+    // Track if a mob turn is currently pending to prevent double execution
+    const mobTurnPendingRef = useRef(false);
     const [isBugReportOpen, setIsBugReportOpen] = useState(false);
     const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
@@ -366,25 +369,41 @@ const App = () => {
                 // For Combat Skills (Reading, etc): Execute mob's stored action on player failure
                 // This replaces the generic damage penalty with the actual mob turn
                 if (skillConfig && checkIsCombatSkill(skillConfig.id) && mobNextAction?.skillId === battlingSkillId) {
-                    const mobAction = mobNextAction.action;
+                    // Prevent double mob turns
+                    if (mobTurnPendingRef.current) {
+                        console.log('[Mob Action] Mob turn already pending on wrong answer, skipping');
+                        playFail();
+                        return;
+                    }
+                    mobTurnPendingRef.current = true;
+
+                    const mobAction = { ...mobNextAction.action }; // Clone to prevent mutation
                     console.log('[Mob Action] Player failed - executing stored action:', mobAction);
 
                     // Show mob action animation
                     setMobAttacking({ skillId: battlingSkillId, type: mobAction.type });
-                    playMobSay(currentSkillState.currentMob);
+                    
+                    // Play appropriate sound for mob action type
+                    if (mobAction.type === 'armor') {
+                        playArmorGain();
+                    } else if (mobAction.type === 'heal') {
+                        playHealSound();
+                    } else {
+                        playMobSay(currentSkillState.currentMob);
+                    }
 
-                    playFail(); // Indicate wrong answer
+                    playFail(); // Also play fail to indicate wrong answer
 
                     setTimeout(() => {
                         setMobAttacking(null);
 
                         if (mobAction.type === 'armor') {
-                            // Mob gains armor (Bug 1 fix: use mobMaxHealth, not hardcoded 10)
+                            // Mob gains armor
                             setSkills(prev => {
                                 const current = prev[battlingSkillId];
                                 const currentArmor = current.mobArmor || 0;
-                                const armorCap = current.mobMaxHealth || 60; // Cap armor at mob's max health
-                                console.log(`[Combat] Mob SHIELD: adding ${mobAction.value} armor (cap: ${armorCap})`);
+                                const armorCap = current.mobMaxHealth || 60;
+                                console.log(`[Combat] Mob ARMOR on fail: ${currentArmor} + ${mobAction.value}`);
                                 return {
                                     ...prev,
                                     [battlingSkillId]: {
@@ -393,46 +412,52 @@ const App = () => {
                                     }
                                 };
                             });
-                            // Play sound for armor/heal?
                         } else if (mobAction.type === 'heal') {
                             // Mob heals itself
                             setSkills(prev => {
                                 const current = prev[battlingSkillId];
+                                const newHealth = Math.min(current.mobMaxHealth, current.mobHealth + mobAction.value);
+                                console.log(`[Combat] Mob HEAL on fail: ${current.mobHealth} + ${mobAction.value} = ${newHealth}`);
                                 return {
                                     ...prev,
                                     [battlingSkillId]: {
                                         ...current,
-                                        mobHealth: Math.min(current.mobMaxHealth, current.mobHealth + mobAction.value)
+                                        mobHealth: newHealth
                                     }
                                 };
                             });
                         } else if (mobAction.type === 'damage') {
-                            // Mob Attacks Player (Now the source of damage on failure, instead of generic penalty)
-                            const mobDamage = mobAction.value;
-                            const damageResult = calculatePlayerDamage(playerHealth, mobDamage, armorPoints);
+                            // Mob Attacks Player - use functional update for fresh state
+                            setPlayerHealth(currentHealth => {
+                                setArmorPoints(currentArmor => {
+                                    const damageResult = calculatePlayerDamage(currentHealth, mobAction.value, currentArmor);
 
-                            // Update State
-                            setArmorPoints(damageResult.newArmor);
-                            setPlayerHealth(damageResult.newHealth);
+                                    // Play appropriate hit sound
+                                    if (damageResult.playerDied) {
+                                        setTimeout(() => processPlayerDeath(battlingSkillId), 0);
+                                    } else if (damageResult.fullyBlocked || damageResult.absorbed > 0) {
+                                        playPlayerHitArmor();
+                                    } else {
+                                        playPlayerHitHealth();
+                                    }
 
-                            // Play Sound & Show Indicator
-                            if (damageResult.playerDied) {
-                                processPlayerDeath(battlingSkillId);
-                            } else {
-                                // Already played playFail() above, maybe add hit sound?
-                                // playFail() is good for "User Error", but maybe we want a hit sound too?
-                                // Keeping it simple for now, the fail sound + health drop is clear.
-                            }
+                                    setPlayerDamageIndicator({
+                                        amount: damageResult.fullyBlocked ? damageResult.absorbed : damageResult.actualDamage,
+                                        blocked: damageResult.fullyBlocked
+                                    });
+                                    setTimeout(() => setPlayerDamageIndicator(null), 1000);
 
-                            setPlayerDamageIndicator({
-                                amount: damageResult.fullyBlocked ? damageResult.absorbed : damageResult.actualDamage,
-                                blocked: damageResult.fullyBlocked
+                                    setTimeout(() => setPlayerHealth(damageResult.newHealth), 0);
+                                    return damageResult.newArmor;
+                                });
+                                return currentHealth;
                             });
-                            setTimeout(() => setPlayerDamageIndicator(null), 1000);
                         }
 
-                        // Calculate next mob action for display
-                        setMobNextAction({ skillId: battlingSkillId, action: calculateMobAction(battlingSkillId) });
+                        // Calculate next mob action AFTER this turn completes
+                        const nextAction = calculateMobAction(battlingSkillId);
+                        setMobNextAction({ skillId: battlingSkillId, action: nextAction });
+                        mobTurnPendingRef.current = false;
                     }, 600);
                 } else {
                     // Fallback for non-combat skills or if no mob action ready (just play fail sound)
@@ -532,6 +557,14 @@ const App = () => {
                     return newStats;
                 });
 
+                // BOSS DEFEAT: Auto-unlock next difficulty
+                // Boss represents mastery of current difficulty - defeating it unlocks the next
+                if (encounterType === 'boss' && newDifficulty < 7) {
+                    newDifficulty = Math.min(7, newDifficulty + 1);
+                    console.log(`[Boss Defeat] Auto-unlocking difficulty ${newDifficulty}`);
+                    playNotification();
+                }
+
                 // Check for level restoration first (specific logic in App.jsx)
                 if (newLostLevel) {
                     newLevel += 1;
@@ -551,7 +584,8 @@ const App = () => {
 
                 newLevel = xpResult.level;
                 newXp = xpResult.xp;
-                newDifficulty = xpResult.difficulty;
+                // Only update difficulty from XP result if it's higher (don't overwrite boss unlock)
+                newDifficulty = Math.max(newDifficulty, xpResult.difficulty);
                 newBadges = xpResult.earnedBadges;
                 leveledUp = xpResult.leveledUp;
 
@@ -710,78 +744,132 @@ const App = () => {
         const skillState = skills[skillId];
         const encounterType = getEncounterType(skillState.level);
 
+        // CRITICAL: Get the mob action NOW before any state changes
+        // This prevents the race condition where UI shows new action while old executes
+        const storedMobAction = mobNextAction?.skillId === skillId
+            ? { ...mobNextAction.action }  // Clone to prevent mutation
+            : calculateMobAction(skillId);
+
         // Define Mob Turn Execution Logic
+        // Uses functional state updates to get fresh values and avoid stale closures
         const executeMobTurn = (currentMobAction) => {
+            // Prevent double mob turns
+            if (mobTurnPendingRef.current) {
+                console.log('[Mob Action] Mob turn already pending, skipping');
+                return;
+            }
+            mobTurnPendingRef.current = true;
+
             setTimeout(() => {
                 if (battlingSkillIdRef.current !== skillId) {
                     console.log('[Mob Action] Battle ended, skipping mob counterattack');
+                    mobTurnPendingRef.current = false;
                     return;
                 }
 
-                // Show mob attack animation
+                // Show mob attack animation with the CORRECT action type
                 setMobAttacking({ skillId, type: currentMobAction.type });
-                playMobSay(skillState.currentMob);
+                
+                // Play appropriate sound for mob action type
+                if (currentMobAction.type === 'armor') {
+                    playArmorGain();
+                } else if (currentMobAction.type === 'heal') {
+                    playHealSound();
+                } else {
+                    playMobSay(skillState.currentMob);
+                }
 
-                // Apply action effect
+                // Apply action effect after animation
                 setTimeout(() => {
                     if (battlingSkillIdRef.current !== skillId) {
                         setMobAttacking(null);
+                        mobTurnPendingRef.current = false;
                         return;
                     }
 
                     setMobAttacking(null);
 
-                    // Use System Function for Logic
                     if (currentMobAction.type === 'damage') {
-                        // DAMAGE LOGIC: Affects Player Health/Armor
-                        const mobDamage = currentMobAction.value;
+                        // DAMAGE LOGIC: Use functional update to get fresh state
+                        setPlayerHealth(currentHealth => {
+                            setArmorPoints(currentArmor => {
+                                const damageResult = calculatePlayerDamage(currentHealth, currentMobAction.value, currentArmor);
+                                
+                                // Play appropriate sound based on what got hit
+                                if (damageResult.playerDied) {
+                                    // Death sound will be played by processPlayerDeath
+                                    setTimeout(() => processPlayerDeath(skillId), 0);
+                                } else if (damageResult.fullyBlocked) {
+                                    playPlayerHitArmor();
+                                } else if (damageResult.absorbed > 0) {
+                                    // Partial armor absorption
+                                    playPlayerHitArmor();
+                                } else {
+                                    playPlayerHitHealth();
+                                }
 
-                        // Calculate damage using current state (fresh from useCallback dependencies)
-                        const damageResult = calculatePlayerDamage(playerHealth, mobDamage, armorPoints);
+                                // Show damage indicator
+                                setPlayerDamageIndicator({
+                                    amount: damageResult.fullyBlocked ? damageResult.absorbed : damageResult.actualDamage,
+                                    blocked: damageResult.fullyBlocked
+                                });
+                                setTimeout(() => setPlayerDamageIndicator(null), 1000);
 
-                        // 1. Update State
-                        setArmorPoints(damageResult.newArmor);
-                        setPlayerHealth(damageResult.newHealth);
-
-                        // 2. Play Sound & Show Indicator (Side Effects)
-                        if (damageResult.playerDied) {
-                            processPlayerDeath(skillId);
-                        } else {
-                            // User request: Play fail sound even on armor hit
-                            // Previously played playClick() on block, now playFail() to ensure feedback
-                            playFail();
-                        }
-
-                        // Show damage indicator
-                        setPlayerDamageIndicator({
-                            amount: damageResult.fullyBlocked ? damageResult.absorbed : damageResult.actualDamage,
-                            blocked: damageResult.fullyBlocked
+                                // Update health in the outer setState
+                                setTimeout(() => setPlayerHealth(damageResult.newHealth), 0);
+                                
+                                return damageResult.newArmor;
+                            });
+                            return currentHealth; // Will be updated by inner setTimeout
                         });
-                        setTimeout(() => setPlayerDamageIndicator(null), 1000);
-
-                    } else {
-                        // ARMOR/HEAL LOGIC: Affects Skills
-                        const currentSkill = skills[skillId];
-                        const playerStateDummy = { playerHealth: 0, armorPoints: 0 }; // Not used for armor/heal
-
-                        // Calculate result
-                        const result = applyMobCounterAttack(currentSkill, playerStateDummy, currentMobAction);
-
-                        // Update skills
-                        setSkills(prevSkills => ({
-                            ...prevSkills,
-                            [skillId]: { ...currentSkill, ...result.newSkillState }
-                        }));
-
-                        // Show indicator & sound
-                        setPlayerDamageIndicator({
-                            amount: result.value,
-                            blocked: result.effectInfo.blocked,
-                            isHeal: result.effectInfo.isHeal
+                    } else if (currentMobAction.type === 'armor') {
+                        // MOB GAINS ARMOR
+                        setSkills(prevSkills => {
+                            const currentSkill = prevSkills[skillId];
+                            const currentArmor = currentSkill.mobArmor || 0;
+                            const armorCap = currentSkill.mobMaxHealth || 60;
+                            const newArmor = Math.min(armorCap, currentArmor + currentMobAction.value);
+                            console.log(`[Combat] Mob ARMOR: ${currentArmor} + ${currentMobAction.value} = ${newArmor}`);
+                            
+                            setPlayerDamageIndicator({
+                                amount: currentMobAction.value,
+                                blocked: true,
+                                isMobArmor: true
+                            });
+                            setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                            
+                            return {
+                                ...prevSkills,
+                                [skillId]: { ...currentSkill, mobArmor: newArmor }
+                            };
                         });
-                        playClick();
-                        setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                    } else if (currentMobAction.type === 'heal') {
+                        // MOB HEALS
+                        setSkills(prevSkills => {
+                            const currentSkill = prevSkills[skillId];
+                            const newHealth = Math.min(currentSkill.mobMaxHealth, currentSkill.mobHealth + currentMobAction.value);
+                            console.log(`[Combat] Mob HEAL: ${currentSkill.mobHealth} + ${currentMobAction.value} = ${newHealth}`);
+                            
+                            setPlayerDamageIndicator({
+                                amount: currentMobAction.value,
+                                blocked: true,
+                                isMobHeal: true
+                            });
+                            setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                            
+                            return {
+                                ...prevSkills,
+                                [skillId]: { ...currentSkill, mobHealth: newHealth }
+                            };
+                        });
                     }
+
+                    // CRITICAL: Calculate and set next mob action AFTER this turn completes
+                    // This prevents the race condition where UI shows new action prematurely
+                    const nextAction = calculateMobAction(skillId);
+                    setMobNextAction({ skillId, action: nextAction });
+                    
+                    mobTurnPendingRef.current = false;
                 }, 600);
             }, 1000);
         };
@@ -789,35 +877,19 @@ const App = () => {
         if (actionType === 'attack') {
             setActionPoints(prev => Math.min(5, prev + 1));
 
-            // Use stored mob action
-            const mobAction = mobNextAction?.skillId === skillId
-                ? mobNextAction.action
-                : calculateMobAction(skillId);
-
-            // Calculate next mob action
-            setMobNextAction({ skillId, action: calculateMobAction(skillId) });
-
             // Deal Damage to Mob
-            // Note: handleSuccessHit -> (skillId, isWrong, customDamage, mult)
-            // Normal attack: use default damage
             executeCombatTurn(skillId);
 
-            // Execute Mob Turn (will check if battle active)
-            executeMobTurn(mobAction);
+            // Execute Mob Turn with the stored action (not freshly calculated)
+            executeMobTurn(storedMobAction);
 
         } else if (actionType === 'defend') {
             setArmorPoints(prev => Math.min(10, prev + 2));
             setActionPoints(prev => Math.min(5, prev + 1));
-            playClick();
+            playArmorGain();
 
-            const mobAction = mobNextAction?.skillId === skillId
-                ? mobNextAction.action
-                : calculateMobAction(skillId);
-
-            setMobNextAction({ skillId, action: calculateMobAction(skillId) });
-
-            // Execute Mob Turn
-            executeMobTurn(mobAction);
+            // Execute Mob Turn with stored action
+            executeMobTurn(storedMobAction);
 
             // Generate next challenge
             if (skillConfig.hasChallenge) {
@@ -838,7 +910,6 @@ const App = () => {
 
             if (encounterType === 'boss') {
                 // Execute 3 hits directly using internal logic to bypass debounce
-                // Each hit deals base damage (total = 3x base damage over 3 hits)
                 setTimeout(() => executeCombatTurn(skillId, false, baseDamage, 3), 0);
                 setTimeout(() => executeCombatTurn(skillId, false, baseDamage, 3), 250);
                 setTimeout(() => executeCombatTurn(skillId, false, baseDamage, 3), 500);
@@ -846,7 +917,7 @@ const App = () => {
                 // Non-boss: instant kill with scaled damage
                 executeCombatTurn(skillId, false, specialDamage, 1.5);
             }
-            playSuccessfulHit();
+            playSpecialAttack();
 
             // Generate next challenge with increased difficulty for Special
             if (skillConfig.hasChallenge) {
@@ -859,15 +930,11 @@ const App = () => {
             if (actionPoints < 2) return;
             setActionPoints(prev => prev - 2);
             setPlayerHealth(10);
-            playNotification();
+            playHealSound();
             console.log('[Combat] HEAL action: player healed to full');
 
-            // Get mob action and execute mob turn (Bug 4 fix: mob gets a turn after heal)
-            const mobAction = mobNextAction?.skillId === skillId
-                ? mobNextAction.action
-                : calculateMobAction(skillId);
-            setMobNextAction({ skillId, action: calculateMobAction(skillId) });
-            executeMobTurn(mobAction);
+            // Execute mob turn with stored action
+            executeMobTurn(storedMobAction);
 
             if (skillConfig.hasChallenge) {
                 const challengeDiff = battleDifficulty || skillState.difficulty || 1;
@@ -875,7 +942,7 @@ const App = () => {
                 if (skillConfig.challengeType === 'reading') setSpokenText('');
             }
         }
-    }, [skills, actionPoints, armorPoints, battleDifficulty, calculateMobAction, setSpokenText, mobNextAction, battlingSkillId, playerHealth, processPlayerDeath]);
+    }, [skills, actionPoints, battleDifficulty, calculateMobAction, setSpokenText, mobNextAction, processPlayerDeath]);
 
     // Helper function to set difficulty for a specific skill
     const setSkillDifficulty = (skillId, newDiff) => {
@@ -949,19 +1016,11 @@ const App = () => {
         // Use context action
         startBattleContext(id, challengeDiff);
 
-        // Add Battle-start side effects
-        // Note: mobArmor reset for Reading is handled ? 
-        // Original StartBattle did lots of specific resets.
-        // CombatContext reset armor/points etc.
-        // But what about reading skill specific Mob Armor reset? 
-        // We should probably rely on CombatContext's startBattle to be generic or custom?
-        // CombatContext does `setArmorPoints(0)` which is PLAYER armor.
-        // Mob armor is stored in Skills (ProgressionContext).
-        // So we need to reset Mob Armor here manually via setSkills? 
-        if (skill.challengeType === 'reading') {
+        // Initialize combat for all combat skills (Reading, Math, Writing)
+        // Reset mob armor and set initial mob action
+        if (checkIsCombatSkill(skill.id)) {
             const updates = { mobArmor: 0 };
-            const newAction = calculateMobAction(id); // Use local helper
-            setMobNextAction(newAction);
+            const newAction = calculateMobAction(id);
             setSkills(prev => ({
                 ...prev,
                 [id]: { ...prev[id], ...updates }
@@ -979,8 +1038,10 @@ const App = () => {
 
     const endBattleLocal = () => {
         console.log('[Battle] Ending battle, cleaning up speech recognition');
+        // Reset mob turn pending ref
+        mobTurnPendingRef.current = false;
+        
         // Reset mob armor for reading skill before clearing battlingSkillId
-        // This seems minor but preserves state cleanliness.
         if (battlingSkillId) {
             setSkills(prev => {
                 const current = prev[battlingSkillId];
