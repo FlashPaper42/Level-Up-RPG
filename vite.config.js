@@ -5,4 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: './', // Use relative paths for Electron compatibility
+  esbuild: {
+    // Strip console.log, console.warn, console.error in production
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
+  }
 })

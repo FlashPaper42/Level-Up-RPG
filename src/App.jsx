@@ -157,7 +157,7 @@ const App = () => {
             setSkills(prevSkills => {
                 // Double-check skills aren't empty to prevent accidental overwrites
                 if (Object.keys(prevSkills).length === 0) return prevSkills;
-                
+
                 let hasChanges = false;
                 const newSkills = { ...prevSkills };
 
@@ -183,21 +183,10 @@ const App = () => {
         }
     }, [parentStatus, currentProfile, setSkills, skills]);
 
-    useEffect(() => {
-        localStorage.setItem(`borderEffect_p${currentProfile}`, selectedBorder);
-    }, [selectedBorder, currentProfile]);
-
-    useEffect(() => {
-        localStorage.setItem(`borderColor_p${currentProfile}`, borderColor);
-    }, [borderColor, currentProfile]);
-
-    useEffect(() => {
-        localStorage.setItem(`profileAvatar_p${currentProfile}`, selectedAvatar);
-    }, [selectedAvatar, currentProfile]);
-
-    useEffect(() => {
-        localStorage.setItem(`profileBgColor_p${currentProfile}`, profileBgColor);
-    }, [profileBgColor, currentProfile]);
+    // NOTE: Removed redundant localStorage.setItem effects for cosmetics (border, borderColor, avatar, bgColor).
+    // These were causing a race condition where switching profiles would overwrite the new profile's
+    // stored cosmetics with the old profile's values. The setters in UserContext.jsx already handle
+    // saving to localStorage when the user makes a selection in the Avatar/Cosmetics modals.
 
     // Keep battlingSkillIdRef in sync (already done in CombatContext, but local hooks might use the ref? 
     // Wait, useAzureSpeech uses context or props? useAzureSpeech is a hook in App.jsx.
@@ -364,7 +353,7 @@ const App = () => {
 
                         // Show mob action animation
                         setMobAttacking({ skillId: battlingSkillId, type: mobAction.type });
-                        
+
                         // Play appropriate sound for mob action type
                         if (mobAction.type === 'armor') {
                             playArmorGain();
@@ -405,33 +394,39 @@ const App = () => {
                                     };
                                 });
                             } else if (mobAction.type === 'damage') {
-                                // Mob damage is always 1 - simple calculation
+                                // Mob damage is always 1
                                 const damage = mobAction.value; // Should be 1
-                                
-                                // Use functional updates to get fresh state
-                                setArmorPoints(currentArmor => {
-                                    if (currentArmor > 0) {
-                                        // Has armor - absorb the hit
-                                        playPlayerHitArmor();
-                                        setPlayerDamageIndicator({ amount: damage, blocked: true });
-                                        setTimeout(() => setPlayerDamageIndicator(null), 1000);
-                                        return Math.max(0, currentArmor - damage);
+
+                                // CRITICAL FIX: Read current armor value FIRST, then decide what to do
+                                // DO NOT put side effects inside setState callbacks - React StrictMode
+                                // will double-invoke them, causing double sounds and double damage
+
+                                // Use the ref to get current armor state synchronously
+                                // This avoids the StrictMode double-invocation issue
+                                const currentArmorValue = armorPoints;
+
+                                if (currentArmorValue > 0) {
+                                    // Has armor - absorb the hit
+                                    setArmorPoints(prev => Math.max(0, prev - damage));
+                                    playPlayerHitArmor();
+                                    setPlayerDamageIndicator({ amount: damage, blocked: true });
+                                    setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                                } else {
+                                    // No armor - take health damage
+                                    setPlayerHealth(prev => {
+                                        const newHealth = Math.max(0, prev - damage);
+                                        return newHealth <= 0 ? 10 : newHealth;
+                                    });
+
+                                    // Check if player died (after state update)
+                                    if (playerHealth - damage <= 0) {
+                                        setTimeout(() => processPlayerDeath(battlingSkillId), 0);
                                     } else {
-                                        // No armor - take health damage
-                                        setPlayerHealth(currentHealth => {
-                                            const newHealth = Math.max(0, currentHealth - damage);
-                                            if (newHealth <= 0) {
-                                                setTimeout(() => processPlayerDeath(battlingSkillId), 0);
-                                            } else {
-                                                playPlayerHitHealth();
-                                            }
-                                            setPlayerDamageIndicator({ amount: damage, blocked: false });
-                                            setTimeout(() => setPlayerDamageIndicator(null), 1000);
-                                            return newHealth <= 0 ? 10 : newHealth; // Reset on death
-                                        });
-                                        return currentArmor;
+                                        playPlayerHitHealth();
                                     }
-                                });
+                                    setPlayerDamageIndicator({ amount: damage, blocked: false });
+                                    setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                                }
                             }
 
                             // Calculate next mob action AFTER this turn completes
@@ -468,7 +463,7 @@ const App = () => {
 
                     // Play fail sound to indicate mistake
                     playFail();
-                    
+
                     // Boss takes their turn after the healing animation completes
                     executeMobTurnOnFail(BOSS_HEALING_ANIMATION_DURATION + 200);
                     return;
@@ -625,18 +620,18 @@ const App = () => {
 
                 if (leveledUp) {
                     playLevelUp();
-                    
+
                     // Check for AMBUSH: if new level is a miniboss or boss level
                     const newEncounterType = getEncounterType(newLevel);
                     if (newEncounterType === 'miniboss' || newEncounterType === 'boss') {
                         // Trigger AMBUSH animation!
                         setShowAmbush({ skillId, encounterType: newEncounterType });
                         playAmbush();
-                        
+
                         // Fully heal the player
                         setPlayerHealth(10);
                         setArmorPoints(0);
-                        
+
                         // Clear ambush after animation
                         setTimeout(() => setShowAmbush(null), 2500);
                     }
@@ -810,7 +805,7 @@ const App = () => {
 
                 // Show mob attack animation with the CORRECT action type
                 setMobAttacking({ skillId, type: currentMobAction.type });
-                
+
                 // Play appropriate sound for mob action type
                 if (currentMobAction.type === 'armor') {
                     playArmorGain();
@@ -832,32 +827,39 @@ const App = () => {
                     setMobAttacking(null);
 
                     if (currentMobAction.type === 'damage') {
-                        // Mob damage is always 1 - use functional updates for fresh state
+                        // Mob damage is always 1
                         const damage = currentMobAction.value; // Should be 1
-                        
-                        setArmorPoints(currentArmor => {
-                            if (currentArmor > 0) {
-                                // Has armor - absorb the hit
-                                playPlayerHitArmor();
-                                setPlayerDamageIndicator({ amount: damage, blocked: true });
-                                setTimeout(() => setPlayerDamageIndicator(null), 1000);
-                                return Math.max(0, currentArmor - damage);
+
+                        // CRITICAL FIX: Read current armor value FIRST, then decide what to do
+                        // DO NOT put side effects inside setState callbacks - React StrictMode
+                        // will double-invoke them, causing double sounds and double damage
+
+                        // Use the state value directly to get current armor
+                        // This avoids the StrictMode double-invocation issue
+                        const currentArmorValue = armorPoints;
+
+                        if (currentArmorValue > 0) {
+                            // Has armor - absorb the hit
+                            setArmorPoints(prev => Math.max(0, prev - damage));
+                            playPlayerHitArmor();
+                            setPlayerDamageIndicator({ amount: damage, blocked: true });
+                            setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                        } else {
+                            // No armor - take health damage
+                            setPlayerHealth(prev => {
+                                const newHealth = Math.max(0, prev - damage);
+                                return newHealth <= 0 ? 10 : newHealth;
+                            });
+
+                            // Check if player died (using current state value)
+                            if (playerHealth - damage <= 0) {
+                                setTimeout(() => processPlayerDeath(skillId), 0);
                             } else {
-                                // No armor - take health damage
-                                setPlayerHealth(currentHealth => {
-                                    const newHealth = Math.max(0, currentHealth - damage);
-                                    if (newHealth <= 0) {
-                                        setTimeout(() => processPlayerDeath(skillId), 0);
-                                    } else {
-                                        playPlayerHitHealth();
-                                    }
-                                    setPlayerDamageIndicator({ amount: damage, blocked: false });
-                                    setTimeout(() => setPlayerDamageIndicator(null), 1000);
-                                    return newHealth <= 0 ? 10 : newHealth; // Reset on death
-                                });
-                                return currentArmor;
+                                playPlayerHitHealth();
                             }
-                        });
+                            setPlayerDamageIndicator({ amount: damage, blocked: false });
+                            setTimeout(() => setPlayerDamageIndicator(null), 1000);
+                        }
                     } else if (currentMobAction.type === 'armor') {
                         // MOB GAINS ARMOR
                         setSkills(prevSkills => {
@@ -866,14 +868,14 @@ const App = () => {
                             const armorCap = currentSkill.mobMaxHealth || 60;
                             const newArmor = Math.min(armorCap, currentArmor + currentMobAction.value);
                             console.log(`[Combat] Mob ARMOR: ${currentArmor} + ${currentMobAction.value} = ${newArmor}`);
-                            
+
                             setPlayerDamageIndicator({
                                 amount: currentMobAction.value,
                                 blocked: true,
                                 isMobArmor: true
                             });
                             setTimeout(() => setPlayerDamageIndicator(null), 1000);
-                            
+
                             return {
                                 ...prevSkills,
                                 [skillId]: { ...currentSkill, mobArmor: newArmor }
@@ -885,14 +887,14 @@ const App = () => {
                             const currentSkill = prevSkills[skillId];
                             const newHealth = Math.min(currentSkill.mobMaxHealth, currentSkill.mobHealth + currentMobAction.value);
                             console.log(`[Combat] Mob HEAL: ${currentSkill.mobHealth} + ${currentMobAction.value} = ${newHealth}`);
-                            
+
                             setPlayerDamageIndicator({
                                 amount: currentMobAction.value,
                                 blocked: true,
                                 isMobHeal: true
                             });
                             setTimeout(() => setPlayerDamageIndicator(null), 1000);
-                            
+
                             return {
                                 ...prevSkills,
                                 [skillId]: { ...currentSkill, mobHealth: newHealth }
@@ -904,7 +906,7 @@ const App = () => {
                     // This prevents the race condition where UI shows new action prematurely
                     const nextAction = calculateMobAction(skillId);
                     setMobNextAction({ skillId, action: nextAction });
-                    
+
                     mobTurnPendingRef.current = false;
                 }, 600);
             }, 1000);
@@ -955,6 +957,21 @@ const App = () => {
             }
             playSpecialAttack();
 
+            // Track special attack usage for achievement
+            setStats(prevStats => {
+                const newStats = {
+                    ...prevStats,
+                    specialAttacksUsed: (prevStats.specialAttacksUsed || 0) + 1
+                };
+
+                // Check achievements
+                setTimeout(() => {
+                    checkAchievementsFromContext(prevStats, newStats, skills, skills);
+                }, 100);
+
+                return newStats;
+            });
+
             // Generate next challenge with increased difficulty for Special
             if (skillConfig.hasChallenge) {
                 const challengeDiff = (battleDifficulty || 1) + 1; // +1 Difficulty for next challenge
@@ -997,25 +1014,7 @@ const App = () => {
         });
     };
 
-    // Wrapper for setActiveTheme to track theme changes
-    const handleThemeChange = useCallback((newTheme) => {
-        if (newTheme !== activeTheme) {
-            setActiveTheme(newTheme);
-            setStats(prevStats => {
-                const newStats = {
-                    ...prevStats,
-                    themeChanges: (prevStats.themeChanges || 0) + 1
-                };
 
-                // Check achievements
-                setTimeout(() => {
-                    checkAchievementsFromContext(prevStats, newStats, skills, skills);
-                }, 100);
-
-                return newStats;
-            });
-        }
-    }, [activeTheme, skills, checkAchievementsFromContext, setActiveTheme, setStats]);
 
     // Wrapper for setSelectedBorder to track border changes
     const handleBorderChange = useCallback((newBorder) => {
@@ -1076,16 +1075,56 @@ const App = () => {
         console.log('[Battle] Ending battle, cleaning up speech recognition');
         // Reset mob turn pending ref
         mobTurnPendingRef.current = false;
-        
-        // Reset mob armor for reading skill before clearing battlingSkillId
+
+        // Process pending level-ups if player has enough XP
+        // This handles the case where player gained XP over the threshold but fled before defeating the mob
         if (battlingSkillId) {
-            setSkills(prev => {
-                const current = prev[battlingSkillId];
-                if (current && current.mobArmor > 0) {
-                    return { ...prev, [battlingSkillId]: { ...current, mobArmor: 0 } };
+            const currentSkill = skills[battlingSkillId];
+            if (currentSkill) {
+                const xpToLevel = calculateXPToLevel(currentSkill.difficulty || 1, currentSkill.level);
+                if (currentSkill.xp >= xpToLevel) {
+                    // Process level-up
+                    let newLevel = currentSkill.level;
+                    let newXp = currentSkill.xp;
+                    let newDifficulty = currentSkill.difficulty || 1;
+                    const skillConfig = SKILL_DATA.find(s => s.id === battlingSkillId);
+
+                    // Calculate all levels gained
+                    while (newXp >= calculateXPToLevel(newDifficulty, newLevel)) {
+                        const xpNeeded = calculateXPToLevel(newDifficulty, newLevel);
+                        newXp -= xpNeeded;
+                        newLevel++;
+
+                        // Update difficulty at tier thresholds
+                        if (skillConfig && skillConfig.id !== 'cleaning' && newLevel % 20 === 0 && newDifficulty < 7) {
+                            newDifficulty++;
+                        }
+                    }
+
+                    setSkills(prev => ({
+                        ...prev,
+                        [battlingSkillId]: {
+                            ...prev[battlingSkillId],
+                            level: newLevel,
+                            xp: newXp,
+                            difficulty: newDifficulty,
+                            mobArmor: 0 // Reset mob armor
+                        }
+                    }));
+
+                    console.log(`[Battle] Processed ${newLevel - currentSkill.level} level-up(s) on flee`);
+                    playLevelUp();
+                } else {
+                    // Just reset mob armor
+                    setSkills(prev => {
+                        const current = prev[battlingSkillId];
+                        if (current && current.mobArmor > 0) {
+                            return { ...prev, [battlingSkillId]: { ...current, mobArmor: 0 } };
+                        }
+                        return prev;
+                    });
                 }
-                return prev;
-            });
+            }
         }
         endBattleContext();
         setChallengeData(null);
@@ -1110,7 +1149,7 @@ const App = () => {
             });
             return { totalLevel, highestLevel, skills: liveSkills, theme: activeTheme || 'minecraft' };
         }
-        
+
         // Fall back to localStorage for non-current profiles
         const key = getStorageKey(id);
         let saved = localStorage.getItem(key);
@@ -1316,7 +1355,7 @@ const App = () => {
             <CosmeticsDrawer
                 isOpen={isCosmeticsOpen}
                 activeTheme={activeTheme}
-                setActiveTheme={handleThemeChange}
+                setActiveTheme={setActiveTheme}
                 selectedBorder={selectedBorder}
                 setSelectedBorder={handleBorderChange}
                 borderColor={borderColor}
@@ -1363,15 +1402,9 @@ const App = () => {
                 isOpen={isAvatarModalOpen}
                 onClose={() => setIsAvatarModalOpen(false)}
                 selectedAvatar={selectedAvatar}
-                setSelectedAvatar={(avatar) => {
-                    setSelectedAvatar(avatar);
-                    localStorage.setItem(`profileAvatar_p${currentProfile} `, avatar);
-                }}
+                setSelectedAvatar={setSelectedAvatar}
                 profileBgColor={profileBgColor}
-                setProfileBgColor={(color) => {
-                    setProfileBgColor(color);
-                    localStorage.setItem(`profileBgColor_p${currentProfile} `, color);
-                }}
+                setProfileBgColor={setProfileBgColor}
             />
 
             {/* Top Right Buttons - Hidden when battling */}
@@ -1519,11 +1552,11 @@ const App = () => {
                     <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
                         <div className="absolute inset-0 bg-black/70 animate-pulse"></div>
                         <div className="relative text-center animate-ambush">
-                            <h1 
+                            <h1
                                 className={`text-9xl font-black uppercase tracking-widest ${showAmbush.encounterType === 'boss' ? 'text-red-500' : 'text-purple-500'}`}
-                                style={{ 
-                                    textShadow: showAmbush.encounterType === 'boss' 
-                                        ? '0 0 40px rgba(255,0,0,0.9), 0 0 80px rgba(255,0,0,0.6), 6px 6px 0 #000' 
+                                style={{
+                                    textShadow: showAmbush.encounterType === 'boss'
+                                        ? '0 0 40px rgba(255,0,0,0.9), 0 0 80px rgba(255,0,0,0.6), 6px 6px 0 #000'
                                         : '0 0 40px rgba(168,85,247,0.9), 0 0 80px rgba(168,85,247,0.6), 6px 6px 0 #000',
                                     animation: 'ambushFlash 0.3s ease-in-out infinite alternate'
                                 }}

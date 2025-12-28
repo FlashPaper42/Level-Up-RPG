@@ -1,6 +1,6 @@
 import {
     Target, Trophy, Zap, Heart, Skull, Swords,
-    Crown, Shield, Sparkles, Paintbrush, Frame,
+    Crown, Shield, Sparkles, Frame,
     CheckCircle, Timer, Calendar, TrendingUp, Award,
     Ghost, Users, Gem, Flame, Star, Moon
 } from 'lucide-react';
@@ -164,14 +164,14 @@ export const ACHIEVEMENTS = {
         }
     },
 
-    fashion_forward: {
-        id: 'fashion_forward',
-        name: 'Fashion Forward',
-        description: 'Change your theme for the first time',
-        icon: Paintbrush,
-        category: 'customization',
+    special_attacker: {
+        id: 'special_attacker',
+        name: 'Special Attack!',
+        description: 'Use the Special action for the first time',
+        icon: Zap,
+        category: 'combat',
         isTiered: false,
-        checkUnlock: (stats) => (stats.themeChanges || 0) >= 1
+        checkUnlock: (stats) => (stats.specialAttacksUsed || 0) >= 1
     },
 
     framed: {

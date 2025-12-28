@@ -20,27 +20,97 @@ function getDataDirectory() {
 async function getProfileDataDirectory() {
   const baseDir = getDataDirectory();
   const dataDir = path.join(baseDir, 'LevelUp_RPG_Data');
-  
+
   // Create directory if it doesn't exist
   if (!existsSync(dataDir)) {
     await fs.mkdir(dataDir, { recursive: true });
+
+    // Set hidden attribute on Windows so kids don't mess with it
+    if (process.platform === 'win32') {
+      try {
+        const { exec } = require('child_process');
+        exec(`attrib +h "${dataDir}"`, (error) => {
+          if (error) console.log('[Electron] Could not hide data folder:', error.message);
+        });
+      } catch (e) {
+        // Silently fail - hiding is not critical
+      }
+    }
   }
-  
+
   return dataDir;
 }
 
 function createWindow() {
-  // Create the browser window with appropriate size for the game
+  // DESIGN RESOLUTION - This is the resolution the app is designed for
+  // The app will render at this resolution and be scaled to fit any screen
+  const DESIGN_WIDTH = 1920;
+  const DESIGN_HEIGHT = 1080;
+
+  // Get the primary display's work area (screen size minus taskbar)
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+  const scaleFactor = primaryDisplay.scaleFactor; // For high-DPI screens
+
+  // Calculate the zoom factor needed to fit the design resolution to this screen
+  // Account for device pixel ratio on high-DPI displays
+  const effectiveWidth = screenWidth;
+  const effectiveHeight = screenHeight;
+
+  const scaleX = effectiveWidth / DESIGN_WIDTH;
+  const scaleY = effectiveHeight / DESIGN_HEIGHT;
+  const zoomFactor = Math.min(scaleX, scaleY);
+
+  console.log(`[Electron] Screen: ${screenWidth}x${screenHeight}, Scale Factor: ${scaleFactor}`);
+  console.log(`[Electron] Design: ${DESIGN_WIDTH}x${DESIGN_HEIGHT}, Zoom: ${zoomFactor.toFixed(3)}`);
+
+  // Create window at DESIGN resolution (will be zoomed to fit)
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
+    width: DESIGN_WIDTH,
+    height: DESIGN_HEIGHT,
+    minWidth: 1024,
+    minHeight: 576, // 16:9 aspect ratio minimum
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.cjs')
+      preload: path.join(__dirname, 'preload.cjs'),
+      // Force consistent zoom level
+      zoomFactor: zoomFactor
     },
     // Remove menu bar for cleaner experience
     autoHideMenuBar: true,
+    // Don't show until we've set up zoom
+    show: false,
+    // Use content size so width/height refer to web page, not window chrome
+    useContentSize: true,
+  });
+
+  // Set zoom factor and maximize when ready
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.setZoomFactor(zoomFactor);
+  });
+
+  // Show window maximized when ready
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.maximize();
+    mainWindow.show();
+  });
+
+  // Maintain zoom factor when window is resized
+  mainWindow.on('resize', () => {
+    const [newWidth, newHeight] = mainWindow.getContentSize();
+    // Skip if window is minimized (size is 0)
+    if (newWidth <= 0 || newHeight <= 0) return;
+
+    const newScaleX = newWidth / DESIGN_WIDTH;
+    const newScaleY = newHeight / DESIGN_HEIGHT;
+    const newZoom = Math.min(newScaleX, newScaleY);
+
+    // Zoom factor must be greater than 0
+    if (newZoom > 0) {
+      mainWindow.webContents.setZoomFactor(newZoom);
+    }
   });
 
   // Load the built game
@@ -92,11 +162,11 @@ ipcMain.handle('load-profile-data', async (event, profileId) => {
     const dataDir = await getProfileDataDirectory();
     const filename = `profile_${profileId}.json`;
     const filepath = path.join(dataDir, filename);
-    
+
     if (!existsSync(filepath)) {
       return { success: true, data: null };
     }
-    
+
     const content = await fs.readFile(filepath, 'utf8');
     const data = JSON.parse(content);
     return { success: true, data };
@@ -124,11 +194,11 @@ ipcMain.handle('load-profile-settings', async (event) => {
     const dataDir = await getProfileDataDirectory();
     const filename = 'profile_settings.json';
     const filepath = path.join(dataDir, filename);
-    
+
     if (!existsSync(filepath)) {
       return { success: true, data: null };
     }
-    
+
     const content = await fs.readFile(filepath, 'utf8');
     const data = JSON.parse(content);
     return { success: true, data };

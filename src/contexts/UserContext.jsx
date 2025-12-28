@@ -97,29 +97,46 @@ export const UserProvider = ({ children }) => {
     };
 
     // --- Cosmetics State ---
-    const [selectedBorder, setSelectedBorder] = useState('solid');
-    const [borderColor, setBorderColor] = useState('#FFD700');
-    const [selectedAvatar, setSelectedAvatar] = useState('person');
-    const [profileBgColor, setProfileBgColor] = useState('linear-gradient(to bottom, #7e22ce, #581c87)');
+    // These are internal state only - persistence happens via explicit save functions
+    const [selectedBorder, setSelectedBorderInternal] = useState('solid');
+    const [borderColor, setBorderColorInternal] = useState('#FFD700');
+    const [selectedAvatar, setSelectedAvatarInternal] = useState('person');
+    const [profileBgColor, setProfileBgColorInternal] = useState('linear-gradient(to bottom, #7e22ce, #581c87)');
 
-    // Sync cosmetics when currentProfile changes
+    // Load cosmetics when currentProfile changes - NO AUTO-SAVE
     useEffect(() => {
         const savedBorder = localStorage.getItem(`borderEffect_p${currentProfile}`) || 'solid';
         const savedColor = localStorage.getItem(`borderColor_p${currentProfile}`) || '#FFD700';
         const savedAvatar = localStorage.getItem(`profileAvatar_p${currentProfile}`) || 'person';
         const savedBgColor = localStorage.getItem(`profileBgColor_p${currentProfile}`) || 'linear-gradient(to bottom, #7e22ce, #581c87)';
 
-        setSelectedBorder(savedBorder);
-        setBorderColor(savedColor);
-        setSelectedAvatar(savedAvatar);
-        setProfileBgColor(savedBgColor);
+        setSelectedBorderInternal(savedBorder);
+        setBorderColorInternal(savedColor);
+        setSelectedAvatarInternal(savedAvatar);
+        setProfileBgColorInternal(savedBgColor);
     }, [currentProfile]);
 
-    // Persist Cosmetics
-    useEffect(() => { localStorage.setItem(`borderEffect_p${currentProfile}`, selectedBorder); }, [selectedBorder, currentProfile]);
-    useEffect(() => { localStorage.setItem(`borderColor_p${currentProfile}`, borderColor); }, [borderColor, currentProfile]);
-    useEffect(() => { localStorage.setItem(`profileAvatar_p${currentProfile}`, selectedAvatar); }, [selectedAvatar, currentProfile]);
-    useEffect(() => { localStorage.setItem(`profileBgColor_p${currentProfile}`, profileBgColor); }, [profileBgColor, currentProfile]);
+    // Explicit save functions - these BOTH update state AND persist to localStorage
+    // These should ONLY be called from UI interactions, NOT from profile switching
+    const setSelectedBorder = (value) => {
+        setSelectedBorderInternal(value);
+        localStorage.setItem(`borderEffect_p${currentProfile}`, value);
+    };
+
+    const setBorderColor = (value) => {
+        setBorderColorInternal(value);
+        localStorage.setItem(`borderColor_p${currentProfile}`, value);
+    };
+
+    const setSelectedAvatar = (value) => {
+        setSelectedAvatarInternal(value);
+        localStorage.setItem(`profileAvatar_p${currentProfile}`, value);
+    };
+
+    const setProfileBgColor = (value) => {
+        setProfileBgColorInternal(value);
+        localStorage.setItem(`profileBgColor_p${currentProfile}`, value);
+    };
 
     const switchProfile = (id) => {
         setCurrentProfile(id);
@@ -140,11 +157,11 @@ export const UserProvider = ({ children }) => {
         verifyProfilePin,
         clearProfilePin,
         hasProfilePin,
-        // Cosmetics
-        selectedBorder, setSelectedBorder,
-        borderColor, setBorderColor,
-        selectedAvatar, setSelectedAvatar,
-        profileBgColor, setProfileBgColor
+        // Cosmetics - expose the internal state values but the save-enabled setters
+        selectedBorder: selectedBorder, setSelectedBorder,
+        borderColor: borderColor, setBorderColor,
+        selectedAvatar: selectedAvatar, setSelectedAvatar,
+        profileBgColor: profileBgColor, setProfileBgColor
     };
 
     return (

@@ -359,9 +359,9 @@ const WritingSkillCard = ({
                                                     return action.type === 'damage' ? (
                                                         <span className="text-red-400 font-bold text-lg">⚔ +1 DMG</span>
                                                     ) : action.type === 'armor' ? (
-                                                        <span className="text-blue-400 font-bold text-lg">🛡 +20% ARMOR</span>
+                                                        <span className="text-blue-400 font-bold text-lg">🛡 +10% ARMOR</span>
                                                     ) : (
-                                                        <span className="text-green-400 font-bold text-lg">❤️ +20% HEAL</span>
+                                                        <span className="text-green-400 font-bold text-lg">❤️ +10% HEAL</span>
                                                     );
                                                 })()}
                                             </div>
@@ -442,7 +442,7 @@ const WritingSkillCard = ({
                             </div>
                         </div>
 
-                        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-yellow-400 text-2xl font-bold pointer-events-none z-50" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>Click outside to exit battle</div>
+                        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-yellow-400 text-2xl font-bold pointer-events-none z-50" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>Click outside to flee the battle</div>
                     </div>,
                     document.body
                 )}

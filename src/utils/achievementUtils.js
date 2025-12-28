@@ -17,7 +17,7 @@ export const getDefaultStats = () => ({
     uniqueMobsDefeated: [],
     uniqueBossesDefeated: [],
     uniqueMinibossesDefeated: [],
-    themeChanges: 0,
+    specialAttacksUsed: 0,
     borderChanges: 0,
     battlesThisSession: 0,
     loginDates: [],
