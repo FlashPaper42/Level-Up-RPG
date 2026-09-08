@@ -22,6 +22,7 @@ import MenuDrawer from './components/drawers/MenuDrawer';
 import SkillCarousel from './components/skills/SkillCarousel';
 import PhantomEvent from './components/PhantomEvent';
 import AchievementToast from './components/ui/AchievementToast';
+import AuthControls from './components/auth/AuthControls';
 import { useWebSpeech } from './hooks/useWebSpeech';
 import { usePhantomSystem } from './hooks/usePhantomSystem';
 import { toggleFullscreenSafe } from './utils/platform';
@@ -67,6 +68,10 @@ const BOSS_HEALING_ANIMATION_DURATION = 600;
 
 // Temporary deployment check UI. Update this list when a hosted change is pushed.
 const CHANGELOG_ENTRIES = [
+    'Added optional Supabase username/password cloud accounts.',
+    'Added cloud profile persistence with local play still available without an account.',
+    'Added Supabase Row Level Security schema and a restricted progression RPC foundation.',
+    'Fixed profile switching so stale parent/player progress is not saved into another profile.',
     'Redesigned the Reading skill card with one-shot browser speech recognition.',
     'Added typed-answer fallback for Reading challenges.',
     'Fixed the Reading microphone error and duplicate combat-turn handling.',
@@ -1225,6 +1230,7 @@ const App = () => {
     return (
         <div className="min-h-screen overflow-hidden relative flex flex-col bg-cover bg-center bg-no-repeat font-sans text-stone-100" style={containerStyle}>
             <GlobalStyles />
+            <AuthControls />
             <div className="absolute inset-0 bg-black/30 pointer-events-none z-0"></div>
 
             {/* Top Left Buttons - Hidden when battling */}

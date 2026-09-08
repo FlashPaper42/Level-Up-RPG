@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { loadCloudProfile, saveCloudProfileSettings } from '../utils/cloudProfile';
 
 const UserContext = createContext();
 
@@ -11,6 +13,7 @@ export const useUser = () => {
 };
 
 export const UserProvider = ({ children }) => {
+    const { user } = useAuth();
     // --- State Initialization ---
     // Safely load from localStorage or fall back to defaults
     const [currentProfile, setCurrentProfile] = useState(() => {
@@ -102,6 +105,47 @@ export const UserProvider = ({ children }) => {
     const [borderColor, setBorderColorInternal] = useState('#FFD700');
     const [selectedAvatar, setSelectedAvatarInternal] = useState('person');
     const [profileBgColor, setProfileBgColorInternal] = useState('linear-gradient(to bottom, #7e22ce, #581c87)');
+    const [cloudSettingsLoaded, setCloudSettingsLoaded] = useState(() => !user);
+
+    useEffect(() => {
+        const resetTimer = window.setTimeout(() => setCloudSettingsLoaded(!user), 0);
+        if (!user) return undefined;
+        let active = true;
+        loadCloudProfile(currentProfile).then(cloudProfile => {
+            if (!active || !cloudProfile) return;
+            const cosmetics = cloudProfile.cosmetics || {};
+            setProfileNames(prev => ({ ...prev, [currentProfile]: cloudProfile.display_name || prev[currentProfile] }));
+            setParentStatus(prev => ({ ...prev, [currentProfile]: Boolean(cloudProfile.parent_verified) }));
+            setSelectedBorderInternal(cosmetics.border || 'solid');
+            setBorderColorInternal(cosmetics.borderColor || '#FFD700');
+            setSelectedAvatarInternal(cosmetics.avatar || 'person');
+            setProfileBgColorInternal(cosmetics.background || 'linear-gradient(to bottom, #7e22ce, #581c87)');
+        }).catch(error => console.error('Failed to load cloud profile settings:', error))
+            .finally(() => {
+                if (active) setCloudSettingsLoaded(true);
+            });
+        return () => {
+            active = false;
+            window.clearTimeout(resetTimer);
+        };
+    }, [user, currentProfile]);
+
+    useEffect(() => {
+        if (!user || !cloudSettingsLoaded) return undefined;
+        const timer = window.setTimeout(() => {
+            saveCloudProfileSettings(currentProfile, {
+                displayName: profileNames[currentProfile],
+                parentVerified: parentStatus[currentProfile],
+                cosmetics: {
+                    border: selectedBorder,
+                    borderColor,
+                    avatar: selectedAvatar,
+                    background: profileBgColor,
+                },
+            }).catch(error => console.error('Failed to save cloud profile settings:', error));
+        }, 300);
+        return () => window.clearTimeout(timer);
+    }, [user, cloudSettingsLoaded, currentProfile, profileNames, parentStatus, selectedBorder, borderColor, selectedAvatar, profileBgColor]);
 
     // Load cosmetics when currentProfile changes - NO AUTO-SAVE
     useEffect(() => {

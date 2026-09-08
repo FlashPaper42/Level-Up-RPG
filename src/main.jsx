@@ -5,15 +5,18 @@ import './index.css'
 import { UserProvider } from './contexts/UserContext'
 import { ProgressionProvider } from './contexts/ProgressionContext'
 import { CombatProvider } from './contexts/CombatContext'
+import { AuthProvider } from './contexts/AuthContext'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <UserProvider>
-      <ProgressionProvider>
-        <CombatProvider>
-          <App />
-        </CombatProvider>
-      </ProgressionProvider>
-    </UserProvider>
+    <AuthProvider>
+      <UserProvider>
+        <ProgressionProvider>
+          <CombatProvider>
+            <App />
+          </CombatProvider>
+        </ProgressionProvider>
+      </UserProvider>
+    </AuthProvider>
   </React.StrictMode>,
 )
