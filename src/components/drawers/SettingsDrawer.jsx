@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { Users, Music, Trash2, AlertTriangle, Edit3, Crown, LockOpen } from 'lucide-react';
 import ProfileCard from '../profile/ProfileCard';
 import ProfileEditorModal from '../modals/ProfileEditorModal';
-import { HERO_TITLE_OPTIONS } from '../../constants/cosmetics';
 
-const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol, currentProfile, onSwitchProfile, profileNames, profileTitles, unlockedTitles = [], onRenameProfile, onRenameTitle, getProfileStats, parentStatus, onParentVerified, currentSkills, selectedAvatar, selectedBorder, borderColor, hasProfilePin, setProfilePin, verifyProfilePin, clearProfilePin }) => {
+const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol, currentProfile, onSwitchProfile, profileNames, profileTitles, onRenameProfile, getProfileStats, parentStatus, onParentVerified, currentSkills, selectedAvatar, selectedBorder, borderColor, hasProfilePin, setProfilePin, verifyProfilePin, clearProfilePin }) => {
     const [editingProfileId, setEditingProfileId] = useState(null);
     // Helper to get avatar for each profile
     const getProfileAvatar = (profileId) => {
@@ -79,23 +78,6 @@ const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol,
                                     />
                                 ))}
                             </div>
-                            <label className="mt-4 block text-sm font-bold uppercase tracking-wider text-slate-400">
-                                Hero title prefix
-                                <select
-                                    value={profileTitles?.[currentProfile] || 'Apprentice'}
-                                    onChange={event => onRenameTitle?.(currentProfile, event.target.value)}
-                                    className="mt-2 w-full rounded-lg border-2 border-slate-600 bg-slate-900 p-3 text-lg text-white"
-                                >
-                                    {HERO_TITLE_OPTIONS.map(title => (
-                                        <option key={title} value={title} disabled={!unlockedTitles.includes(title)}>
-                                            {unlockedTitles.includes(title) ? title : `${title} (locked)`}
-                                        </option>
-                                    ))}
-                                </select>
-                                <span className="mt-1 block text-xs normal-case text-slate-500">
-                                    Earn achievements to unlock more fixed titles.
-                                </span>
-                            </label>
                         </div>
 
                         {/* Parent Profile Editor - Only show if current profile is a parent */}
