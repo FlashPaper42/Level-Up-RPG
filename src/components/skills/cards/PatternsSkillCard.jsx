@@ -25,8 +25,6 @@ const PatternsSkillCard = ({
     themeData,
     isCenter,
     isBattling,
-    mobName,
-    damageNumbers,
     onStartBattle,
     onEndBattle,
     onMathSubmit,
@@ -36,7 +34,6 @@ const PatternsSkillCard = ({
     selectedBorder,
     borderColor
 }) => {
-    const prevDamageCount = useRef(0);
 
     // Game state
     const [simonSequence, setSimonSequence] = useState([]);
@@ -47,7 +44,7 @@ const PatternsSkillCard = ({
     const [simonGameActive, setSimonGameActive] = useState(false);
     const [showInstructions, setShowInstructions] = useState(true);
     const [ringRotation, setRingRotation] = useState(0); // 0 = no rotation, 1 = rotating (CSS handles animation)
-    const [clockHandAngle, setClockHandAngle] = useState(0); // Persisted clock hand angle
+    const [, setClockHandAngle] = useState(0);
     const simonSessionStartedRef = useRef(false);
 
     const { borderClass, levelTextColor } = getLevelStyling(data.level);

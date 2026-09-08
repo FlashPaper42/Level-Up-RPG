@@ -110,10 +110,12 @@ export const UserProvider = ({ children }) => {
         const savedAvatar = localStorage.getItem(`profileAvatar_p${currentProfile}`) || 'person';
         const savedBgColor = localStorage.getItem(`profileBgColor_p${currentProfile}`) || 'linear-gradient(to bottom, #7e22ce, #581c87)';
 
-        setSelectedBorderInternal(savedBorder);
-        setBorderColorInternal(savedColor);
-        setSelectedAvatarInternal(savedAvatar);
-        setProfileBgColorInternal(savedBgColor);
+        window.setTimeout(() => {
+            setSelectedBorderInternal(savedBorder);
+            setBorderColorInternal(savedColor);
+            setSelectedAvatarInternal(savedAvatar);
+            setProfileBgColorInternal(savedBgColor);
+        }, 0);
     }, [currentProfile]);
 
     // Explicit save functions - these BOTH update state AND persist to localStorage

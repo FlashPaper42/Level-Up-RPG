@@ -14,12 +14,42 @@
   body {
     margin: 0;
     font-family: 'VT323', monospace;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: #0f172a;
+    color: #f8fafc;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  :focus-visible {
+    outline: 3px solid #facc15;
+    outline-offset: 3px;
+  }
+
+  button {
+    min-height: 44px;
   }
 
   #root {
     width: 100vw;
-    height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -82,6 +112,17 @@
 
 .animate-blink-box {
   animation: blinkBox 1s ease-in-out infinite;
+}
+
+.skill-carousel-stage {
+  --card-offset: clamp(140px, 18vw, 320px);
+  touch-action: pan-y;
+}
+
+.modal-backdrop {
+  overscroll-behavior: contain;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
 }
 
 /* Ambush animation for miniboss/boss surprise encounters */

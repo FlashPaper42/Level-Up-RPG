@@ -19,6 +19,10 @@ const BGM_TRACKS = [
     'assets/sounds/bgm/piano3.wav'
 ];
 
+const createAudio = path => (typeof window !== 'undefined' && typeof window.Audio === 'function'
+    ? new window.Audio(path)
+    : null);
+
 // UI sound paths
 const UI_SOUNDS = {
     actioncard_left: 'assets/sounds/ui/actioncard_left.wav',
@@ -127,7 +131,8 @@ class BGMManager {
     play() {
         if (!this.audio) {
             this.currentTrackIndex = this.getRandomTrack();
-            this.audio = new Audio(this.tracks[this.currentTrackIndex]);
+            this.audio = createAudio(this.tracks[this.currentTrackIndex]);
+            if (!this.audio) return;
             this.audio.volume = this.volume;
 
             // When a track ends, play a new random track
@@ -192,7 +197,8 @@ export const playUISound = (soundName) => {
     const path = UI_SOUNDS[soundName];
     if (!path) return;
 
-    const audio = new Audio(path);
+    const audio = createAudio(path);
+    if (!audio) return;
     audio.volume = sfxVolume;
     audio.play().catch(() => { });
 };
@@ -208,7 +214,8 @@ export const playActionSound = (actionName) => {
         return;
     }
 
-    const audio = new Audio(path);
+    const audio = createAudio(path);
+    if (!audio) return;
     audio.volume = sfxVolume;
     audio.play().catch(() => { });
 };

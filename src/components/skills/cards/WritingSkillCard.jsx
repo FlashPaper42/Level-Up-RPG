@@ -40,12 +40,9 @@ const WritingSkillCard = ({
     borderColor,
     bossHealing,
     actionPoints,
-    armorPoints,
-    playerHealth,
     handleCombatAction,
     generateChallengeAtDifficulty,
     mobAttacking,
-    playerDamageIndicator,
     calculateMobAction,
     mobNextAction
 }) => {
@@ -79,12 +76,18 @@ const WritingSkillCard = ({
     const gemStyle = {};
     const buttonStyle = getButtonStyle(config.colorStyle);
 
-    useEffect(() => { setLetterInput(''); }, [challenge]);
+    useEffect(() => {
+        const resetTimer = window.setTimeout(() => setLetterInput(''), 0);
+        return () => window.clearTimeout(resetTimer);
+    }, [challenge]);
 
     useEffect(() => {
         if (damageNumbers.length > prevDamageCount.current) {
-            setIsHit(true);
-            setTimeout(() => setIsHit(false), 400);
+            const hitTimer = window.setTimeout(() => {
+                setIsHit(true);
+                window.setTimeout(() => setIsHit(false), 400);
+            }, 0);
+            return () => window.clearTimeout(hitTimer);
         }
         prevDamageCount.current = damageNumbers.length;
     }, [damageNumbers]);
@@ -92,7 +95,8 @@ const WritingSkillCard = ({
     // Reset selectedAction when battle ends
     useEffect(() => {
         if (!isBattling) {
-            setSelectedAction(null);
+            const resetTimer = window.setTimeout(() => setSelectedAction(null), 0);
+            return () => window.clearTimeout(resetTimer);
         }
     }, [isBattling]);
 

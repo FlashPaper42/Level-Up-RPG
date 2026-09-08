@@ -186,14 +186,14 @@ const SkillCarousel = ({
             )}
 
             <div
-                className={`relative w-full flex items-center justify-center perspective-1000 h-[650px] mb-12 ${battlingSkillId ? 'z-50' : ''}`}
+                className={`skill-carousel-stage relative w-full flex items-center justify-center perspective-1000 h-[min(650px,70dvh)] min-h-[420px] mb-12 ${battlingSkillId ? 'z-50' : ''}`}
                 style={{ cursor: battlingSkillId ? 'default' : (isDragging ? 'grabbing' : 'grab') }}
                 onMouseDown={(e) => handleDragStart(e.clientX)}
                 onMouseMove={(e) => handleDragMove(e.clientX)}
                 onMouseUp={handleDragEnd}
                 onMouseLeave={handleDragEnd}
                 onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
-                onTouchMove={(e) => { e.preventDefault(); handleDragMove(e.touches[0].clientX); }}
+                onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
                 onTouchEnd={handleDragEnd}
             >
                 {getVisibleItems().map((item) => {
@@ -215,7 +215,7 @@ const SkillCarousel = ({
                             key={item.key}
                             className="absolute transition-all duration-500 ease-out"
                             style={{
-                                transform: `translateX(${item.offset * 320}px) translateY(${translateY}px) rotateX(${rotateX}deg) scale(${item.offset === 0 ? 1.1 : 0.85})`,
+                                transform: `translateX(calc(${item.offset} * var(--card-offset))) translateY(${translateY}px) rotateX(${rotateX}deg) scale(${item.offset === 0 ? 1.1 : 0.85})`,
                                 opacity: item.offset === 0 ? 1 : (Math.abs(item.offset) === 3 ? 0 : (Math.abs(item.offset) === 2 ? 0.3 : 0.6)),
                                 zIndex: isItemBattling ? 50 : (item.offset === 0 ? 20 : 10 - Math.abs(item.offset)),
                                 filter: item.offset === 0 ? 'none' : 'brightness(0.5) blur(1px)',

@@ -1,5 +1,5 @@
 /**
- * Web Speech API Recognition for Electron
+ * Web Speech API Recognition for supported browsers
  * Uses browser's built-in webkitSpeechRecognition for perfect accuracy
  * Free, works offline, excellent for single-syllable words
  */
@@ -57,7 +57,7 @@ export function startWebSpeechRecognition(onRecognizing, onRecognized, onError) 
         };
 
         // Handle errors
-        recognition.onerror = (event) => {
+        recognition.onerror = () => {
             console.error('[Web Speech] Error:', event.error);
             if (event.error !== 'no-speech') {
                 if (onError) onError(event.error);
@@ -79,7 +79,7 @@ export function startWebSpeechRecognition(onRecognizing, onRecognized, onError) 
                 console.log('[Web Speech] Restarting for continuous mode...');
                 try {
                     recognition.start();
-                } catch (e) {
+                } catch {
                     console.log('[Web Speech] Already started');
                 }
             }

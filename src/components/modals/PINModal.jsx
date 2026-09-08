@@ -16,13 +16,17 @@ const PINModal = ({ isOpen, onClose, onSubmit, profileName, isSettingPin = false
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
-            setPin(['', '', '', '']);
-            setConfirmPin(['', '', '', '']);
-            setError('');
-            setStep(1);
-            setTimeout(() => inputRefs[0].current?.focus(), 100);
+            const resetTimer = window.setTimeout(() => {
+                setPin(['', '', '', '']);
+                setConfirmPin(['', '', '', '']);
+                setError('');
+                setStep(1);
+                inputRefs[0].current?.focus();
+            }, 0);
+            return () => window.clearTimeout(resetTimer);
         }
-    }, [isOpen]);
+        return undefined;
+    }, [isOpen, inputRefs]);
 
     const handleDigitChange = (index, value, isConfirm = false) => {
         if (!/^\d*$/.test(value)) return; // Only allow digits
@@ -109,8 +113,8 @@ const PINModal = ({ isOpen, onClose, onSubmit, profileName, isSettingPin = false
     );
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center">
-            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 border-yellow-400 rounded-2xl p-6 w-[380px] shadow-2xl">
+        <div className="modal-backdrop fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="pin-modal-title">
+            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 border-yellow-400 rounded-2xl p-6 w-full max-w-[380px] max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-3">
@@ -118,7 +122,7 @@ const PINModal = ({ isOpen, onClose, onSubmit, profileName, isSettingPin = false
                             {isSettingPin ? <KeyRound className="text-yellow-400" size={24} /> : <Lock className="text-yellow-400" size={24} />}
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-yellow-400" style={{ fontFamily: '"VT323", monospace' }}>
+                            <h2 id="pin-modal-title" className="text-xl font-bold text-yellow-400" style={{ fontFamily: '"VT323", monospace' }}>
                                 {isSettingPin ? 'Set Profile PIN' : 'Profile PIN Required'}
                             </h2>
                             <p className="text-sm text-slate-400">{profileName}</p>
@@ -126,6 +130,7 @@ const PINModal = ({ isOpen, onClose, onSubmit, profileName, isSettingPin = false
                     </div>
                     <button
                         onClick={onClose}
+                        aria-label="Close PIN dialog"
                         className="p-2 rounded-lg hover:bg-slate-700 transition-colors"
                     >
                         <X className="text-slate-400" size={20} />

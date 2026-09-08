@@ -40,12 +40,9 @@ const MathSkillCard = ({
     borderColor,
     bossHealing,
     actionPoints,
-    armorPoints,
-    playerHealth,
     handleCombatAction,
     generateChallengeAtDifficulty,
     mobAttacking,
-    playerDamageIndicator,
     calculateMobAction,
     mobNextAction
 }) => {
@@ -87,13 +84,19 @@ const MathSkillCard = ({
     const buttonStyle = getButtonStyle(config.colorStyle);
 
     // Reset input when challenge changes
-    useEffect(() => { setMathInput(''); }, [challenge]);
+    useEffect(() => {
+        const resetTimer = window.setTimeout(() => setMathInput(''), 0);
+        return () => window.clearTimeout(resetTimer);
+    }, [challenge]);
 
     // Handle damage animation
     useEffect(() => {
         if (damageNumbers.length > prevDamageCount.current) {
-            setIsHit(true);
-            setTimeout(() => setIsHit(false), 400);
+            const hitTimer = window.setTimeout(() => {
+                setIsHit(true);
+                window.setTimeout(() => setIsHit(false), 400);
+            }, 0);
+            return () => window.clearTimeout(hitTimer);
         }
         prevDamageCount.current = damageNumbers.length;
     }, [damageNumbers]);
@@ -101,7 +104,8 @@ const MathSkillCard = ({
     // Reset selectedAction when battle ends
     useEffect(() => {
         if (!isBattling) {
-            setSelectedAction(null);
+            const resetTimer = window.setTimeout(() => setSelectedAction(null), 0);
+            return () => window.clearTimeout(resetTimer);
         }
     }, [isBattling]);
 

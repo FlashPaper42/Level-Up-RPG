@@ -7,8 +7,8 @@ const safeGet = (key, fallback) => {
         const saved = localStorage.getItem(key);
         if (!saved) return fallback;
         return JSON.parse(saved);
-    } catch (e) {
-        console.warn(`[useProfile] Failed to load ${key}`, e);
+    } catch (error) {
+        console.warn(`[useProfile] Failed to load ${key}`, error);
         return fallback;
     }
 };
@@ -19,7 +19,7 @@ export const useProfile = () => {
         try {
             const saved = localStorage.getItem('currentProfile_v1');
             return saved ? parseInt(saved, 10) : 1;
-        } catch (e) {
+        } catch {
             return 1;
         }
     });

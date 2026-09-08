@@ -32,7 +32,6 @@ const CleaningSkillCard = ({
     isCenter,
     isBattling,
     mobName,
-    challenge,
     onStartBattle,
     onEndBattle,
     onMathSubmit,

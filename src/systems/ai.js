@@ -12,7 +12,7 @@ console.log('[System:AI] Module loaded');
  * @param {string} skillId - The skill ID
  * @returns {{type: 'damage'|'armor'|'heal', value: number}}
  */
-export const calculateMobAction = (skillState, skillId = 'reading') => {
+export const calculateMobAction = (skillState) => {
     if (!skillState) return { type: 'damage', value: 1 };
 
     const mobMaxHealth = skillState.mobMaxHealth || 60;

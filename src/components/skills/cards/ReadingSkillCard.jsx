@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { Mic, Plus, Minus } from 'lucide-react';
 import SafeImage from '../../ui/SafeImage';
@@ -6,18 +6,16 @@ import MobWithAura from '../../ui/MobWithAura';
 import ParentalVerificationModal from '../../ui/ParentalVerificationModal';
 import PixelShield from '../../ui/PixelShield';
 import { BASE_ASSETS, FRIENDLY_MOBS, HOSTILE_MOBS, CHEST_BLOCKS, BOSS_MOBS, MINIBOSS_MOBS, DIFFICULTY_IMAGES, DIFFICULTY_CONTENT, HOMOPHONES } from '../../../constants/gameData';
-import { playClick, getSfxVolume } from '../../../utils/soundManager';
+import { playClick } from '../../../utils/soundManager';
 import { calculateXPToLevel } from '../../../utils/gameUtils';
 import { AURA_ADJECTIVES } from '../../../utils/mobDisplayUtils';
 import {
     PRESTIGE_LEVEL_THRESHOLD,
     MIN_SPOKEN_TEXT_LENGTH,
     AXOLOTL_NOTE_MAP,
-    getTempoDelays,
     getActionAnimation,
     getLevelStyling,
     getButtonStyle,
-    playMismatch,
     getBorderEffect
 } from '../shared';
 
@@ -39,7 +37,6 @@ const ReadingSkillCard = ({
     damageNumbers,
     onStartBattle,
     onEndBattle,
-    onMathSubmit,
     onMicClick,
     difficulty,
     setDifficulty,
@@ -48,12 +45,9 @@ const ReadingSkillCard = ({
     borderColor,
     bossHealing,
     actionPoints,
-    armorPoints,
-    playerHealth,
     handleCombatAction,
     generateChallengeAtDifficulty,
     mobAttacking,
-    playerDamageIndicator,
     calculateMobAction,
     mobNextAction
 }) => {
@@ -98,8 +92,11 @@ const ReadingSkillCard = ({
     // Handle damage animation
     useEffect(() => {
         if (damageNumbers.length > prevDamageCount.current) {
-            setIsHit(true);
-            setTimeout(() => setIsHit(false), 400);
+            const hitTimer = window.setTimeout(() => {
+                setIsHit(true);
+                window.setTimeout(() => setIsHit(false), 400);
+            }, 0);
+            return () => window.clearTimeout(hitTimer);
         }
         prevDamageCount.current = damageNumbers.length;
     }, [damageNumbers]);
@@ -115,12 +112,14 @@ const ReadingSkillCard = ({
             if (isCorrect && spokenText !== prevSpokenTextRef.current) {
                 if (handleCombatAction) {
                     handleCombatAction(config.id, selectedAction, true);
-                    setSelectedAction(null);
+                    window.setTimeout(() => setSelectedAction(null), 0);
                 }
                 prevSpokenTextRef.current = spokenText;
             } else if (!isCorrect && normalizedSpoken.length >= MIN_SPOKEN_TEXT_LENGTH && spokenText !== prevSpokenTextRef.current) {
-                setIsReadingWrong(true);
-                setTimeout(() => setIsReadingWrong(false), 500);
+                window.setTimeout(() => {
+                    setIsReadingWrong(true);
+                    window.setTimeout(() => setIsReadingWrong(false), 500);
+                }, 0);
                 prevSpokenTextRef.current = spokenText;
             }
         }
@@ -129,7 +128,8 @@ const ReadingSkillCard = ({
     // Reset selectedAction when battle ends
     useEffect(() => {
         if (!isBattling) {
-            setSelectedAction(null);
+            const resetTimer = window.setTimeout(() => setSelectedAction(null), 0);
+            return () => window.clearTimeout(resetTimer);
         }
     }, [isBattling]);
 

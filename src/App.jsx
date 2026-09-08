@@ -22,26 +22,22 @@ import MenuDrawer from './components/drawers/MenuDrawer';
 import SkillCarousel from './components/skills/SkillCarousel';
 import PhantomEvent from './components/PhantomEvent';
 import AchievementToast from './components/ui/AchievementToast';
-import { useAzureSpeech } from './hooks/useAzureSpeech';
+import { useWebSpeech } from './hooks/useWebSpeech';
 import { usePhantomSystem } from './hooks/usePhantomSystem';
 import { toggleFullscreenSafe } from './utils/platform';
 import { getAvatarEmoji } from './constants/avatarData';
 
 // Utils & Constants
-import { getRandomMob, getRandomFriendlyMob, getRandomMiniboss, getRandomBoss, getMobForSkill, getEncounterType, generateMathProblem, getReadingWord, getWordForDifficulty, calculateDamage, calculateMobHealth, calculateXPReward, calculateXPToLevel } from './utils/gameUtils';
+import { getMobForSkill, getEncounterType, calculateDamage, calculateMobHealth, calculateXPToLevel } from './utils/gameUtils';
 import {
     calculateMobAction as calculateMobActionFromSystem,
-    calculateDamageAfterArmor,
     willHitDefeatMob,
     isCombatSkill as checkIsCombatSkill,
     applyDamageToMob,
     processXPGain,
     generateNewMobData,
-    applyMobCounterAttack,
-    calculatePlayerDamage
 } from './systems/combat';
 import { generateChallenge as generateChallengeFromSystem } from './systems/challenges';
-import { getRandomAura } from './utils/mobDisplayUtils';
 import {
     BASE_ASSETS, THEME_CONFIG, SKILL_DATA,
     HOMOPHONES, DIFFICULTY_CONTENT, HOSTILE_MOBS, BOSS_MOBS, MINIBOSS_MOBS
@@ -50,15 +46,12 @@ import {
     getBGMManager, setSfxVolume,
     playClick,
     playDeath, playFail, playLevelUp, playNotification, playSuccessfulHit,
-    playMobHurt, playMobDeath, playMobSay, playAchievement,
+    playMobHurt, playMobDeath, playMobSay,
     playArmorGain, playHealSound, playSpecialAttack, playPlayerHitArmor, playPlayerHitHealth, playAmbush
 } from './utils/soundManager';
 import {
-    getDefaultStats, getNewlyUnlockedAchievements, getNewTierAchievements,
     addUniqueToArray, isAchievementUnlocked
 } from './utils/achievementUtils';
-import { migrateLocalStorageToFiles } from './utils/migration';
-import { saveProfileData, saveProfileSettings } from './utils/storage';
 
 // Parent verification privilege constants
 const PARENT_PRIVILEGE_LEVEL = 200;
@@ -96,7 +89,7 @@ const App = () => {
     const {
         battlingSkillId, battlingSkillIdRef, battleDifficulty,
         startBattle: startBattleContext, endBattle: endBattleContext,
-        setBattlingSkillId, setBattleDifficulty, // Now exposed and needed
+        setBattlingSkillId, // Now exposed and needed
         playerHealth, setPlayerHealth,
         actionPoints, setActionPoints,
         armorPoints, setArmorPoints,
@@ -139,11 +132,6 @@ const App = () => {
     // The previous implementation read from localStorage.getItem(...) in useState initializer.
     // We already moved generic Profile settings to UserContext, but specific "Cosmetics"
     // like selectedBorder/Avatar are now also in UserContext.
-
-    // Run migration on mount (Electron only)
-    useEffect(() => {
-        migrateLocalStorageToFiles();
-    }, []);
 
     // Note: State saving logic (persistence) is now handled inside ProgressionContext and UserContext!
     // We can REMOVE the duplicated `saveProfileData` calls here for skills/stats/theme.
@@ -188,16 +176,6 @@ const App = () => {
     // stored cosmetics with the old profile's values. The setters in UserContext.jsx already handle
     // saving to localStorage when the user makes a selection in the Avatar/Cosmetics modals.
 
-    // Keep battlingSkillIdRef in sync (already done in CombatContext, but local hooks might use the ref? 
-    // Wait, useAzureSpeech uses context or props? useAzureSpeech is a hook in App.jsx.
-    // It takes battlingSkillId as param.
-    // But App.jsx passed `battlingSkillId` (state) to it.
-    // So we just pass the context value.
-
-
-
-    // Use Azure Speech Hook
-    // Use Azure Speech Hook
     const {
         isListening,
         spokenText,
@@ -205,7 +183,7 @@ const App = () => {
         startVoiceListener,
         stopVoiceRecognition,
         toggleMicListener
-    } = useAzureSpeech({
+    } = useWebSpeech({
         battlingSkillId,
         challengeData,
         onSuccess: (targetId) => {
@@ -295,29 +273,6 @@ const App = () => {
         if (!bgmManager.current.isPlaying) {
             bgmManager.current.play();
         }
-    }, []);
-
-    // Toggle fullscreen mode
-    const toggleFullscreen = useCallback(() => {
-        console.log('[Fullscreen] Function called!');
-        console.log('[Fullscreen] document.fullscreenElement:', document.fullscreenElement);
-
-        if (!document.fullscreenElement) {
-            console.log('[Fullscreen] Calling requestFullscreen on documentElement');
-            document.documentElement.requestFullscreen()
-                .then(() => console.log('[Fullscreen] requestFullscreen promise resolved'))
-                .catch(err => {
-                    console.error('[Fullscreen] requestFullscreen failed:', err);
-                });
-        } else {
-            console.log('[Fullscreen] Calling exitFullscreen');
-            document.exitFullscreen()
-                .then(() => console.log('[Fullscreen] exitFullscreen promise resolved'))
-                .catch(err => {
-                    console.error('[Fullscreen] exitFullscreen failed:', err);
-                });
-        }
-        playClick();
     }, []);
 
     // Generate challenges using the challenges system
@@ -612,7 +567,7 @@ const App = () => {
 
                 // Handle Badge Notifications
                 if (xpResult.badgesEarned.length > 0) {
-                    xpResult.badgesEarned.forEach(tier => {
+                    xpResult.badgesEarned.forEach(() => {
                         setLootBox({ level: newLevel, skillName: skillConfig.fantasyName, item: "New Rank!", img: BASE_ASSETS.badges.Wood });
                         playNotification();
                     });
@@ -1168,7 +1123,7 @@ const App = () => {
                 }
             });
             return { totalLevel, highestLevel, skills: skillsData, theme };
-        } catch (e) { return null; }
+        } catch { return null; }
     };
 
     const handleSwitchProfile = (newId) => {
@@ -1311,11 +1266,6 @@ const App = () => {
                         onClickLevel={() => {
                             setIsMenuOpen(true);
                             playClick();
-                            // Set highlight state for total level
-                            setTimeout(() => {
-                                setHighlightTotalLevel(true);
-                                setTimeout(() => setHighlightTotalLevel(false), 2000);
-                            }, 300);
                         }}
                     />
                 </div>

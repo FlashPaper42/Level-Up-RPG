@@ -10,11 +10,8 @@ import {
     getWordForDifficulty,
     getRandomMob,
     getRandomFriendlyMob,
-    getRandomMiniboss,
-    getRandomBoss,
     getMobForSkill,
     addUniqueToArray, // Ensure this is exported from utils/gameUtils or utils/achievementUtils
-    getRandomAura
 } from '../utils/gameUtils';
 import {
     playMobHurt,

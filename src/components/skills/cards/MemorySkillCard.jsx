@@ -32,7 +32,6 @@ const MemorySkillCard = ({
     unlockedDifficulty,
     selectedBorder,
     borderColor,
-    actionPoints,
     onPerfectMemoryGame
 }) => {
     const [memoryCards, setMemoryCards] = useState([]);
@@ -81,33 +80,37 @@ const MemorySkillCard = ({
                 { id: idx * 2 + 1, color: mob, img: FRIENDLY_MOBS[mob] }
             ]);
             const shuffledCards = cardPairs.sort(() => Math.random() - 0.5);
-            setMemoryCards(shuffledCards);
-            setFlippedIndices([]);
-            setMatchedPairs([]);
-            setIsProcessingMatch(false);
-            setMismatchShake(false);
-            setMismatchCount(0);
+            window.setTimeout(() => {
+                setMemoryCards(shuffledCards);
+                setFlippedIndices([]);
+                setMatchedPairs([]);
+                setIsProcessingMatch(false);
+                setMismatchShake(false);
+                setMismatchCount(0);
+            }, 0);
             // Initialize positions and velocities for nightmare mode
             if (isNightmareMode) {
                 const SPEED = 1.5;
-                setCardPositions(shuffledCards.map(() => ({ x: 0, y: 0 })));
-                setCardVelocities(shuffledCards.map(() => {
+                window.setTimeout(() => setCardPositions(shuffledCards.map(() => ({ x: 0, y: 0 }))), 0);
+                window.setTimeout(() => setCardVelocities(shuffledCards.map(() => {
                     // Random angle for initial direction
                     const angle = Math.random() * 2 * Math.PI;
                     return {
                         x: Math.cos(angle) * SPEED,
                         y: Math.sin(angle) * SPEED
                     };
-                }));
+                })), 0);
             }
         } else if (!isBattling) {
             memorySessionStartedRef.current = false;
-            setMemoryCards([]);
-            setFlippedIndices([]);
-            setMatchedPairs([]);
-            setMismatchCount(0);
-            setCardPositions([]);
-            setCardVelocities([]);
+            window.setTimeout(() => {
+                setMemoryCards([]);
+                setFlippedIndices([]);
+                setMatchedPairs([]);
+                setMismatchCount(0);
+                setCardPositions([]);
+                setCardVelocities([]);
+            }, 0);
         }
     }, [isBattling, memoryPairs, isNightmareMode]);
 

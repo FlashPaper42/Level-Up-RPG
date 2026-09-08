@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useUser } from './UserContext';
 import { SKILL_DATA, BASE_ASSETS, FRIENDLY_MOBS, HOSTILE_MOBS, MINIBOSS_MOBS, BOSS_MOBS } from '../constants/gameData';
 import { getRandomMob, getRandomFriendlyMob, getRandomMiniboss, getRandomBoss } from '../systems/mobs'; // You'll need to export these from specific systems or utils
-import { calculateMobHealth, calculateXPReward, calculateXPToLevel, getEncounterType } from '../systems/progression';
+import { calculateMobHealth } from '../systems/progression';
 import { getRandomAura } from '../utils/mobDisplayUtils';
 import { getDefaultStats, checkAchievements as checkAchievementsUtil } from '../utils/achievementUtils';
 
@@ -25,7 +25,6 @@ export const ProgressionProvider = ({ children }) => {
     // --- State ---
     const [skills, setSkills] = useState({});
     const [stats, setStats] = useState(getDefaultStats());
-    const [achievements, setAchievements] = useState([]); // This might be derived from stats/skills usually, but state is fine
     const [hasLoaded, setHasLoaded] = useState(false); // Prevent saving before initial load completes
 
     // --- Load Logic (Mirrored from App.jsx) ---
@@ -104,8 +103,11 @@ export const ProgressionProvider = ({ children }) => {
     // Reload when profile changes
     // Reset hasLoaded when profile changes to prevent stale saves
     useEffect(() => {
-        setHasLoaded(false);
-        loadData();
+        const timer = window.setTimeout(() => {
+            setHasLoaded(false);
+            loadData();
+        }, 0);
+        return () => window.clearTimeout(timer);
     }, [loadData]);
 
 

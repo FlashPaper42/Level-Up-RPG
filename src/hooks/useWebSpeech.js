@@ -23,7 +23,7 @@ export const useWebSpeech = ({
         // Clear spokenText when challenge changes to prevent carryover
         if (isListening && challengeData) {
             console.log('[Speech Recognition] Challenge changed, clearing spoken text');
-            setSpokenText("Listening...");
+            window.setTimeout(() => setSpokenText("Listening..."), 0);
         }
     }, [challengeData, isListening]);
 

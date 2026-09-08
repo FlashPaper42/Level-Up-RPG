@@ -4,7 +4,7 @@ import { playLevelUp, playNotification } from '../utils/soundManager';
 import { SKILL_DATA, HOSTILE_MOBS } from '../constants/gameData';
 
 export const usePhantomSystem = () => {
-    const { skills, setSkills, stats, setStats, checkAchievements } = useProgression();
+    const { skills, setSkills, setStats, checkAchievements } = useProgression();
     const [lootBox, setLootBox] = useState(null);
 
     const handlePhantomLevelAward = useCallback((skillId) => {
