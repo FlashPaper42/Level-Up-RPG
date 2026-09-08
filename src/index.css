@@ -117,12 +117,12 @@
 
 .skill-carousel-stage {
   --card-offset: clamp(140px, 21vw, 430px);
-  /* Fill the space below the logo so the carousel midpoint is the visual
-     midpoint between the lockup and the bottom of the viewport. */
-  --carousel-y-shift: clamp(20px, 2.5dvh, 28px);
-  height: max(400px, calc(100dvh - clamp(8.5rem, 19dvh, 15rem) - clamp(0.25rem, 1dvh, 1rem)));
-  margin-top: clamp(0.75rem, 2.5dvh, 2rem);
-  margin-bottom: clamp(0.25rem, 1dvh, 0.75rem);
+  --carousel-y-shift: clamp(-0.25rem, 0.5dvh, 0.5rem);
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  margin-top: clamp(0.25rem, 1dvh, 0.75rem);
+  margin-bottom: clamp(0.75rem, 2dvh, 1.5rem);
   touch-action: pan-y;
 }
 
@@ -131,8 +131,9 @@
 }
 
 .profile-picture-position {
+  position: fixed;
   left: clamp(0.75rem, 3vw, 3rem);
-  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  bottom: max(1rem, env(safe-area-inset-bottom));
   transform: scale(1.12);
   transform-origin: bottom left;
 }
@@ -145,7 +146,18 @@
 }
 
 .top-control {
-  min-width: clamp(3.5rem, 6vw, 5rem);
+  position: fixed;
+  min-width: clamp(4rem, 6.5vw, 5.75rem);
+  transform: scale(1.15);
+  transform-origin: top left;
+}
+
+.low-focus-control {
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  right: max(1rem, env(safe-area-inset-right));
+  opacity: 0.7;
+  transform: scale(0.85);
+  transform-origin: bottom right;
 }
 
 .battle-portal {
@@ -179,15 +191,15 @@
 .brand-lockup {
   position: relative;
   width: 100%;
-  height: clamp(8.5rem, 19dvh, 15rem);
+  height: clamp(9rem, 20dvh, 16rem);
   flex: 0 0 auto;
 }
 
 .brand-lockup-logo {
   position: absolute;
   inset: 0 auto auto 50%;
-  width: clamp(15rem, 48vw, 60rem);
-  height: clamp(5.5rem, 13dvh, 11rem);
+  width: clamp(16rem, 52vw, 64rem);
+  height: clamp(6rem, 14dvh, 12rem);
   transform: translateX(-50%);
   object-fit: contain;
 }
@@ -222,8 +234,7 @@
 
   .skill-carousel-stage {
     --card-offset: clamp(130px, 23vw, 240px);
-    height: max(400px, calc(100dvh - clamp(8.5rem, 19dvh, 15rem) - clamp(0.25rem, 1dvh, 1rem)));
-    margin-top: clamp(0.5rem, 2dvh, 1.25rem);
+    margin-top: clamp(0.25rem, 1dvh, 0.75rem);
   }
 
   .skill-card-shell {
@@ -235,7 +246,7 @@
 
 @media (max-width: 700px) {
   .top-control {
-    transform: scale(0.8);
+      transform: scale(1);
     transform-origin: top left;
   }
 
@@ -314,9 +325,8 @@
   }
 
   .skill-carousel-stage {
-    height: max(400px, calc(100dvh - clamp(7.5rem, 18dvh, 10rem) - 0.75rem));
-    margin-top: 0.75rem;
-    margin-bottom: 0.25rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.75rem;
   }
 }
 

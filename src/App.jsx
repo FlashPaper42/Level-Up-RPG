@@ -1396,7 +1396,7 @@ const App = () => {
                             setIsFullscreen(newState);
                             playClick();
                         }}
-                        className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
+                        className="top-control fixed z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                         style={{ top: '24px', right: 'calc(24px + 76px + 12px)' }}
                         aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
                         title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
@@ -1405,7 +1405,7 @@ const App = () => {
                     </button>
                     <button
                         onClick={() => { setIsSettingsOpen(false); setIsCosmeticsOpen(false); setIsMenuOpen(true); playClick(); }}
-                        className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
+                        className="top-control fixed z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                         style={{ top: '24px', right: '24px' }}
                     >
                         <Menu size={48} />
@@ -1426,7 +1426,7 @@ const App = () => {
             {!battlingSkillId && (
                 <button
                     onClick={() => { setIsMenuOpen(false); setIsCosmeticsOpen(false); setIsSettingsOpen(false); setIsBugReportOpen(true); playClick(); }}
-                    className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
+                    className="low-focus-control fixed z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                     style={{ bottom: '24px', right: '24px' }}
                 >
                     <Bug size={48} className="text-red-400" />
