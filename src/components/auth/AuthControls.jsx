@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Cloud, LogIn, LogOut, UserPlus, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-const AuthControls = () => {
+const AuthControls = ({ isBattling = false }) => {
     const { user, configured, isLoading, error, signIn, signUp, signOut } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [mode, setMode] = useState('signIn');
@@ -10,7 +10,7 @@ const AuthControls = () => {
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
 
-    if (isLoading) return null;
+    if (isLoading || isBattling) return null;
 
     const submit = async event => {
         event.preventDefault();
@@ -29,10 +29,10 @@ const AuthControls = () => {
             <button
                 type="button"
                 onClick={signOut}
-                className="fixed bottom-4 left-4 z-[60] flex items-center gap-2 rounded border-2 border-green-600 bg-slate-900/90 px-3 py-2 text-sm font-bold text-green-300 shadow-lg"
+                className={`auth-controls fixed bottom-4 left-4 z-[60] flex max-w-[min(13rem,calc(100vw-2rem))] items-center gap-2 rounded border-2 border-green-600 bg-slate-900/90 px-3 py-2 text-sm font-bold text-green-300 shadow-lg ${isBattling ? 'auth-controls-battling' : ''}`}
                 title="Sign out of cloud save"
             >
-                <Cloud size={16} /> Cloud save <LogOut size={16} />
+                <Cloud size={16} className="shrink-0" /> <span className="auth-controls-label">Cloud save</span> <LogOut size={16} className="shrink-0" />
             </button>
         );
     }
@@ -42,9 +42,9 @@ const AuthControls = () => {
             <button
                 type="button"
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-4 left-4 z-[60] flex items-center gap-2 rounded border-2 border-slate-600 bg-slate-900/90 px-3 py-2 text-sm font-bold text-slate-200 shadow-lg"
+                className={`auth-controls fixed bottom-4 left-4 z-[60] flex max-w-[min(13rem,calc(100vw-2rem))] items-center gap-2 rounded border-2 border-slate-600 bg-slate-900/90 px-3 py-2 text-sm font-bold text-slate-200 shadow-lg ${isBattling ? 'auth-controls-battling' : ''}`}
             >
-                <Cloud size={16} /> {configured ? 'Sign in to save online' : 'Playing locally'}
+                <Cloud size={16} className="shrink-0" /> <span className="auth-controls-label">{configured ? 'Sign in to save online' : 'Playing locally'}</span>
             </button>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={() => setIsOpen(false)}>

@@ -44,12 +44,22 @@ const ProfilePicture = ({
         background: 'linear-gradient(to bottom, #7e22ce, #581c87)'
     };
     const backgroundStyle = skillColorStyle || defaultColorStyle;
+    const handleKeyDown = (event) => {
+        if (onClickPicture && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            onClickPicture(event);
+        }
+    };
 
     return (
         <div
-            className={`relative ${config.container} ${borderClass} rounded-lg overflow-hidden ${onClickPicture ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
+            className={`profile-picture-shell relative ${config.container} ${borderClass} rounded-lg overflow-hidden ${onClickPicture ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
             style={{ ...borderStyle, ...backgroundStyle }}
             onClick={onClickPicture}
+            onKeyDown={handleKeyDown}
+            role={onClickPicture ? 'button' : undefined}
+            tabIndex={onClickPicture ? 0 : undefined}
+            aria-label={onClickPicture ? 'Choose avatar' : undefined}
         >
             {/* Texture overlay like skill cards */}
             <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>

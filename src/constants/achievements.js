@@ -378,6 +378,86 @@ export const ACHIEVEMENTS = {
         category: 'engagement',
         isTiered: false,
         checkUnlock: (stats) => (stats.totalChoresCompleted || 0) >= 10
+    },
+
+    mob_slayer: {
+        id: 'mob_slayer',
+        name: 'Mob Slayer',
+        description: 'Defeat 25 enemies across your adventures',
+        icon: Swords,
+        category: 'combat',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.totalMobsDefeated || 0) >= 25
+    },
+
+    mob_collector: {
+        id: 'mob_collector',
+        name: 'Mob Collector',
+        description: 'Discover 10 different regular enemies',
+        icon: Users,
+        category: 'completion',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.uniqueMobsDefeated || []).length >= 10
+    },
+
+    boss_bane: {
+        id: 'boss_bane',
+        name: 'Boss Bane',
+        description: 'Defeat five bosses',
+        icon: Crown,
+        category: 'combat',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.totalBossesDefeated || 0) >= 5
+    },
+
+    phantom_pack: {
+        id: 'phantom_pack',
+        name: 'Phantom Pack',
+        description: 'Catch 10 Phantoms',
+        icon: Ghost,
+        category: 'combat',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.phantomsCaught || 0) >= 10
+    },
+
+    skill_triad: {
+        id: 'skill_triad',
+        name: 'Skill Triad',
+        description: 'Reach level 20 in three different skills',
+        icon: TrendingUp,
+        category: 'progression',
+        isTiered: false,
+        checkUnlock: (stats, skills) => Object.values(skills).filter(skill => (skill.level || 0) >= 20).length >= 3
+    },
+
+    precision_player: {
+        id: 'precision_player',
+        name: 'Precision Player',
+        description: 'Complete five memory games without mismatches',
+        icon: CheckCircle,
+        category: 'skill',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.perfectMemoryGames || 0) >= 5
+    },
+
+    nightmare_veteran: {
+        id: 'nightmare_veteran',
+        name: 'Nightmare Veteran',
+        description: 'Complete five Nightmare challenges',
+        icon: Moon,
+        category: 'skill',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.nightmareVictories || 0) >= 5
+    },
+
+    profile_stylist: {
+        id: 'profile_stylist',
+        name: 'Profile Stylist',
+        description: 'Try five different border effects',
+        icon: Sparkles,
+        category: 'customization',
+        isTiered: false,
+        checkUnlock: (stats) => (stats.borderChanges || 0) >= 5
     }
 };
 

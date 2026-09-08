@@ -53,6 +53,7 @@ import {
 import {
     addUniqueToArray, isAchievementUnlocked
 } from './utils/achievementUtils';
+import { ACHIEVEMENTS } from './constants/achievements';
 
 // Parent verification privilege constants
 const PARENT_PRIVILEGE_LEVEL = 200;
@@ -68,6 +69,9 @@ const BOSS_HEALING_ANIMATION_DURATION = 600;
 
 // Temporary deployment check UI. Update this list when a hosted change is pushed.
 const CHANGELOG_ENTRIES = [
+    'Responsive layout pass keeps controls and challenge cards usable on small laptops and narrow screens.',
+    'Typed challenges now focus automatically when an action starts or can be retried.',
+    'Expanded the achievement collection with distinct combat, mastery, and collection goals.',
     'Added optional Supabase username/password cloud accounts.',
     'Added cloud profile persistence with local play still available without an account.',
     'Added Supabase Row Level Security schema and a restricted progression RPC foundation.',
@@ -235,9 +239,7 @@ const App = () => {
     // Calculate unlocked achievements (memoized)
     const unlockedAchievements = React.useMemo(() => {
         const unlocked = [];
-        const achievementIds = ['speed_demon', 'world_ender', 'monster_manual', 'perfectionist', 'full_set'];
-
-        achievementIds.forEach(id => {
+        Object.keys(ACHIEVEMENTS).forEach(id => {
             if (isAchievementUnlocked(id, stats, skills)) {
                 unlocked.push(id);
             }
@@ -1228,9 +1230,9 @@ const App = () => {
     const containerStyle = { ...currentThemeData.style, fontFamily: '"VT323", monospace' };
 
     return (
-        <div className="min-h-screen overflow-hidden relative flex flex-col bg-cover bg-center bg-no-repeat font-sans text-stone-100" style={containerStyle}>
+        <div className="min-h-[100dvh] overflow-x-hidden overflow-y-auto relative flex flex-col bg-cover bg-center bg-no-repeat font-sans text-stone-100" style={containerStyle}>
             <GlobalStyles />
-            <AuthControls />
+            <AuthControls isBattling={Boolean(battlingSkillId)} />
             <div className="absolute inset-0 bg-black/30 pointer-events-none z-0"></div>
 
             {/* Top Left Buttons - Hidden when battling */}
@@ -1239,21 +1241,21 @@ const App = () => {
                     {/* Button dimensions: p-3 (12px) + icon(48px) + p-3 (12px) + border-2*2 (4px) = 76px + 8px gap = 84px spacing */}
                     <button
                         onClick={() => { setIsMenuOpen(false); setIsCosmeticsOpen(false); setIsSettingsOpen(true); playClick(); }}
-                        className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
+                        className="top-control top-left-settings absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                         style={{ top: '24px', left: '24px' }}
                     >
                         <Settings size={48} className="text-slate-400" />
                     </button>
                     <button
                         onClick={() => { setIsMenuOpen(false); setIsSettingsOpen(false); setIsCosmeticsOpen(true); playClick(); }}
-                        className="absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
+                        className="top-control top-left-cosmetics absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                         style={{ top: '24px', left: 'calc(24px + 76px + 12px)' }}
                     >
                         <Sparkles size={48} className="text-purple-400" />
                     </button>
                     <button
                         onClick={() => { setIsChangelogOpen(true); playClick(); }}
-                        className="absolute z-40 flex items-center gap-2 bg-stone-800/90 text-white px-3 py-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg text-lg font-bold"
+                        className="top-control changelog-control absolute z-40 flex items-center gap-2 bg-stone-800/90 text-white px-3 py-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg text-lg font-bold"
                         style={{ top: '24px', left: '200px' }}
                         aria-label="Open changelog"
                     >
@@ -1299,8 +1301,7 @@ const App = () => {
             {/* Profile picture selector - hide during gameplay (patterns, memory, cleaning) */}
             {!battlingSkillId && (
                 <div
-                    className="absolute z-40"
-                    style={{ bottom: '48px', left: '48px' }}
+                    className="profile-picture-position absolute z-40"
                 >
                     <ProfilePicture
                         avatar={getAvatarEmoji(selectedAvatar)}
@@ -1458,13 +1459,13 @@ const App = () => {
             {battlingSkillId && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40"
-                    style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', minWidth: '100vw', minHeight: '100vh' }}
+                    style={{ position: 'fixed', inset: 0, width: '100%', height: '100dvh' }}
                     onClick={endBattleLocal}
                 />
             )}
-            <main className="flex-1 relative flex flex-col items-center justify-center w-full">
-                <div className="z-10 relative mb-[-30px] md:mb-[-50px] pointer-events-none opacity-90"><SafeImage src={currentThemeData.assets.logo} fallbackSrc="https://placehold.co/800x300/333/FFD700?text=LOGO+PLACEHOLDER&font=monsterrat" alt="Game Logo" className="w-[480px] md:w-[720px] lg:w-[960px] object-contain drop-shadow-2xl" /></div>
-                <h1 className="text-9xl text-yellow-400 tracking-widest uppercase mt-[-20px] mb-[95px] z-20 relative drop-shadow-[4px_4px_0_#000]" style={{ textShadow: '6px 6px 0 #000' }}>Level Up!</h1>
+            <main className="game-main flex-1 relative flex flex-col items-center justify-start w-full">
+                <div className="z-10 relative mt-[clamp(0.5rem,2dvh,1.5rem)] mb-[-1rem] pointer-events-none opacity-90"><SafeImage src={currentThemeData.assets.logo} fallbackSrc="https://placehold.co/800x300/333/FFD700?text=LOGO+PLACEHOLDER&font=monsterrat" alt="Game Logo" className="w-[clamp(15rem,48vw,60rem)] max-h-[14dvh] object-contain drop-shadow-2xl" /></div>
+                <h1 className="text-[clamp(3rem,8vw,9rem)] leading-none text-yellow-400 tracking-widest uppercase mt-0 mb-[clamp(1rem,5dvh,5.5rem)] z-20 relative drop-shadow-[4px_4px_0_#000]" style={{ textShadow: 'clamp(2px,0.4vw,6px) clamp(2px,0.4vw,6px) 0 #000' }}>Level Up!</h1>
 
                 <SkillCarousel
                     skills={skills}
