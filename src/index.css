@@ -116,7 +116,7 @@
 }
 
 .skill-carousel-stage {
-  --card-offset: clamp(120px, 18vw, 360px);
+  --card-offset: clamp(220px, 24vw, 480px);
   --carousel-y-shift: clamp(-1rem, -1dvh, -0.25rem);
   flex: 1 1 auto;
   min-height: 0;
@@ -140,16 +140,20 @@
 
 .auth-controls {
   bottom: max(1rem, env(safe-area-inset-bottom));
-  right: max(5.5rem, calc(env(safe-area-inset-right) + 4.5rem));
+  right: max(7rem, calc(env(safe-area-inset-right) + 6rem));
   min-height: 36px;
+  padding: 0.65rem 0.9rem;
+  font-size: clamp(0.9rem, 1.2vw, 1.15rem);
+  transform: scale(1.1);
+  transform-origin: bottom right;
   line-height: 1;
 }
 
 .top-control {
   position: fixed;
   top: clamp(1rem, 2.2vw, 2rem);
-  min-width: clamp(4.75rem, 7vw, 7rem);
-  min-height: clamp(4.5rem, 7vw, 6.5rem);
+  min-width: clamp(5rem, 7.5vw, 7.5rem);
+  min-height: clamp(4.75rem, 7.5vw, 6.75rem);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +165,7 @@
 }
 
 .top-left-cosmetics {
-  left: clamp(6.25rem, 9vw, 9.5rem);
+  left: calc(clamp(1rem, 2vw, 2.5rem) + clamp(5rem, 7.5vw, 7.5rem) + clamp(0.75rem, 1.5vw, 1.5rem));
 }
 
 .top-right-menu {
@@ -169,7 +173,7 @@
 }
 
 .top-right-fullscreen {
-  right: clamp(6.25rem, 9vw, 9.5rem);
+  right: calc(clamp(1rem, 2vw, 2.5rem) + clamp(5rem, 7.5vw, 7.5rem) + clamp(0.75rem, 1.5vw, 1.5rem));
 }
 
 .low-focus-control {
@@ -203,7 +207,7 @@
 }
 
 .skill-card-shell {
-  width: min(420px, 34vw) !important;
+  width: min(420px, 31vw) !important;
   height: min(700px, 72dvh) !important;
   min-height: 360px;
 }
@@ -253,7 +257,7 @@
   }
 
   .skill-carousel-stage {
-    --card-offset: clamp(110px, 21vw, 250px);
+    --card-offset: clamp(190px, 27vw, 380px);
     margin-top: clamp(0.25rem, 1dvh, 0.75rem);
   }
 
@@ -275,7 +279,7 @@
   }
 
   .top-left-cosmetics {
-    left: 5.75rem !important;
+    left: 6.75rem !important;
     top: 0.75rem !important;
   }
 
@@ -285,18 +289,19 @@
   }
 
   .top-right-fullscreen {
-    right: 5.75rem !important;
+    right: 6.75rem !important;
     top: 0.75rem !important;
   }
 
   .auth-controls {
     max-width: min(10rem, calc(100vw - 1.5rem));
     padding: 0.45rem 0.6rem;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    transform: scale(1);
   }
 
   .profile-picture-position {
-    transform: scale(1.12);
+    transform: scale(1.2);
   }
 
   .brand-lockup {
@@ -348,7 +353,7 @@
   }
 
   .skill-card-shell {
-    width: min(360px, 76vw) !important;
+    width: min(380px, 78vw) !important;
     height: min(590px, 66dvh) !important;
     min-height: 340px;
   }
@@ -371,7 +376,7 @@
   }
 
   .auth-controls {
-    right: 4.5rem;
+    right: 5rem;
     bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
