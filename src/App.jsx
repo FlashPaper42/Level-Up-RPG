@@ -180,16 +180,10 @@ const App = () => {
         isListening,
         spokenText,
         setSpokenText,
-        startVoiceListener,
         stopVoiceRecognition,
         toggleMicListener
     } = useWebSpeech({
-        battlingSkillId,
-        challengeData,
-        onSuccess: (targetId) => {
-            handleSuccessHit(targetId);
-        },
-        onFailure: (targetId) => handleSuccessHit(targetId, 'WRONG')
+        challengeData
     });
 
     // Use Phantom System Hook
@@ -1023,7 +1017,6 @@ const App = () => {
         setChallengeData(generateChallenge(skill.challengeType, challengeDiff));
         playClick();
         startBGM();
-        if (skill.challengeType === 'reading') startVoiceListener(id);
     };
 
     const endBattleLocal = () => {

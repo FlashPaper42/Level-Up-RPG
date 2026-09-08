@@ -1,7 +1,6 @@
 /**
  * Web Speech API Recognition for supported browsers
- * Uses browser's built-in webkitSpeechRecognition for perfect accuracy
- * Free, works offline, excellent for single-syllable words
+ * Uses the browser's built-in speech recognition for one explicit attempt.
  */
 
 // Module state
@@ -9,91 +8,63 @@ let recognition = null;
 let isListening = false;
 
 /**
- * Start continuous speech recognition
- * @param {Function} onRecognizing - Called with partial results as user speaks: (text) => {}
- * @param {Function} onRecognized - Called with final result when phrase completes: (text) => {}
- * @param {Function} onError - Called on error: (error) => {}
- * @returns {boolean} True if started successfully
+ * Start one speech recognition attempt.
+ * @param {Function} onRecognized - Called once with the final transcript.
+ * @param {Function} onError - Called with the browser error code.
+ * @returns {boolean} True if started successfully.
  */
-export function startWebSpeechRecognition(onRecognizing, onRecognized, onError) {
+export function startWebSpeechRecognition(onRecognized, onError) {
     if (isListening && recognition) {
         console.log('[Web Speech] Already listening');
         return true;
     }
 
     try {
-        console.log('[Web Speech] Starting continuous recognition...');
-
-        // Check if Web Speech API is available
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            console.error('[Web Speech] API not available');
-            if (onError) onError('Speech recognition not supported');
+        const isSecure = window.isSecureContext || window.location.hostname === 'localhost';
+        if (!isSecure) {
+            onError?.('insecure-context');
             return false;
         }
 
-        // Create recognizer
-        recognition = new SpeechRecognition();
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            onError?.('unsupported');
+            return false;
+        }
 
-        // Configure for continuous listening with interim results
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        recognition.maxAlternatives = 1;
+        const currentRecognition = new SpeechRecognition();
+        recognition = currentRecognition;
+        currentRecognition.continuous = false;
+        currentRecognition.interimResults = false;
+        currentRecognition.lang = 'en-US';
+        currentRecognition.maxAlternatives = 1;
 
-        // Handle results (both interim and final)
-        recognition.onresult = (event) => {
+        currentRecognition.onresult = (event) => {
             const result = event.results[event.results.length - 1];
-            const text = result[0].transcript;
-            const isFinal = result.isFinal;
-
-            console.log(`[Web Speech] ${isFinal ? 'Final' : 'Interim'} result:`, text);
-
-            if (isFinal) {
-                if (onRecognized) onRecognized(text);
-            } else {
-                if (onRecognizing) onRecognizing(text);
+            if (result?.isFinal) {
+                onRecognized?.(result[0].transcript);
             }
         };
 
-        // Handle errors
-        recognition.onerror = () => {
-            console.error('[Web Speech] Error:', event.error);
-            if (event.error !== 'no-speech') {
-                if (onError) onError(event.error);
-            }
+        currentRecognition.onerror = (event) => {
+            onError?.(event.error || 'unknown');
         };
 
-        // Handle start
-        recognition.onstart = () => {
-            console.log('[Web Speech] Recognition started');
+        currentRecognition.onstart = () => {
             isListening = true;
         };
 
-        // Handle end (restart if continuous mode)
-        recognition.onend = () => {
-            console.log('[Web Speech] Recognition ended');
+        currentRecognition.onend = () => {
             isListening = false;
-            // Auto-restart for continuous listening unless explicitly stopped
-            if (recognition && !recognition._stopped) {
-                console.log('[Web Speech] Restarting for continuous mode...');
-                try {
-                    recognition.start();
-                } catch {
-                    console.log('[Web Speech] Already started');
-                }
-            }
+            if (recognition === currentRecognition) recognition = null;
         };
 
-        // Start recognition
-        recognition._stopped = false;
-        recognition.start();
-        isListening = true;
-
+        currentRecognition.start();
         return true;
     } catch (error) {
-        console.error('[Web Speech] Setup error:', error);
-        if (onError) onError(error.message);
+        recognition = null;
+        isListening = false;
+        onError?.(error.name === 'NotAllowedError' ? 'not-allowed' : 'start-failed');
         return false;
     }
 }
@@ -103,11 +74,14 @@ export function startWebSpeechRecognition(onRecognizing, onRecognized, onError) 
  */
 export function stopWebSpeechRecognition() {
     if (recognition) {
-        console.log('[Web Speech] Stopping recognition...');
-        recognition._stopped = true;
-        recognition.stop();
+        const currentRecognition = recognition;
         recognition = null;
         isListening = false;
+        currentRecognition.onresult = null;
+        currentRecognition.onerror = null;
+        currentRecognition.onstart = null;
+        currentRecognition.onend = null;
+        currentRecognition.abort();
     } else {
         isListening = false;
     }

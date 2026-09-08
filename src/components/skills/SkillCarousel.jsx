@@ -234,6 +234,7 @@ const SkillCarousel = ({
                                 mobName={getMobForSkill(item, skills[item.id])}
                                 mobAura={getAuraForSkill(item, skills[item.id])}
                                 challenge={challengeData}
+                                handleSuccessHit={handleSuccessHit}
                                 isListening={isListening}
                                 spokenText={spokenText}
                                 damageNumbers={damageNumbers?.filter(d => d.skillId === item.id) || []}
