@@ -3,7 +3,7 @@ import { Users, Music, Trash2, AlertTriangle, Edit3, Crown, LockOpen } from 'luc
 import ProfileCard from '../profile/ProfileCard';
 import ProfileEditorModal from '../modals/ProfileEditorModal';
 
-const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol, currentProfile, onSwitchProfile, profileNames, onRenameProfile, getProfileStats, parentStatus, onParentVerified, currentSkills, selectedAvatar, selectedBorder, borderColor, hasProfilePin, setProfilePin, verifyProfilePin, clearProfilePin }) => {
+const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol, currentProfile, onSwitchProfile, profileNames, profileTitles, onRenameProfile, onRenameTitle, getProfileStats, parentStatus, onParentVerified, currentSkills, selectedAvatar, selectedBorder, borderColor, hasProfilePin, setProfilePin, verifyProfilePin, clearProfilePin }) => {
     const [editingProfileId, setEditingProfileId] = useState(null);
     // Helper to get avatar for each profile
     const getProfileAvatar = (profileId) => {
@@ -77,6 +77,16 @@ const SettingsDrawer = ({ isOpen, onReset, bgmVol, setBgmVol, sfxVol, setSfxVol,
                                     />
                                 ))}
                             </div>
+                            <label className="mt-4 block text-sm font-bold uppercase tracking-wider text-slate-400">
+                                Hero title prefix
+                                <input
+                                    value={profileTitles?.[currentProfile] || 'Apprentice'}
+                                    maxLength={32}
+                                    onChange={event => onRenameTitle?.(currentProfile, event.target.value)}
+                                    className="mt-2 w-full rounded-lg border-2 border-slate-600 bg-slate-900 p-3 text-lg text-white"
+                                    placeholder="Apprentice"
+                                />
+                            </label>
                         </div>
 
                         {/* Parent Profile Editor - Only show if current profile is a parent */}

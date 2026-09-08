@@ -16,6 +16,12 @@ create table if not exists public.player_profiles (
   unique(user_id, profile_number)
 );
 
+-- `stats` is a per-profile snapshot (streaks, challenge counts, boss
+-- discoveries, and achievement inputs). It is intentionally persisted with
+-- progression so local and cloud profiles stay isolated. Combat and stat
+-- events are currently client-side; this snapshot is not server-authoritative
+-- until a trusted event/RPC boundary is added for combat outcomes.
+
 alter table public.player_profiles enable row level security;
 
 create policy "Users can read their own profiles"

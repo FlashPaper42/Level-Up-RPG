@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Lock } from 'lucide-react';
 import SafeImage from '../ui/SafeImage';
 import { BADGE_TIERS, BASE_ASSETS, SKILL_DATA } from '../../constants/gameData';
@@ -10,6 +10,7 @@ import {
     getTierProgress,
     getAchievementDisplayName
 } from '../../utils/achievementUtils';
+import { getLoginStreak } from '../../utils/achievementUtils';
 import { calculateXPToLevel } from '../../utils/gameUtils';
 
 // Achievement grid constants
@@ -17,6 +18,7 @@ const ACHIEVEMENT_GRID_COLUMNS = 6;
 const TOOLTIP_POSITION_THRESHOLD = 4; // Columns >= this show tooltip on left
 
 const MenuDrawer = ({ isOpen, skills, stats }) => {
+    const [activeTab, setActiveTab] = useState('achievements');
     const totalLevels = Object.values(skills).reduce((acc, s) => acc + s.level, 0);
 
     // Calculate total badges earned
@@ -34,6 +36,21 @@ const MenuDrawer = ({ isOpen, skills, stats }) => {
         isAchievementUnlocked(id, stats, skills)
     ).length;
     const totalAchievements = Object.keys(ACHIEVEMENTS).length;
+    const streak = getLoginStreak(stats.loginDates || []);
+    const trackedStats = [
+        ['Current streak', `${stats.currentStreak || streak.current} days`],
+        ['Best streak', `${Math.max(stats.longestStreak || 0, streak.longest)} days`],
+        ['Challenges completed', stats.totalChallengesCompleted || 0],
+        ['Battles won', stats.battlesThisSession || 0],
+        ['Bosses defeated', stats.totalBossesDefeated || 0],
+        ['All bosses found', `${(stats.uniqueBossesDefeated || []).length}/4`],
+        ['Perfect memory games', stats.perfectMemoryGames || 0],
+        ['Best pattern streak', stats.maxPatternStreak || 0],
+        ['Best combo', stats.maxCombo || 0],
+        ['No-damage victories', stats.noDamageVictories || 0],
+        ['Chores completed', stats.totalChoresCompleted || 0],
+        ['Phantoms caught', stats.phantomsCaught || 0],
+    ];
 
     return (
         <div
@@ -51,8 +68,27 @@ const MenuDrawer = ({ isOpen, skills, stats }) => {
                     </div>
                 </div>
 
+                <div className="mb-4 flex shrink-0 gap-2" role="tablist" aria-label="Progress overview">
+                    <button type="button" role="tab" aria-selected={activeTab === 'achievements'} onClick={() => setActiveTab('achievements')} className={`rounded border-2 px-4 py-2 text-lg font-bold uppercase transition-colors ${activeTab === 'achievements' ? 'border-yellow-400 bg-yellow-400/20 text-yellow-300' : 'border-stone-600 text-stone-400 hover:text-white'}`}>Achievements</button>
+                    <button type="button" role="tab" aria-selected={activeTab === 'stats'} onClick={() => setActiveTab('stats')} className={`rounded border-2 px-4 py-2 text-lg font-bold uppercase transition-colors ${activeTab === 'stats' ? 'border-cyan-400 bg-cyan-400/20 text-cyan-300' : 'border-stone-600 text-stone-400 hover:text-white'}`}>Stats</button>
+                </div>
+
                 {/* Content Area - Single scrollable view */}
                 <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide">
+                    {activeTab === 'stats' ? (
+                        <section role="tabpanel" aria-label="Tracked statistics" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            {trackedStats.map(([label, value]) => (
+                                <div key={label} className="flex items-center justify-between rounded-xl border-2 border-cyan-900/70 bg-slate-950/70 px-4 py-3">
+                                    <span className="text-lg text-slate-300">{label}</span>
+                                    <strong className="text-2xl text-cyan-300">{value}</strong>
+                                </div>
+                            ))}
+                            <p className="sm:col-span-2 rounded-lg border border-slate-700 bg-black/30 p-3 text-sm text-slate-400">
+                                Stats sync with the active profile in local mode or cloud snapshots. Combat is still client-side, so cloud values are not server-authoritative.
+                            </p>
+                        </section>
+                    ) : (
+                    <section role="tabpanel" aria-label="Achievements">
                     {/* Skill Badges Section */}
                     <div className="grid grid-cols-2 gap-4">
                         {Object.keys(skills).map(key => {
@@ -251,6 +287,8 @@ const MenuDrawer = ({ isOpen, skills, stats }) => {
                             })}
                         </div>
                     </div>
+                    </section>
+                    )}
                 </div>
             </div>
         </div>

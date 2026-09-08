@@ -22,6 +22,14 @@ export const UserProvider = ({ children }) => {
         } catch (e) { console.error(e); return 1; }
     });
 
+    const [profileTitles, setProfileTitles] = useState(() => {
+        try {
+            return localStorage.getItem('heroProfileTitles_v1')
+                ? JSON.parse(localStorage.getItem('heroProfileTitles_v1'))
+                : { 1: 'Apprentice', 2: 'Apprentice', 3: 'Apprentice' };
+        } catch (e) { console.error(e); return { 1: 'Apprentice', 2: 'Apprentice', 3: 'Apprentice' }; }
+    });
+
     const [profileNames, setProfileNames] = useState(() => {
         try {
             return localStorage.getItem('heroProfileNames_v1') ? JSON.parse(localStorage.getItem('heroProfileNames_v1')) : { 1: "Player 1", 2: "Player 2", 3: "Player 3" };
@@ -59,6 +67,10 @@ export const UserProvider = ({ children }) => {
     }, [profileNames]);
 
     useEffect(() => {
+        localStorage.setItem('heroProfileTitles_v1', JSON.stringify(profileTitles));
+    }, [profileTitles]);
+
+    useEffect(() => {
         localStorage.setItem('heroParentStatus_v1', JSON.stringify(parentStatus));
     }, [parentStatus]);
 
@@ -69,6 +81,12 @@ export const UserProvider = ({ children }) => {
     // --- Actions ---
     const updateProfileName = (id, name) => {
         setProfileNames(prev => ({ ...prev, [id]: name }));
+    };
+
+    const updateProfileTitle = (id, title) => {
+        const safeTitle = String(title || '').trim().slice(0, 32) || 'Apprentice';
+        setProfileTitles(prev => ({ ...prev, [id]: safeTitle }));
+        localStorage.setItem(`profileTitle_p${id}`, safeTitle);
     };
 
     const toggleParentStatus = (id) => {
@@ -120,6 +138,7 @@ export const UserProvider = ({ children }) => {
             setBorderColorInternal(cosmetics.borderColor || '#FFD700');
             setSelectedAvatarInternal(cosmetics.avatar || 'person');
             setProfileBgColorInternal(cosmetics.background || 'linear-gradient(to bottom, #7e22ce, #581c87)');
+            setProfileTitles(prev => ({ ...prev, [currentProfile]: cosmetics.title || prev[currentProfile] || 'Apprentice' }));
         }).catch(error => console.error('Failed to load cloud profile settings:', error))
             .finally(() => {
                 if (active) setCloudSettingsLoaded(true);
@@ -141,11 +160,12 @@ export const UserProvider = ({ children }) => {
                     borderColor,
                     avatar: selectedAvatar,
                     background: profileBgColor,
+                    title: profileTitles[currentProfile] || 'Apprentice',
                 },
             }).catch(error => console.error('Failed to save cloud profile settings:', error));
         }, 300);
         return () => window.clearTimeout(timer);
-    }, [user, cloudSettingsLoaded, currentProfile, profileNames, parentStatus, selectedBorder, borderColor, selectedAvatar, profileBgColor]);
+    }, [user, cloudSettingsLoaded, currentProfile, profileNames, profileTitles, parentStatus, selectedBorder, borderColor, selectedAvatar, profileBgColor]);
 
     // Load cosmetics when currentProfile changes - NO AUTO-SAVE
     useEffect(() => {
@@ -153,12 +173,14 @@ export const UserProvider = ({ children }) => {
         const savedColor = localStorage.getItem(`borderColor_p${currentProfile}`) || '#FFD700';
         const savedAvatar = localStorage.getItem(`profileAvatar_p${currentProfile}`) || 'person';
         const savedBgColor = localStorage.getItem(`profileBgColor_p${currentProfile}`) || 'linear-gradient(to bottom, #7e22ce, #581c87)';
+        const savedTitle = localStorage.getItem(`profileTitle_p${currentProfile}`) || 'Apprentice';
 
         window.setTimeout(() => {
             setSelectedBorderInternal(savedBorder);
             setBorderColorInternal(savedColor);
             setSelectedAvatarInternal(savedAvatar);
             setProfileBgColorInternal(savedBgColor);
+            setProfileTitles(prev => ({ ...prev, [currentProfile]: savedTitle }));
         }, 0);
     }, [currentProfile]);
 
@@ -184,6 +206,12 @@ export const UserProvider = ({ children }) => {
         localStorage.setItem(`profileBgColor_p${currentProfile}`, value);
     };
 
+    const setProfileTitle = (value) => {
+        const safeTitle = String(value || '').trim().slice(0, 32) || 'Apprentice';
+        setProfileTitles(prev => ({ ...prev, [currentProfile]: safeTitle }));
+        localStorage.setItem(`profileTitle_p${currentProfile}`, safeTitle);
+    };
+
     const switchProfile = (id) => {
         setCurrentProfile(id);
     };
@@ -191,11 +219,13 @@ export const UserProvider = ({ children }) => {
     const value = {
         currentProfile,
         profileNames,
+        profileTitles,
         parentStatus,
         profilePins,
         activeTheme,
         setActiveTheme, // Exposed for App.jsx to sync with legacy load logic for now
         updateProfileName,
+        updateProfileTitle,
         toggleParentStatus,
         switchProfile,
         // PIN management
@@ -207,7 +237,8 @@ export const UserProvider = ({ children }) => {
         selectedBorder: selectedBorder, setSelectedBorder,
         borderColor: borderColor, setBorderColor,
         selectedAvatar: selectedAvatar, setSelectedAvatar,
-        profileBgColor: profileBgColor, setProfileBgColor
+        profileBgColor: profileBgColor, setProfileBgColor,
+        setProfileTitle
     };
 
     return (

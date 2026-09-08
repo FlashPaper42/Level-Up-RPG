@@ -4,7 +4,7 @@ import { useProgression } from './contexts/ProgressionContext';
 import { useCombat } from './contexts/CombatContext';
 
 import {
-    Menu, Sparkles, Gift, Maximize, Minimize, Settings, Bug, ClipboardList
+    Menu, Sparkles, Gift, Maximize, Minimize, Settings, Bug
 } from 'lucide-react';
 
 // Modules
@@ -51,7 +51,7 @@ import {
     playArmorGain, playHealSound, playSpecialAttack, playPlayerHitArmor, playPlayerHitHealth, playAmbush
 } from './utils/soundManager';
 import {
-    addUniqueToArray, isAchievementUnlocked
+    addUniqueToArray, isAchievementUnlocked, getLoginStreak
 } from './utils/achievementUtils';
 import { ACHIEVEMENTS } from './constants/achievements';
 
@@ -67,27 +67,11 @@ const MIC_OFF_TEXT = "Mic Off";
 // Boss healing animation duration (ms)
 const BOSS_HEALING_ANIMATION_DURATION = 600;
 
-// Temporary deployment check UI. Update this list when a hosted change is pushed.
-const CHANGELOG_ENTRIES = [
-    'Responsive layout pass keeps controls and challenge cards usable on small laptops and narrow screens.',
-    'Typed challenges now focus automatically when an action starts or can be retried.',
-    'Expanded the achievement collection with distinct combat, mastery, and collection goals.',
-    'Added optional Supabase username/password cloud accounts.',
-    'Added cloud profile persistence with local play still available without an account.',
-    'Added Supabase Row Level Security schema and a restricted progression RPC foundation.',
-    'Fixed profile switching so stale parent/player progress is not saved into another profile.',
-    'Redesigned the Reading skill card with one-shot browser speech recognition.',
-    'Added typed-answer fallback for Reading challenges.',
-    'Fixed the Reading microphone error and duplicate combat-turn handling.',
-    'Removed automatic microphone activation when a battle starts.',
-    'Improved browser speech error messages and recognition cleanup.',
-];
-
 const App = () => {
     // Contexts
     const {
-        currentProfile, profileNames, parentStatus, activeTheme,
-        setActiveTheme, // For theme switching
+        currentProfile, profileNames, profileTitles, parentStatus, activeTheme,
+        setActiveTheme, updateProfileTitle, // For theme switching and hero identity
         // PIN management
         setProfilePin, verifyProfilePin, clearProfilePin, hasProfilePin,
         switchProfile, updateProfileName, toggleParentStatus,
@@ -124,7 +108,6 @@ const App = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isCosmeticsOpen, setIsCosmeticsOpen] = useState(false);
     const [isResetOpen, setIsResetOpen] = useState(false);
-    const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
     // Guard against double-firing of combat actions
     const processingHitRef = useRef(false);
@@ -141,7 +124,8 @@ const App = () => {
 
     const challengeDataRef = useRef(null);
     const damageIdRef = useRef(0);
-    const loginTrackedRef = useRef(0);
+    const loginTrackedRef = useRef(null);
+    const battleDamageTakenRef = useRef(0);
 
     const [bgmVol, setBgmVol] = useState(0.3);
     const [sfxVol, setSfxVolState] = useState(0.5);
@@ -300,6 +284,7 @@ const App = () => {
     const executeCombatTurn = (skillId = battlingSkillId, isWrong = false, customDamage = null, customXPMultiplier = null) => {
         // Handle wrong answer
         if (isWrong === 'WRONG') {
+            setStats(prevStats => ({ ...prevStats, currentCombo: 0 }));
             // Check if player is fighting a boss
             if (battlingSkillId) {
                 const currentSkillState = skills[battlingSkillId];
@@ -373,12 +358,14 @@ const App = () => {
 
                                 if (currentArmorValue > 0) {
                                     // Has armor - absorb the hit
+                                    battleDamageTakenRef.current += damage;
                                     setArmorPoints(prev => Math.max(0, prev - damage));
                                     playPlayerHitArmor();
                                     setPlayerDamageIndicator({ amount: damage, blocked: true });
                                     setTimeout(() => setPlayerDamageIndicator(null), 1000);
                                 } else {
                                     // No armor - take health damage
+                                    battleDamageTakenRef.current += damage;
                                     setPlayerHealth(prev => {
                                         const newHealth = Math.max(0, prev - damage);
                                         return newHealth <= 0 ? 10 : newHealth;
@@ -456,6 +443,20 @@ const App = () => {
         if (!skillId) return;
         const skillConfig = SKILL_DATA.find(s => s.id === skillId);
         const currentSkillState = skills[skillId];
+        // A successful challenge is recorded separately from battle wins so the
+        // statistics pane remains useful for all skill types.
+        setStats(prevStats => {
+            const combo = (prevStats.currentCombo || 0) + 1;
+            return {
+                ...prevStats,
+                totalChallengesCompleted: (prevStats.totalChallengesCompleted || 0) + 1,
+                currentCombo: combo,
+                maxCombo: Math.max(prevStats.maxCombo || 0, combo),
+                maxPatternStreak: skillId === 'patterns'
+                    ? Math.max(prevStats.maxPatternStreak || 0, combo)
+                    : (prevStats.maxPatternStreak || 0)
+            };
+        });
         const skillDifficulty = currentSkillState.difficulty || 1;
         const playerLevel = currentSkillState.level;
         // Get the correct mob name for this skill (reading uses readingMob, math uses mathMob, etc.)
@@ -525,6 +526,9 @@ const App = () => {
                 setStats(prevStats => {
                     const newStats = { ...prevStats };
                     newStats.battlesThisSession = (newStats.battlesThisSession || 0) + 1;
+                    if (battleDamageTakenRef.current === 0) {
+                        newStats.noDamageVictories = (newStats.noDamageVictories || 0) + 1;
+                    }
 
                     if (encounterType === 'boss') {
                         newStats.totalBossesDefeated = (newStats.totalBossesDefeated || 0) + 1;
@@ -806,12 +810,14 @@ const App = () => {
 
                         if (currentArmorValue > 0) {
                             // Has armor - absorb the hit
+                            battleDamageTakenRef.current += damage;
                             setArmorPoints(prev => Math.max(0, prev - damage));
                             playPlayerHitArmor();
                             setPlayerDamageIndicator({ amount: damage, blocked: true });
                             setTimeout(() => setPlayerDamageIndicator(null), 1000);
                         } else {
                             // No armor - take health damage
+                            battleDamageTakenRef.current += damage;
                             setPlayerHealth(prev => {
                                 const newHealth = Math.max(0, prev - damage);
                                 return newHealth <= 0 ? 10 : newHealth;
@@ -1003,6 +1009,7 @@ const App = () => {
     }, [selectedBorder, skills, checkAchievementsFromContext, setStats]);
 
     const startBattleLocal = (id) => {
+        battleDamageTakenRef.current = 0;
         const skill = SKILL_DATA.find(s => s.id === id);
         // Use the skill's current difficulty setting
         const currentDiff = skills[id].difficulty || 1;
@@ -1209,22 +1216,24 @@ const App = () => {
         }
     }, [achievementToast]);
 
-    // Track login date (once per day)
+    // Track login date and consecutive streak (once per profile/day).
     useEffect(() => {
-        if (loginTrackedRef.current) return; // Skip if already tracked
-        loginTrackedRef.current = true;
+        if (loginTrackedRef.current === currentProfile) return;
 
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
         const currentDates = stats.loginDates || [];
-        // Only set if today's date is not already recorded
+        loginTrackedRef.current = currentProfile;
         if (!currentDates.includes(today)) {
+            const nextDates = [...currentDates, today];
+            const streak = getLoginStreak(nextDates);
             setStats(prev => ({
                 ...prev,
-                loginDates: [...(prev.loginDates || []), today]
+                loginDates: nextDates,
+                currentStreak: streak.current,
+                longestStreak: Math.max(prev.longestStreak || 0, streak.longest)
             }));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Run once on mount, guarded by loginTrackedRef
+    }, [currentProfile, stats.loginDates, setStats]);
 
     const currentThemeData = THEME_CONFIG[activeTheme] || THEME_CONFIG.minecraft;
     const containerStyle = { ...currentThemeData.style, fontFamily: '"VT323", monospace' };
@@ -1244,64 +1253,23 @@ const App = () => {
                         className="top-control top-left-settings absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                         style={{ top: '24px', left: '24px' }}
                     >
-                        <Settings size={48} className="text-slate-400" />
+                        <Settings size={52} className="text-slate-400" />
                     </button>
                     <button
                         onClick={() => { setIsMenuOpen(false); setIsSettingsOpen(false); setIsCosmeticsOpen(true); playClick(); }}
                         className="top-control top-left-cosmetics absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                         style={{ top: '24px', left: 'calc(24px + 76px + 12px)' }}
                     >
-                        <Sparkles size={48} className="text-purple-400" />
-                    </button>
-                    <button
-                        onClick={() => { setIsChangelogOpen(true); playClick(); }}
-                        className="top-control changelog-control absolute z-40 flex items-center gap-2 bg-stone-800/90 text-white px-3 py-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg text-lg font-bold"
-                        style={{ top: '24px', left: '200px' }}
-                        aria-label="Open changelog"
-                    >
-                        <ClipboardList size={28} className="text-yellow-400" />
-                        <span>Changelog</span>
+                        <Sparkles size={52} className="text-purple-400" />
                     </button>
                 </>
-            )}
-
-            {isChangelogOpen && (
-                <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
-                    onClick={() => setIsChangelogOpen(false)}
-                >
-                    <section
-                        className="w-full max-w-lg rounded-lg border-4 border-yellow-500 bg-slate-900 p-5 text-left shadow-2xl"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="changelog-title"
-                        onClick={event => event.stopPropagation()}
-                    >
-                        <div className="mb-4 flex items-center justify-between border-b-2 border-slate-700 pb-3">
-                            <h2 id="changelog-title" className="text-3xl font-bold uppercase text-yellow-400">
-                                Changelog
-                            </h2>
-                            <button
-                                type="button"
-                                onClick={() => setIsChangelogOpen(false)}
-                                className="rounded border-2 border-slate-600 px-3 py-1 text-xl font-bold text-white hover:bg-slate-700"
-                                aria-label="Close changelog"
-                            >
-                                X
-                            </button>
-                        </div>
-                        <ul className="list-disc space-y-2 pl-6 text-lg text-slate-200">
-                            {CHANGELOG_ENTRIES.map(entry => <li key={entry}>{entry}</li>)}
-                        </ul>
-                    </section>
-                </div>
             )}
 
             {/* Profile Picture Display - Bottom Left */}
             {/* Profile picture selector - hide during gameplay (patterns, memory, cleaning) */}
             {!battlingSkillId && (
                 <div
-                    className="profile-picture-position absolute z-40"
+                    className="profile-picture-position absolute z-40 flex items-end gap-3"
                 >
                     <ProfilePicture
                         avatar={getAvatarEmoji(selectedAvatar)}
@@ -1319,6 +1287,11 @@ const App = () => {
                             playClick();
                         }}
                     />
+                    <div className="hero-identity pointer-events-none mb-1 max-w-[10rem] rounded-lg border-2 border-yellow-500/50 bg-slate-950/80 px-3 py-2 text-left shadow-lg backdrop-blur-sm">
+                        <p className="text-xs font-bold uppercase tracking-widest text-yellow-300">{profileTitles[currentProfile] || 'Apprentice'}</p>
+                        <p className="truncate text-xl font-bold uppercase text-white">{profileNames[currentProfile] || `Player ${currentProfile}`}</p>
+                        <p className="text-xs uppercase text-slate-400">Hero profile</p>
+                    </div>
                 </div>
             )}
 
@@ -1384,7 +1357,9 @@ const App = () => {
                 currentProfile={currentProfile}
                 onSwitchProfile={handleSwitchProfile}
                 profileNames={profileNames}
+                profileTitles={profileTitles}
                 onRenameProfile={handleRenameProfile}
+                onRenameTitle={updateProfileTitle}
                 getProfileStats={getProfileStats}
                 parentStatus={parentStatus}
                 onParentVerified={handleParentVerified}
@@ -1464,8 +1439,10 @@ const App = () => {
                 />
             )}
             <main className="game-main flex-1 relative flex flex-col items-center justify-start w-full">
-                <div className="z-10 relative mt-[clamp(0.5rem,2dvh,1.5rem)] mb-[-1rem] pointer-events-none opacity-90"><SafeImage src={currentThemeData.assets.logo} fallbackSrc="https://placehold.co/800x300/333/FFD700?text=LOGO+PLACEHOLDER&font=monsterrat" alt="Game Logo" className="w-[clamp(15rem,48vw,60rem)] max-h-[14dvh] object-contain drop-shadow-2xl" /></div>
-                <h1 className="text-[clamp(3rem,8vw,9rem)] leading-none text-yellow-400 tracking-widest uppercase mt-0 mb-[clamp(1rem,5dvh,5.5rem)] z-20 relative drop-shadow-[4px_4px_0_#000]" style={{ textShadow: 'clamp(2px,0.4vw,6px) clamp(2px,0.4vw,6px) 0 #000' }}>Level Up!</h1>
+                <div className="brand-lockup z-10 mt-[clamp(0.25rem,1dvh,1rem)] pointer-events-none opacity-90">
+                    <SafeImage src={currentThemeData.assets.logo} fallbackSrc="https://placehold.co/800x300/333/FFD700?text=LOGO+PLACEHOLDER&font=monsterrat" alt="Game Logo" className="brand-lockup-logo drop-shadow-2xl" />
+                    <h1 className="brand-lockup-title text-[clamp(3rem,8vw,9rem)] leading-none text-yellow-400 tracking-widest uppercase drop-shadow-[4px_4px_0_#000]" style={{ textShadow: 'clamp(2px,0.4vw,6px) clamp(2px,0.4vw,6px) 0 #000' }}>Level Up!</h1>
+                </div>
 
                 <SkillCarousel
                     skills={skills}
@@ -1501,6 +1478,12 @@ const App = () => {
                         setStats(prev => ({
                             ...prev,
                             perfectMemoryGames: (prev.perfectMemoryGames || 0) + 1
+                        }));
+                    }}
+                    onChoresCompleted={(count) => {
+                        setStats(prev => ({
+                            ...prev,
+                            totalChoresCompleted: (prev.totalChoresCompleted || 0) + count
                         }));
                     }}
                 />
