@@ -35,6 +35,7 @@ const CleaningSkillCard = ({
     onStartBattle,
     onEndBattle,
     onMathSubmit,
+    onChoresCompleted,
     selectedBorder,
     borderColor
 }) => {
@@ -69,6 +70,7 @@ const CleaningSkillCard = ({
         // Grant XP/levels for each completed chore
         const choreCount = completedChores.length;
         if (choreCount > 0) {
+            if (onChoresCompleted) onChoresCompleted(choreCount);
             // Submit multiple wins - one per chore
             for (let i = 0; i < choreCount; i++) {
                 setTimeout(() => {
@@ -82,7 +84,7 @@ const CleaningSkillCard = ({
         }
         // Reset completed chores
         setCompletedChores([]);
-    }, [onMathSubmit, completedChores]);
+    }, [onMathSubmit, onChoresCompleted, completedChores]);
 
     const isBattlingCenter = isBattling && isCenter;
 

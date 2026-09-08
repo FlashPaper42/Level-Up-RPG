@@ -21,6 +21,13 @@ export const getDefaultStats = () => ({
     borderChanges: 0,
     battlesThisSession: 0,
     loginDates: [],
+    currentStreak: 0,
+    longestStreak: 0,
+    totalChallengesCompleted: 0,
+    currentCombo: 0,
+    maxCombo: 0,
+    noDamageVictories: 0,
+    perfectChallenges: 0,
     perfectMemoryGames: 0,
     nightmareVictories: 0,
     nightmareMinigameVictories: [],
@@ -206,6 +213,41 @@ export const recordLoginDate = (loginDates) => {
         return [...loginDates, today];
     }
     return loginDates;
+};
+
+/**
+ * Calculate the active and best consecutive-day streak from YYYY-MM-DD dates.
+ * Dates are sorted defensively so old/local snapshots remain compatible.
+ */
+export const getLoginStreak = (loginDates = [], today = new Date()) => {
+    const dates = [...new Set(loginDates)].sort();
+    if (dates.length === 0) return { current: 0, longest: 0 };
+
+    let longest = 1;
+    let run = 1;
+    for (let index = 1; index < dates.length; index += 1) {
+        const previous = new Date(`${dates[index - 1]}T00:00:00Z`);
+        const current = new Date(`${dates[index]}T00:00:00Z`);
+        const dayGap = Math.round((current - previous) / 86400000);
+        run = dayGap === 1 ? run + 1 : 1;
+        longest = Math.max(longest, run);
+    }
+
+    const todayDate = new Date(today);
+    todayDate.setUTCHours(0, 0, 0, 0);
+    const latest = new Date(`${dates[dates.length - 1]}T00:00:00Z`);
+    const daysSinceLatest = Math.round((todayDate - latest) / 86400000);
+    let current = 0;
+    if (daysSinceLatest <= 1) {
+        current = 1;
+        for (let index = dates.length - 1; index > 0; index -= 1) {
+            const previous = new Date(`${dates[index - 1]}T00:00:00Z`);
+            const date = new Date(`${dates[index]}T00:00:00Z`);
+            if (Math.round((date - previous) / 86400000) !== 1) break;
+            current += 1;
+        }
+    }
+    return { current, longest };
 };
 
 /**

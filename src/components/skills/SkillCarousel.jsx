@@ -28,6 +28,7 @@ const SkillCarousel = ({
     mobAttacking,
     playerDamageIndicator,
     onPerfectMemoryGame,
+    onChoresCompleted,
     calculateMobAction,
     mobNextAction
 }) => {
@@ -254,6 +255,7 @@ const SkillCarousel = ({
                                 mobAttacking={mobAttacking?.skillId === item.id ? mobAttacking : null}
                                 playerDamageIndicator={playerDamageIndicator}
                                 onPerfectMemoryGame={onPerfectMemoryGame}
+                                onChoresCompleted={onChoresCompleted}
                                 calculateMobAction={calculateMobAction}
                                 mobNextAction={mobNextAction}
                             />

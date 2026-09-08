@@ -116,7 +116,7 @@
 }
 
 .skill-carousel-stage {
-  --card-offset: clamp(120px, 18vw, 320px);
+  --card-offset: clamp(140px, 21vw, 430px);
   touch-action: pan-y;
 }
 
@@ -126,12 +126,14 @@
 
 .profile-picture-position {
   left: clamp(0.75rem, 3vw, 3rem);
-  bottom: clamp(5.5rem, 14dvh, 8rem);
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  transform: scale(1.12);
+  transform-origin: bottom left;
 }
 
 .auth-controls {
-  bottom: max(0.75rem, env(safe-area-inset-bottom));
-  left: max(0.75rem, env(safe-area-inset-left));
+  top: max(7.25rem, calc(env(safe-area-inset-top) + 6rem));
+  right: max(0.75rem, env(safe-area-inset-right));
   min-height: 36px;
   line-height: 1;
 }
@@ -163,9 +165,34 @@
 }
 
 .skill-card-shell {
-  width: min(300px, 25vw);
-  height: min(600px, 65dvh);
+  width: min(420px, 34vw) !important;
+  height: min(700px, 72dvh) !important;
   min-height: 360px;
+}
+
+.brand-lockup {
+  position: relative;
+  width: 100%;
+  height: clamp(8.5rem, 19dvh, 15rem);
+  flex: 0 0 auto;
+}
+
+.brand-lockup-logo {
+  position: absolute;
+  inset: 0 auto auto 50%;
+  width: clamp(15rem, 48vw, 60rem);
+  height: clamp(5.5rem, 13dvh, 11rem);
+  transform: translateX(-50%);
+  object-fit: contain;
+}
+
+.brand-lockup-title {
+  position: absolute;
+  top: 56%;
+  left: 50%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
 }
 
 @media (max-width: 1100px) {
@@ -186,6 +213,15 @@
   .battle-center-card {
     width: min(48vw, 500px);
   }
+
+  .skill-carousel-stage {
+    --card-offset: clamp(130px, 23vw, 240px);
+  }
+
+  .skill-card-shell {
+    width: min(380px, 42vw) !important;
+    height: min(650px, 70dvh) !important;
+  }
 }
 
 @media (max-width: 700px) {
@@ -204,20 +240,27 @@
     top: 0.5rem !important;
   }
 
-  .changelog-control {
-    left: 7.5rem !important;
-    top: 0.5rem !important;
-    min-width: 3.5rem;
-  }
-
-  .changelog-control span {
-    display: none;
-  }
-
   .auth-controls {
     max-width: min(10rem, calc(100vw - 1.5rem));
     padding: 0.45rem 0.6rem;
     font-size: 0.9rem;
+  }
+
+  .profile-picture-position {
+    transform: scale(1.05);
+  }
+
+  .brand-lockup {
+    height: clamp(7.5rem, 18dvh, 10rem);
+  }
+
+  .brand-lockup-logo {
+    width: min(86vw, 32rem);
+  }
+
+  .brand-lockup-title {
+    top: 58%;
+    font-size: clamp(2.75rem, 13vw, 5rem);
   }
 
   .auth-controls-label {
@@ -256,8 +299,8 @@
   }
 
   .skill-card-shell {
-    width: min(300px, 72vw);
-    height: min(560px, 66dvh);
+    width: min(360px, 76vw) !important;
+    height: min(590px, 66dvh) !important;
     min-height: 340px;
   }
 }
@@ -271,6 +314,14 @@
     width: 38px;
     justify-content: center;
     padding: 0.45rem;
+  }
+
+  .auth-controls {
+    top: 5.5rem;
+  }
+
+  .brand-lockup-title {
+    top: 60%;
   }
 }
 
