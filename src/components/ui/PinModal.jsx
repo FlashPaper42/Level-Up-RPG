@@ -21,24 +21,32 @@ const PinModal = ({ isOpen, onClose, mode = 'enter', onSubmit, profileName = 'Pr
     // Reset state when modal opens/closes
     useEffect(() => {
         if (isOpen) {
-            setPin(['', '', '', '']);
-            setConfirmPin(['', '', '', '']);
-            setStep(1);
-            setLocalError(false);
-            setTimeout(() => inputRefs[0].current?.focus(), 100);
+            const resetTimer = window.setTimeout(() => {
+                setPin(['', '', '', '']);
+                setConfirmPin(['', '', '', '']);
+                setStep(1);
+                setLocalError(false);
+                inputRefs[0].current?.focus();
+            }, 0);
+            return () => window.clearTimeout(resetTimer);
         }
+        return undefined;
     }, [isOpen]);
 
     // Show error effect
     useEffect(() => {
         if (error) {
-            setLocalError(true);
-            setPin(['', '', '', '']);
-            setTimeout(() => {
-                setLocalError(false);
-                inputRefs[0].current?.focus();
-            }, 500);
+            const errorTimer = window.setTimeout(() => {
+                setLocalError(true);
+                setPin(['', '', '', '']);
+                window.setTimeout(() => {
+                    setLocalError(false);
+                    inputRefs[0].current?.focus();
+                }, 500);
+            }, 0);
+            return () => window.clearTimeout(errorTimer);
         }
+        return undefined;
     }, [error]);
 
     const handleDigitChange = (index, value, isConfirm = false) => {
@@ -209,4 +217,3 @@ const PinModal = ({ isOpen, onClose, mode = 'enter', onSubmit, profileName = 'Pr
 };
 
 export default PinModal;
-

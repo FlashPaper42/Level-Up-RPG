@@ -20,7 +20,7 @@ import { playClick } from '../../utils/soundManager';
 // Combat action button component
 const ActionButton = ({
     action,
-    icon: Icon,
+    icon,
     label,
     color,
     isSelected,
@@ -46,7 +46,7 @@ const ActionButton = ({
             className={`${baseClasses} ${selectedClasses} ${disabledClasses} ${color}`}
             title={`${label} (${cost} AP)`}
         >
-            <Icon size={20} className="mb-1" />
+            {React.createElement(icon, { size: 20, className: 'mb-1' })}
             <span className="text-xs font-bold uppercase">{label}</span>
             <span className="text-[10px] text-slate-300">{cost} AP</span>
         </button>
@@ -200,7 +200,6 @@ export const CombatActionPanel = ({
 
 // Challenge display component
 export const ChallengeDisplay = ({
-    challenge,
     isWrong,
     children,
     className = ""
@@ -227,7 +226,6 @@ const CombatUI = ({
     mobArmor = 0,
 
     // Player state
-    playerHealth,
     actionPoints,
     armorPoints,
 

@@ -6,7 +6,7 @@
  */
 
 import { SKILL_DATA } from '../constants/gameData';
-import { calculateXPReward, calculateMobHealth, getEncounterType } from './progression';
+import { calculateXPReward, getEncounterType } from './progression';
 
 // Import sub-systems
 import * as DamageSystem from './damage';

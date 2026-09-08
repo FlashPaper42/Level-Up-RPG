@@ -4,7 +4,7 @@ import { useProgression } from './contexts/ProgressionContext';
 import { useCombat } from './contexts/CombatContext';
 
 import {
-    Menu, Sparkles, Gift, Maximize, Minimize, Settings, Bug
+    Menu, Sparkles, Gift, Maximize, Minimize, Settings, Bug, ClipboardList
 } from 'lucide-react';
 
 // Modules
@@ -22,26 +22,22 @@ import MenuDrawer from './components/drawers/MenuDrawer';
 import SkillCarousel from './components/skills/SkillCarousel';
 import PhantomEvent from './components/PhantomEvent';
 import AchievementToast from './components/ui/AchievementToast';
-import { useAzureSpeech } from './hooks/useAzureSpeech';
+import { useWebSpeech } from './hooks/useWebSpeech';
 import { usePhantomSystem } from './hooks/usePhantomSystem';
 import { toggleFullscreenSafe } from './utils/platform';
 import { getAvatarEmoji } from './constants/avatarData';
 
 // Utils & Constants
-import { getRandomMob, getRandomFriendlyMob, getRandomMiniboss, getRandomBoss, getMobForSkill, getEncounterType, generateMathProblem, getReadingWord, getWordForDifficulty, calculateDamage, calculateMobHealth, calculateXPReward, calculateXPToLevel } from './utils/gameUtils';
+import { getMobForSkill, getEncounterType, calculateDamage, calculateMobHealth, calculateXPToLevel } from './utils/gameUtils';
 import {
     calculateMobAction as calculateMobActionFromSystem,
-    calculateDamageAfterArmor,
     willHitDefeatMob,
     isCombatSkill as checkIsCombatSkill,
     applyDamageToMob,
     processXPGain,
     generateNewMobData,
-    applyMobCounterAttack,
-    calculatePlayerDamage
 } from './systems/combat';
 import { generateChallenge as generateChallengeFromSystem } from './systems/challenges';
-import { getRandomAura } from './utils/mobDisplayUtils';
 import {
     BASE_ASSETS, THEME_CONFIG, SKILL_DATA,
     HOMOPHONES, DIFFICULTY_CONTENT, HOSTILE_MOBS, BOSS_MOBS, MINIBOSS_MOBS
@@ -50,15 +46,12 @@ import {
     getBGMManager, setSfxVolume,
     playClick,
     playDeath, playFail, playLevelUp, playNotification, playSuccessfulHit,
-    playMobHurt, playMobDeath, playMobSay, playAchievement,
+    playMobHurt, playMobDeath, playMobSay,
     playArmorGain, playHealSound, playSpecialAttack, playPlayerHitArmor, playPlayerHitHealth, playAmbush
 } from './utils/soundManager';
 import {
-    getDefaultStats, getNewlyUnlockedAchievements, getNewTierAchievements,
     addUniqueToArray, isAchievementUnlocked
 } from './utils/achievementUtils';
-import { migrateLocalStorageToFiles } from './utils/migration';
-import { saveProfileData, saveProfileSettings } from './utils/storage';
 
 // Parent verification privilege constants
 const PARENT_PRIVILEGE_LEVEL = 200;
@@ -71,6 +64,15 @@ const MIC_OFF_TEXT = "Mic Off";
 
 // Boss healing animation duration (ms)
 const BOSS_HEALING_ANIMATION_DURATION = 600;
+
+// Temporary deployment check UI. Update this list when a hosted change is pushed.
+const CHANGELOG_ENTRIES = [
+    'Redesigned the Reading skill card with one-shot browser speech recognition.',
+    'Added typed-answer fallback for Reading challenges.',
+    'Fixed the Reading microphone error and duplicate combat-turn handling.',
+    'Removed automatic microphone activation when a battle starts.',
+    'Improved browser speech error messages and recognition cleanup.',
+];
 
 const App = () => {
     // Contexts
@@ -96,7 +98,7 @@ const App = () => {
     const {
         battlingSkillId, battlingSkillIdRef, battleDifficulty,
         startBattle: startBattleContext, endBattle: endBattleContext,
-        setBattlingSkillId, setBattleDifficulty, // Now exposed and needed
+        setBattlingSkillId, // Now exposed and needed
         playerHealth, setPlayerHealth,
         actionPoints, setActionPoints,
         armorPoints, setArmorPoints,
@@ -113,6 +115,7 @@ const App = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isCosmeticsOpen, setIsCosmeticsOpen] = useState(false);
     const [isResetOpen, setIsResetOpen] = useState(false);
+    const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
     // Guard against double-firing of combat actions
     const processingHitRef = useRef(false);
@@ -139,11 +142,6 @@ const App = () => {
     // The previous implementation read from localStorage.getItem(...) in useState initializer.
     // We already moved generic Profile settings to UserContext, but specific "Cosmetics"
     // like selectedBorder/Avatar are now also in UserContext.
-
-    // Run migration on mount (Electron only)
-    useEffect(() => {
-        migrateLocalStorageToFiles();
-    }, []);
 
     // Note: State saving logic (persistence) is now handled inside ProgressionContext and UserContext!
     // We can REMOVE the duplicated `saveProfileData` calls here for skills/stats/theme.
@@ -188,30 +186,14 @@ const App = () => {
     // stored cosmetics with the old profile's values. The setters in UserContext.jsx already handle
     // saving to localStorage when the user makes a selection in the Avatar/Cosmetics modals.
 
-    // Keep battlingSkillIdRef in sync (already done in CombatContext, but local hooks might use the ref? 
-    // Wait, useAzureSpeech uses context or props? useAzureSpeech is a hook in App.jsx.
-    // It takes battlingSkillId as param.
-    // But App.jsx passed `battlingSkillId` (state) to it.
-    // So we just pass the context value.
-
-
-
-    // Use Azure Speech Hook
-    // Use Azure Speech Hook
     const {
         isListening,
         spokenText,
         setSpokenText,
-        startVoiceListener,
         stopVoiceRecognition,
         toggleMicListener
-    } = useAzureSpeech({
-        battlingSkillId,
-        challengeData,
-        onSuccess: (targetId) => {
-            handleSuccessHit(targetId);
-        },
-        onFailure: (targetId) => handleSuccessHit(targetId, 'WRONG')
+    } = useWebSpeech({
+        challengeData
     });
 
     // Use Phantom System Hook
@@ -295,29 +277,6 @@ const App = () => {
         if (!bgmManager.current.isPlaying) {
             bgmManager.current.play();
         }
-    }, []);
-
-    // Toggle fullscreen mode
-    const toggleFullscreen = useCallback(() => {
-        console.log('[Fullscreen] Function called!');
-        console.log('[Fullscreen] document.fullscreenElement:', document.fullscreenElement);
-
-        if (!document.fullscreenElement) {
-            console.log('[Fullscreen] Calling requestFullscreen on documentElement');
-            document.documentElement.requestFullscreen()
-                .then(() => console.log('[Fullscreen] requestFullscreen promise resolved'))
-                .catch(err => {
-                    console.error('[Fullscreen] requestFullscreen failed:', err);
-                });
-        } else {
-            console.log('[Fullscreen] Calling exitFullscreen');
-            document.exitFullscreen()
-                .then(() => console.log('[Fullscreen] exitFullscreen promise resolved'))
-                .catch(err => {
-                    console.error('[Fullscreen] exitFullscreen failed:', err);
-                });
-        }
-        playClick();
     }, []);
 
     // Generate challenges using the challenges system
@@ -612,7 +571,7 @@ const App = () => {
 
                 // Handle Badge Notifications
                 if (xpResult.badgesEarned.length > 0) {
-                    xpResult.badgesEarned.forEach(tier => {
+                    xpResult.badgesEarned.forEach(() => {
                         setLootBox({ level: newLevel, skillName: skillConfig.fantasyName, item: "New Rank!", img: BASE_ASSETS.badges.Wood });
                         playNotification();
                     });
@@ -1068,7 +1027,6 @@ const App = () => {
         setChallengeData(generateChallenge(skill.challengeType, challengeDiff));
         playClick();
         startBGM();
-        if (skill.challengeType === 'reading') startVoiceListener(id);
     };
 
     const endBattleLocal = () => {
@@ -1168,7 +1126,7 @@ const App = () => {
                 }
             });
             return { totalLevel, highestLevel, skills: skillsData, theme };
-        } catch (e) { return null; }
+        } catch { return null; }
     };
 
     const handleSwitchProfile = (newId) => {
@@ -1287,7 +1245,48 @@ const App = () => {
                     >
                         <Sparkles size={48} className="text-purple-400" />
                     </button>
+                    <button
+                        onClick={() => { setIsChangelogOpen(true); playClick(); }}
+                        className="absolute z-40 flex items-center gap-2 bg-stone-800/90 text-white px-3 py-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg text-lg font-bold"
+                        style={{ top: '24px', left: '200px' }}
+                        aria-label="Open changelog"
+                    >
+                        <ClipboardList size={28} className="text-yellow-400" />
+                        <span>Changelog</span>
+                    </button>
                 </>
+            )}
+
+            {isChangelogOpen && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
+                    onClick={() => setIsChangelogOpen(false)}
+                >
+                    <section
+                        className="w-full max-w-lg rounded-lg border-4 border-yellow-500 bg-slate-900 p-5 text-left shadow-2xl"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="changelog-title"
+                        onClick={event => event.stopPropagation()}
+                    >
+                        <div className="mb-4 flex items-center justify-between border-b-2 border-slate-700 pb-3">
+                            <h2 id="changelog-title" className="text-3xl font-bold uppercase text-yellow-400">
+                                Changelog
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={() => setIsChangelogOpen(false)}
+                                className="rounded border-2 border-slate-600 px-3 py-1 text-xl font-bold text-white hover:bg-slate-700"
+                                aria-label="Close changelog"
+                            >
+                                X
+                            </button>
+                        </div>
+                        <ul className="list-disc space-y-2 pl-6 text-lg text-slate-200">
+                            {CHANGELOG_ENTRIES.map(entry => <li key={entry}>{entry}</li>)}
+                        </ul>
+                    </section>
+                </div>
             )}
 
             {/* Profile Picture Display - Bottom Left */}
@@ -1311,11 +1310,6 @@ const App = () => {
                         onClickLevel={() => {
                             setIsMenuOpen(true);
                             playClick();
-                            // Set highlight state for total level
-                            setTimeout(() => {
-                                setHighlightTotalLevel(true);
-                                setTimeout(() => setHighlightTotalLevel(false), 2000);
-                            }, 300);
                         }}
                     />
                 </div>

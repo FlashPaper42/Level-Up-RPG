@@ -190,10 +190,10 @@ export const THEMES_LIST = [{ id: 'minecraft', name: 'Minecraft', img: 'assets/t
 export const BADGE_TIERS = [{ level: 20, title: "Wood" }, { level: 40, title: "Stone" }, { level: 60, title: "Gold" }, { level: 80, title: "Iron" }, { level: 100, title: "Emerald" }, { level: 120, title: "Diamond" }, { level: 140, title: "Netherite" }, { level: 160, title: "Obsidian" }];
 
 // Reading words organized by character length for difficulty scaling
-// OPTIMIZED FOR AZURE SPEECH RECOGNITION:
-// - Multi-syllable words (Azure is better with these)
+// Optimized for browser speech recognition:
+// - Multi-syllable words are easier for speech engines to distinguish
 // - No homophones (BEE/BE, SEE/SEA, etc.)
-// - Common vocabulary (well-trained in Azure's model)
+// - Common vocabulary
 // - Phonetically distinct (clear pronunciation)
 export const READING_WORDS = {
     3: ["CAR", "SUN", "RUN", "BIG", "RED", "FOX", "MOM", "DAD", "CUP", "BUS", "PEN", "ANT", "BAG", "TUB", "PIG", "DIG"],

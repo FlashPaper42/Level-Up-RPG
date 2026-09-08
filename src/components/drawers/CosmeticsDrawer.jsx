@@ -27,8 +27,6 @@ const ACHIEVEMENT_EFFECTS = [
 
 const CosmeticsDrawer = ({
     isOpen,
-    activeTheme,
-    setActiveTheme,
     selectedBorder,
     setSelectedBorder,
     borderColor,

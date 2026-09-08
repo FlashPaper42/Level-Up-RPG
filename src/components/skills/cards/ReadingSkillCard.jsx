@@ -1,25 +1,23 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { Mic, Plus, Minus } from 'lucide-react';
 import SafeImage from '../../ui/SafeImage';
 import MobWithAura from '../../ui/MobWithAura';
 import ParentalVerificationModal from '../../ui/ParentalVerificationModal';
 import PixelShield from '../../ui/PixelShield';
-import { BASE_ASSETS, FRIENDLY_MOBS, HOSTILE_MOBS, CHEST_BLOCKS, BOSS_MOBS, MINIBOSS_MOBS, DIFFICULTY_IMAGES, DIFFICULTY_CONTENT, HOMOPHONES } from '../../../constants/gameData';
-import { playClick, getSfxVolume } from '../../../utils/soundManager';
+import { BASE_ASSETS, FRIENDLY_MOBS, HOSTILE_MOBS, CHEST_BLOCKS, BOSS_MOBS, MINIBOSS_MOBS, DIFFICULTY_IMAGES, DIFFICULTY_CONTENT } from '../../../constants/gameData';
+import { playClick } from '../../../utils/soundManager';
 import { calculateXPToLevel } from '../../../utils/gameUtils';
 import { AURA_ADJECTIVES } from '../../../utils/mobDisplayUtils';
 import {
     PRESTIGE_LEVEL_THRESHOLD,
-    MIN_SPOKEN_TEXT_LENGTH,
     AXOLOTL_NOTE_MAP,
-    getTempoDelays,
     getActionAnimation,
     getLevelStyling,
     getButtonStyle,
-    playMismatch,
     getBorderEffect
 } from '../shared';
+import { isAnswerCorrect } from '../../../utils/answerNormalization';
 
 /**
  * ReadingSkillCard - Handles the Reading skill with turn-based combat
@@ -34,12 +32,12 @@ const ReadingSkillCard = ({
     mobName,
     mobAura,
     challenge,
+    handleSuccessHit,
     isListening,
     spokenText,
     damageNumbers,
     onStartBattle,
     onEndBattle,
-    onMathSubmit,
     onMicClick,
     difficulty,
     setDifficulty,
@@ -48,20 +46,18 @@ const ReadingSkillCard = ({
     borderColor,
     bossHealing,
     actionPoints,
-    armorPoints,
-    playerHealth,
     handleCombatAction,
     generateChallengeAtDifficulty,
     mobAttacking,
-    playerDamageIndicator,
     calculateMobAction,
     mobNextAction
 }) => {
     const [isHit, setIsHit] = useState(false);
     const [isReadingWrong, setIsReadingWrong] = useState(false);
     const [selectedAction, setSelectedAction] = useState(null);
+    const [typedAnswer, setTypedAnswer] = useState('');
     const prevDamageCount = useRef(0);
-    const prevSpokenTextRef = useRef('');
+    const resolvedChallengeRef = useRef(null);
     const readingWordRef = useRef(null);
 
     // Calculate HP percentage
@@ -98,38 +94,58 @@ const ReadingSkillCard = ({
     // Handle damage animation
     useEffect(() => {
         if (damageNumbers.length > prevDamageCount.current) {
-            setIsHit(true);
-            setTimeout(() => setIsHit(false), 400);
+            const hitTimer = window.setTimeout(() => {
+                setIsHit(true);
+                window.setTimeout(() => setIsHit(false), 400);
+            }, 0);
+            return () => window.clearTimeout(hitTimer);
         }
         prevDamageCount.current = damageNumbers.length;
     }, [damageNumbers]);
 
-    // Handle Reading skill combat actions when word is spoken correctly
+    // Resolve one final transcript through the same path as typed answers.
     useEffect(() => {
         if (config.challengeType === 'reading' && isBattling && selectedAction && spokenText && challenge?.answer) {
-            const normalizedSpoken = spokenText.toUpperCase().trim();
-            const normalizedAnswer = challenge.answer.toUpperCase().trim();
-            const homophones = HOMOPHONES[normalizedAnswer];
-            const isCorrect = normalizedSpoken === normalizedAnswer || (homophones && homophones.some(h => h.toUpperCase() === normalizedSpoken));
-
-            if (isCorrect && spokenText !== prevSpokenTextRef.current) {
-                if (handleCombatAction) {
-                    handleCombatAction(config.id, selectedAction, true);
-                    setSelectedAction(null);
-                }
-                prevSpokenTextRef.current = spokenText;
-            } else if (!isCorrect && normalizedSpoken.length >= MIN_SPOKEN_TEXT_LENGTH && spokenText !== prevSpokenTextRef.current) {
-                setIsReadingWrong(true);
-                setTimeout(() => setIsReadingWrong(false), 500);
-                prevSpokenTextRef.current = spokenText;
+            if (spokenText === 'Listening...' || spokenText === 'Mic Off' || spokenText.includes('Speech ') || spokenText.includes('Microphone')) return;
+            if (resolvedChallengeRef.current === challenge.answer) return;
+            resolvedChallengeRef.current = challenge.answer;
+            if (isAnswerCorrect(spokenText, challenge.answer)) {
+                handleCombatAction?.(config.id, selectedAction, true);
+            } else {
+                window.setTimeout(() => {
+                    setIsReadingWrong(true);
+                    window.setTimeout(() => setIsReadingWrong(false), 500);
+                }, 0);
+                handleSuccessHit?.(config.id, 'WRONG');
             }
+            window.setTimeout(() => setSelectedAction(null), 0);
         }
-    }, [spokenText, config.challengeType, config.id, isBattling, challenge?.answer, selectedAction, handleCombatAction]);
+    }, [spokenText, config.challengeType, config.id, isBattling, challenge, selectedAction, handleCombatAction, handleSuccessHit]);
+
+    useEffect(() => {
+        resolvedChallengeRef.current = null;
+        window.setTimeout(() => setTypedAnswer(''), 0);
+    }, [challenge]);
+
+    const submitTypedAnswer = () => {
+        if (!selectedAction || !typedAnswer.trim()) return;
+        setIsReadingWrong(false);
+        const isCorrect = isAnswerCorrect(typedAnswer, challenge?.answer);
+        if (isCorrect) {
+            handleCombatAction?.(config.id, selectedAction, true);
+        } else {
+            setIsReadingWrong(true);
+            handleSuccessHit?.(config.id, 'WRONG');
+        }
+        setTypedAnswer('');
+        setSelectedAction(null);
+    };
 
     // Reset selectedAction when battle ends
     useEffect(() => {
         if (!isBattling) {
-            setSelectedAction(null);
+            const resetTimer = window.setTimeout(() => setSelectedAction(null), 0);
+            return () => window.clearTimeout(resetTimer);
         }
     }, [isBattling]);
 
@@ -246,9 +262,30 @@ const ReadingSkillCard = ({
                                             <div className="flex-1 flex flex-col items-center justify-center gap-3">
                                                 {selectedAction ? (
                                                     <>
-                                                        <button onClick={onMicClick} className={`w-full text-center p-2 rounded border-2 transition-colors flex items-center justify-center gap-2 ${isListening ? 'border-red-500 bg-red-900/20' : 'border-gray-600 hover:bg-white/10'}`}>
-                                                            {isListening ? <Mic className="inline animate-pulse text-red-500" /> : <><Mic className="inline text-gray-500" /><span className="text-xs uppercase font-bold text-stone-400">Tap to Speak</span></>}
-                                                        </button>
+                                                        <div className="w-full rounded border border-gray-600 bg-black/20 p-2">
+                                                            <p className="mb-2 text-center text-xs font-bold uppercase text-stone-300">
+                                                                Read: {challenge?.question || 'the word'}
+                                                            </p>
+                                                            <button onClick={onMicClick} className={`w-full text-center p-2 rounded border-2 transition-colors flex items-center justify-center gap-2 ${isListening ? 'border-red-500 bg-red-900/20' : 'border-gray-600 hover:bg-white/10'}`}>
+                                                                {isListening ? <Mic className="inline animate-pulse text-red-500" /> : <><Mic className="inline text-gray-500" /><span className="text-xs uppercase font-bold text-stone-400">Speak once</span></>}
+                                                            </button>
+                                                            <p className="mt-2 min-h-5 text-center text-xs text-stone-400" aria-live="polite">
+                                                                {spokenText || 'Use your microphone or type the word below.'}
+                                                            </p>
+                                                        </div>
+                                                        <form className="flex w-full gap-2" onSubmit={event => { event.preventDefault(); submitTypedAnswer(); }}>
+                                                            <input
+                                                                value={typedAnswer}
+                                                                onChange={event => setTypedAnswer(event.target.value)}
+                                                                placeholder="Type the word"
+                                                                aria-label="Type the reading answer"
+                                                                className="min-w-0 flex-1 rounded border-2 border-gray-600 bg-slate-900 px-2 py-2 text-white"
+                                                            />
+                                                            <button type="submit" className="rounded border-2 border-green-700 bg-green-700 px-3 text-xs font-bold uppercase text-white hover:bg-green-600">
+                                                                Submit
+                                                            </button>
+                                                        </form>
+                                                        {isReadingWrong && <p className="text-center text-xs font-bold uppercase text-red-300" role="alert">Not quite. Try again.</p>}
                                                         <button onClick={() => { if (handleCombatAction) { handleCombatAction(config.id, selectedAction, true); setSelectedAction(null); } playClick(); }} className="w-full text-xs text-gray-500 underline hover:text-white">Skip / Manual Success</button>
                                                     </>
                                                 ) : (

@@ -159,7 +159,10 @@ const ProfileEditorModal = ({ isOpen, onClose, profileId, profileName, onSave })
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await saveProfileData(profileId, profileData);
+            const saved = await saveProfileData(profileId, profileData);
+            if (!saved) {
+                throw new Error('Browser storage is unavailable or full');
+            }
             if (onSave) {
                 onSave();
             }
