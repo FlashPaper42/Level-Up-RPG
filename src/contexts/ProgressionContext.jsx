@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useUser } from './UserContext';
+import { useAuth } from './AuthContext';
 import { SKILL_DATA, BASE_ASSETS, FRIENDLY_MOBS, HOSTILE_MOBS, MINIBOSS_MOBS, BOSS_MOBS } from '../constants/gameData';
 import { getRandomMob, getRandomFriendlyMob, getRandomMiniboss, getRandomBoss } from '../systems/mobs'; // You'll need to export these from specific systems or utils
 import { calculateMobHealth } from '../systems/progression';
 import { getRandomAura } from '../utils/mobDisplayUtils';
 import { getDefaultStats, checkAchievements as checkAchievementsUtil } from '../utils/achievementUtils';
+import { loadCloudProfile, saveCloudProfile } from '../utils/cloudProfile';
 
 const ProgressionContext = createContext();
 
@@ -21,15 +23,18 @@ const getStorageKey = (profileId) => `heroSkills_v23_p${profileId}`;
 
 export const ProgressionProvider = ({ children }) => {
     const { currentProfile, activeTheme, setActiveTheme } = useUser();
+    const { user } = useAuth();
 
     // --- State ---
     const [skills, setSkills] = useState({});
     const [stats, setStats] = useState(getDefaultStats());
     const [hasLoaded, setHasLoaded] = useState(false); // Prevent saving before initial load completes
+    const loadedProfileRef = useRef(null);
 
     // --- Load Logic (Mirrored from App.jsx) ---
-    const loadData = useCallback(() => {
+    const loadData = useCallback(async () => {
         const key = getStorageKey(currentProfile);
+        loadedProfileRef.current = null;
         let saved = localStorage.getItem(key);
         // Fallback for profile 1 legacy
         if (!saved && currentProfile === 1) saved = localStorage.getItem('heroSkills_v23');
@@ -56,6 +61,22 @@ export const ProgressionProvider = ({ children }) => {
                 currentMinibossAura: getRandomAura(), currentBossAura: getRandomAura(),
             };
         });
+
+        if (user) {
+            try {
+                const cloudProfile = await loadCloudProfile(currentProfile);
+                if (cloudProfile) {
+                    setSkills(cloudProfile.progression && Object.keys(cloudProfile.progression).length > 0 ? cloudProfile.progression : initialSkills);
+                    setStats({ ...getDefaultStats(), ...(cloudProfile.stats || {}) });
+                    setActiveTheme(cloudProfile.preferences?.theme || 'minecraft');
+                    loadedProfileRef.current = `${user.id}:${currentProfile}`;
+                    setHasLoaded(true);
+                    return;
+                }
+            } catch (error) {
+                console.error('Failed to load cloud profile; using local fallback:', error);
+            }
+        }
 
         if (saved) {
             try {
@@ -86,25 +107,29 @@ export const ProgressionProvider = ({ children }) => {
                 }
                 
                 // Mark as loaded to enable persistence
+                loadedProfileRef.current = `${user?.id || 'local'}:${currentProfile}`;
                 setHasLoaded(true);
             } catch (e) {
                 console.error("Failed to load progression data:", e);
                 setSkills(initialSkills);
+                loadedProfileRef.current = `${user?.id || 'local'}:${currentProfile}`;
                 setHasLoaded(true);
             }
         } else {
             setSkills(initialSkills);
             setStats(getDefaultStats());
             setActiveTheme('minecraft');
+            loadedProfileRef.current = `${user?.id || 'local'}:${currentProfile}`;
             setHasLoaded(true);
         }
-    }, [currentProfile, setActiveTheme]);
+    }, [currentProfile, setActiveTheme, user]);
 
     // Reload when profile changes
     // Reset hasLoaded when profile changes to prevent stale saves
     useEffect(() => {
         const timer = window.setTimeout(() => {
             setHasLoaded(false);
+            setSkills({});
             loadData();
         }, 0);
         return () => window.clearTimeout(timer);
@@ -125,13 +150,24 @@ export const ProgressionProvider = ({ children }) => {
             theme: activeTheme // Saving theme here as it's part of the blob
         };
 
-        localStorage.setItem(getStorageKey(currentProfile), JSON.stringify(dataToSave));
+        const expectedProfileKey = `${user?.id || 'local'}:${currentProfile}`;
+        if (loadedProfileRef.current !== expectedProfileKey) return;
 
-        // Legacy fallback for profile 1
-        if (currentProfile === 1) {
-            localStorage.setItem('heroSkills_v23', JSON.stringify(dataToSave));
+        if (user) {
+            saveCloudProfile(currentProfile, {
+                skills,
+                stats,
+                preferences: { theme: activeTheme },
+            }).catch(error => console.error('Failed to save cloud profile:', error));
+        } else {
+            localStorage.setItem(getStorageKey(currentProfile), JSON.stringify(dataToSave));
+
+            // Legacy fallback for profile 1
+            if (currentProfile === 1) {
+                localStorage.setItem('heroSkills_v23', JSON.stringify(dataToSave));
+            }
         }
-    }, [skills, stats, activeTheme, currentProfile, hasLoaded]);
+    }, [skills, stats, activeTheme, currentProfile, hasLoaded, user]);
 
 
     // --- Actions ---
