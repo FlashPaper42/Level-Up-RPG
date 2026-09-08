@@ -1,3 +1,5 @@
+import { devLog } from '../utils/logger';
+
 /**
  * Progression System
  * 
@@ -177,7 +179,7 @@ export const calculatePatternXP = (difficulty, playerLevel, iterationsCompleted)
     const maxXPPerRound = Math.floor(xpToLevel * 0.5);
     const finalXP = Math.min(Math.floor(penalizedXP), maxXPPerRound);
     
-    console.log(`[Pattern XP] Diff=${difficulty}, Iter=${iterationsCompleted}, Raw=${rawXP.toFixed(0)}, Penalty=${difficultyPenalty.toFixed(2)}, Final=${finalXP}`);
+    devLog(`[Pattern XP] Diff=${difficulty}, Iter=${iterationsCompleted}, Raw=${rawXP.toFixed(0)}, Penalty=${difficultyPenalty.toFixed(2)}, Final=${finalXP}`);
     
     return Math.max(1, finalXP); // Minimum 1 XP
 };

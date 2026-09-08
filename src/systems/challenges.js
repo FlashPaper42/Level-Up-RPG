@@ -16,6 +16,7 @@ import {
     WRITING_WORD_INDEX,
     WRITING_DIFFICULTY_POOLS
 } from '../constants/gameData';
+import { devLog } from '../utils/logger';
 
 // ===== Reading Challenges =====
 
@@ -48,7 +49,7 @@ export const getReadingWord = (difficulty) => {
  * D7: (50-99) with 3-step PEMDAS - nightmare complexity
  */
 export const generateMathProblem = (difficulty) => {
-    console.log(`[Challenges] Generating math problem for difficulty ${difficulty}`);
+    devLog(`[Challenges] Generating math problem for difficulty ${difficulty}`);
     const config = DIFFICULTY_CONTENT.math[difficulty] || DIFFICULTY_CONTENT.math[1];
 
     // Difficulty 7: Nightmare - Complex 3-step PEMDAS with large numbers
@@ -115,7 +116,7 @@ const generateStandardProblem = (config) => {
             answer = (a + b).toString();
     }
 
-    console.log(`[Challenges] Generated: ${question} = ${answer}`);
+    devLog(`[Challenges] Generated: ${question} = ${answer}`);
     return { type: 'math', question, answer };
 };
 
@@ -174,7 +175,7 @@ const generatePemdasProblem = () => {
 
     const pattern = patterns[Math.floor(Math.random() * patterns.length)];
     const result = pattern();
-    console.log(`[Challenges] Generated PEMDAS: ${result.question} = ${result.answer}`);
+    devLog(`[Challenges] Generated PEMDAS: ${result.question} = ${result.answer}`);
     return { type: 'math', question: `${result.question} = ?`, answer: result.answer.toString(), isPemdas: true };
 };
 
@@ -251,7 +252,7 @@ const generateNightmareProblem = () => {
 
     const pattern = patterns[Math.floor(Math.random() * patterns.length)];
     const result = pattern();
-    console.log(`[Challenges] Generated Nightmare: ${result.question} = ${result.answer}`);
+    devLog(`[Challenges] Generated Nightmare: ${result.question} = ${result.answer}`);
     return { type: 'math', question: `${result.question} = ?`, answer: result.answer.toString(), isNightmare: true };
 };
 

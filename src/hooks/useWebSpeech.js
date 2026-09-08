@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { startWebSpeechRecognition, stopWebSpeechRecognition } from '../utils/webSpeechRecognizer';
+import { devLog } from '../utils/logger';
 const MIC_OFF_TEXT = "Mic Off";
 
 export const useWebSpeech = ({
@@ -11,7 +12,7 @@ export const useWebSpeech = ({
     useEffect(() => {
         // Clear spokenText when challenge changes to prevent carryover
         if (isListening && challengeData) {
-            console.log('[Speech Recognition] Challenge changed, clearing spoken text');
+            devLog('[Speech Recognition] Challenge changed, clearing spoken text');
             window.setTimeout(() => setSpokenText("Listening..."), 0);
         }
     }, [challengeData, isListening]);

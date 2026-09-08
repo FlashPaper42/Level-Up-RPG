@@ -5,7 +5,7 @@ import SafeImage from '../../ui/SafeImage';
 import { BASE_ASSETS, FRIENDLY_MOBS, DIFFICULTY_CONTENT, DIFFICULTY_IMAGES } from '../../../constants/gameData';
 import { FRIENDLY_MOBS_WITH_SAY } from '../../../systems/mobs';
 import { playClick, getSfxVolume, playMobSay } from '../../../utils/soundManager';
-import { calculateXPToLevel } from '../../../utils/gameUtils';
+import { calculateXPToLevel } from '../../../systems/progression';
 import {
     PRESTIGE_LEVEL_THRESHOLD,
     getLevelStyling,

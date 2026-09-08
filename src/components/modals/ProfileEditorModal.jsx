@@ -3,7 +3,7 @@ import { X, Save, ChevronRight, Flame, HelpCircle, BookOpen, Calculator, PenTool
 import { SKILL_DATA } from '../../constants/gameData';
 import { loadProfileData, saveProfileData } from '../../utils/storage';
 import { getDefaultStats } from '../../utils/achievementUtils';
-import { calculateMobHealth } from '../../utils/gameUtils';
+import { calculateMobHealth } from '../../systems/progression';
 
 // Parent-friendly skill information with clear descriptions
 const PARENT_SKILL_INFO = {

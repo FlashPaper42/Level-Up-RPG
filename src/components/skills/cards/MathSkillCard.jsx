@@ -5,7 +5,7 @@ import SafeImage from '../../ui/SafeImage';
 import MobWithAura from '../../ui/MobWithAura';
 import { BASE_ASSETS, HOSTILE_MOBS, BOSS_MOBS, MINIBOSS_MOBS, DIFFICULTY_IMAGES } from '../../../constants/gameData';
 import { playClick } from '../../../utils/soundManager';
-import { calculateXPToLevel } from '../../../utils/gameUtils';
+import { calculateXPToLevel } from '../../../systems/progression';
 import { AURA_ADJECTIVES } from '../../../utils/mobDisplayUtils';
 import {
     PRESTIGE_LEVEL_THRESHOLD,

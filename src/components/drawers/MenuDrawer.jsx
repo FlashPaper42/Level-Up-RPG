@@ -11,7 +11,7 @@ import {
     getAchievementDisplayName
 } from '../../utils/achievementUtils';
 import { getLoginStreak } from '../../utils/achievementUtils';
-import { calculateXPToLevel } from '../../utils/gameUtils';
+import { calculateXPToLevel } from '../../systems/progression';
 
 // Achievement grid constants
 const ACHIEVEMENT_GRID_COLUMNS = 6;

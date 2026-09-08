@@ -13,8 +13,7 @@ import * as DamageSystem from './damage';
 import * as LevelingSystem from './leveling';
 import * as AISystem from './ai';
 import * as MobSystem from './mobs';
-
-console.log('[System:Combat] Module loaded');
+import { devLog } from '../utils/logger';
 
 // Re-export specific helpers for backward compatibility or convenience if needed
 // But ideally, consumers import directly.
@@ -65,7 +64,7 @@ export const applyDamageToMob = (currentSkillState, damage, skillConfig, customX
         xpGained = totalXPReward - xpAlreadyAwarded;
     }
 
-    console.log(`[System:Combat] Mob Hit: ${damage} dmg -> ${newMobHealth} HP, XP: ${xpGained}`);
+    devLog(`[System:Combat] Mob Hit: ${damage} dmg -> ${newMobHealth} HP, XP: ${xpGained}`);
 
     return {
         newMobHealth,

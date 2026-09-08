@@ -3,7 +3,7 @@
  * Logic for mob decision making.
  */
 
-console.log('[System:AI] Module loaded');
+import { devLog } from '../utils/logger';
 
 /**
  * Calculate mob's next action for turn-based combat
@@ -28,17 +28,17 @@ export const calculateMobAction = (skillState) => {
 
     // If at full health AND max armor, can only choose damage
     if (isAtFullHealth && isAtMaxArmor) {
-        console.log('[System:AI] Full HP + Max Armor -> damage');
+        devLog('[System:AI] Full HP + Max Armor -> damage');
         return { type: 'damage', value: 1 };
     }
 
     // If at max armor but not full health, choose damage or heal (not armor)
     if (isAtMaxArmor) {
         if (rand < 0.5) {
-            console.log('[System:AI] Max Armor -> damage');
+            devLog('[System:AI] Max Armor -> damage');
             return { type: 'damage', value: 1 };
         } else {
-            console.log('[System:AI] Max Armor -> heal');
+            devLog('[System:AI] Max Armor -> heal');
             return { type: 'heal', value: tenPercentValue };
         }
     }
@@ -46,23 +46,23 @@ export const calculateMobAction = (skillState) => {
     // If at full health but not max armor, choose damage or armor (not heal)
     if (isAtFullHealth) {
         if (rand < 0.5) {
-            console.log('[System:AI] Full HP -> damage');
+            devLog('[System:AI] Full HP -> damage');
             return { type: 'damage', value: 1 };
         } else {
-            console.log('[System:AI] Full HP -> armor');
+            devLog('[System:AI] Full HP -> armor');
             return { type: 'armor', value: tenPercentValue };
         }
     }
 
     // Normal case: Randomly choose damage, armor, or heal (equal probability - 33.3% each)
     if (rand < 0.333) {
-        console.log('[System:AI] Action -> damage');
+        devLog('[System:AI] Action -> damage');
         return { type: 'damage', value: 1 };
     } else if (rand < 0.666) {
-        console.log('[System:AI] Action -> armor');
+        devLog('[System:AI] Action -> armor');
         return { type: 'armor', value: tenPercentValue };
     } else {
-        console.log('[System:AI] Action -> heal');
+        devLog('[System:AI] Action -> heal');
         return { type: 'heal', value: tenPercentValue };
     }
 };

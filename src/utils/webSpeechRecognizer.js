@@ -3,6 +3,8 @@
  * Uses the browser's built-in speech recognition for one explicit attempt.
  */
 
+import { devLog } from './logger';
+
 // Module state
 let recognition = null;
 let isListening = false;
@@ -15,7 +17,7 @@ let isListening = false;
  */
 export function startWebSpeechRecognition(onRecognized, onError) {
     if (isListening && recognition) {
-        console.log('[Web Speech] Already listening');
+        devLog('[Web Speech] Already listening');
         return true;
     }
 

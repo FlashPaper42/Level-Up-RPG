@@ -3,7 +3,7 @@
  * Pure functions for calculating damage interactions.
  */
 
-console.log('[System:Damage] Module loaded');
+import { devLog } from '../utils/logger';
 
 /**
  * Calculate damage dealt to a target entity with armor
@@ -47,7 +47,7 @@ export const calculatePlayerDamage = (currentHealth, damage, armor) => {
     const newHealth = Math.max(0, currentHealth - damageToHealth);
     const playerDied = newHealth <= 0;
 
-    console.log(`[System:Damage] Player hit: ${damage} dmg vs ${armor} armor -> ${damageToHealth} HP dmg`);
+    devLog(`[System:Damage] Player hit: ${damage} dmg vs ${armor} armor -> ${damageToHealth} HP dmg`);
 
     return {
         newHealth: playerDied ? 10 : newHealth, // Reset to 10 on death
