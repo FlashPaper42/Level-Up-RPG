@@ -22,6 +22,11 @@ export const getDefaultStats = () => ({
     battlesThisSession: 0,
     loginDates: [],
     perfectMemoryGames: 0,
+    nightmareVictories: 0,
+    nightmareMinigameVictories: [],
+    maxPatternStreak: 0,
+    fastMemoryGames: 0,
+    totalChoresCompleted: 0,
     achievementsUnlocked: []
 });
 

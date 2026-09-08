@@ -16,6 +16,7 @@
     font-family: 'VT323', monospace;
     overflow-x: hidden;
     overflow-y: auto;
+    min-width: 320px;
     background: #0f172a;
     color: #f8fafc;
   }
@@ -37,7 +38,7 @@
   }
 
   #root {
-    width: 100vw;
+    width: 100%;
     min-height: 100dvh;
   }
 }
@@ -115,8 +116,162 @@
 }
 
 .skill-carousel-stage {
-  --card-offset: clamp(140px, 18vw, 320px);
+  --card-offset: clamp(120px, 18vw, 320px);
   touch-action: pan-y;
+}
+
+.profile-picture-shell {
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.55));
+}
+
+.profile-picture-position {
+  left: clamp(0.75rem, 3vw, 3rem);
+  bottom: clamp(5.5rem, 14dvh, 8rem);
+}
+
+.auth-controls {
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  left: max(0.75rem, env(safe-area-inset-left));
+  min-height: 36px;
+  line-height: 1;
+}
+
+.top-control {
+  min-width: clamp(3.5rem, 6vw, 5rem);
+}
+
+.battle-portal {
+  overflow: auto;
+  padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
+    max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+}
+
+.battle-layout {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.battle-side {
+  width: min(300px, 25vw);
+}
+
+.battle-center-card {
+  width: min(534px, 42vw);
+  height: min(620px, calc(100dvh - 7rem)) !important;
+  min-height: 360px;
+}
+
+.skill-card-shell {
+  width: min(300px, 25vw);
+  height: min(600px, 65dvh);
+  min-height: 360px;
+}
+
+@media (max-width: 1100px) {
+  .battle-side {
+    width: min(270px, 26vw);
+    transform: scale(0.82);
+  }
+
+  .battle-side-left {
+    left: max(0.5rem, calc(50% - 47vw)) !important;
+  }
+
+  .battle-side-right {
+    left: auto !important;
+    right: max(0.5rem, calc(50% - 47vw)) !important;
+  }
+
+  .battle-center-card {
+    width: min(48vw, 500px);
+  }
+}
+
+@media (max-width: 700px) {
+  .top-control {
+    transform: scale(0.8);
+    transform-origin: top left;
+  }
+
+  .top-left-settings {
+    left: 0.5rem !important;
+    top: 0.5rem !important;
+  }
+
+  .top-left-cosmetics {
+    left: 4rem !important;
+    top: 0.5rem !important;
+  }
+
+  .changelog-control {
+    left: 7.5rem !important;
+    top: 0.5rem !important;
+    min-width: 3.5rem;
+  }
+
+  .changelog-control span {
+    display: none;
+  }
+
+  .auth-controls {
+    max-width: min(10rem, calc(100vw - 1.5rem));
+    padding: 0.45rem 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .auth-controls-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .battle-layout {
+    min-height: 680px;
+    align-items: flex-start;
+  }
+
+  .battle-center-card {
+    width: min(82vw, 420px);
+    height: min(510px, calc(100dvh - 6rem)) !important;
+  }
+
+  .battle-side {
+    width: min(44vw, 250px);
+    transform: scale(0.72);
+    transform-origin: center bottom;
+  }
+
+  .battle-side-left {
+    left: 0 !important;
+    top: auto !important;
+    bottom: 0.5rem !important;
+  }
+
+  .battle-side-right {
+    left: auto !important;
+    right: 0 !important;
+    top: auto !important;
+    bottom: 0.5rem !important;
+  }
+
+  .skill-card-shell {
+    width: min(300px, 72vw);
+    height: min(560px, 66dvh);
+    min-height: 340px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-controls-label {
+    display: none;
+  }
+
+  .auth-controls {
+    width: 38px;
+    justify-content: center;
+    padding: 0.45rem;
+  }
 }
 
 .modal-backdrop {

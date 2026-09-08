@@ -129,10 +129,9 @@ const SkillCarousel = ({
             {!battlingSkillId && (
                 <button
                     onClick={handlePrev}
-                    className="flex absolute left-0 z-30 items-center justify-center h-full"
+                    className="flex absolute left-0 z-30 items-center justify-center h-full w-[clamp(3rem,7vw,5rem)]"
                     style={{
                         background: 'linear-gradient(to right, rgba(100, 100, 100, 0.6), transparent)',
-                        width: '80px',
                         padding: '0',
                         top: 0
                     }}
@@ -159,10 +158,9 @@ const SkillCarousel = ({
             {!battlingSkillId && (
                 <button
                     onClick={handleNext}
-                    className="flex absolute right-0 z-30 items-center justify-center h-full"
+                    className="flex absolute right-0 z-30 items-center justify-center h-full w-[clamp(3rem,7vw,5rem)]"
                     style={{
                         background: 'linear-gradient(to left, rgba(100, 100, 100, 0.6), transparent)',
-                        width: '80px',
                         padding: '0',
                         top: 0
                     }}
@@ -186,7 +184,7 @@ const SkillCarousel = ({
             )}
 
             <div
-                className={`skill-carousel-stage relative w-full flex items-center justify-center perspective-1000 h-[min(650px,70dvh)] min-h-[420px] mb-12 ${battlingSkillId ? 'z-50' : ''}`}
+                className={`skill-carousel-stage relative w-full flex items-center justify-center perspective-1000 h-[clamp(360px,68dvh,650px)] min-h-0 mb-[clamp(1rem,4dvh,3rem)] ${battlingSkillId ? 'z-50' : ''}`}
                 style={{ cursor: battlingSkillId ? 'default' : (isDragging ? 'grabbing' : 'grab') }}
                 onMouseDown={(e) => handleDragStart(e.clientX)}
                 onMouseMove={(e) => handleDragMove(e.clientX)}

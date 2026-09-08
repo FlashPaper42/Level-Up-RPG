@@ -18,6 +18,7 @@ import {
     getBorderEffect
 } from '../shared';
 import { isAnswerCorrect } from '../../../utils/answerNormalization';
+import useAutoFocusOnChallenge from '../../../hooks/useAutoFocusOnChallenge';
 
 /**
  * ReadingSkillCard - Handles the Reading skill with turn-based combat
@@ -59,6 +60,7 @@ const ReadingSkillCard = ({
     const prevDamageCount = useRef(0);
     const resolvedChallengeRef = useRef(null);
     const readingWordRef = useRef(null);
+    const typedAnswerRef = useRef(null);
 
     // Calculate HP percentage
     const mobHealth = data.mobHealth || 100;
@@ -150,11 +152,16 @@ const ReadingSkillCard = ({
     }, [isBattling]);
 
     const isBattlingCenter = isBattling && isCenter;
+    useAutoFocusOnChallenge(typedAnswerRef, {
+        enabled: Boolean(isBattlingCenter && selectedAction),
+        challengeKey: challenge?.answer,
+        retryKey: isReadingWrong
+    });
 
     // Card content for non-battling state
     const cardContent = (
         <div
-            className={`bg-[#2b2b2b] border-4 rounded-lg overflow-visible flex flex-col transition-all duration-500 ${isCenter ? `${appliedBorderEffect} ${!appliedBorderEffect ? borderClass : ''}` : 'border-stone-700'} w-[300px] ${isBattlingCenter ? 'h-[550px]' : 'h-[600px]'} ${!isBattlingCenter ? 'relative' : ''}`}
+            className={`skill-card-shell bg-[#2b2b2b] border-4 rounded-lg overflow-visible flex flex-col transition-all duration-500 ${isCenter ? `${appliedBorderEffect} ${!appliedBorderEffect ? borderClass : ''}` : 'border-stone-700'} w-[300px] ${isBattlingCenter ? 'h-[550px]' : 'h-[600px]'} ${!isBattlingCenter ? 'relative' : ''}`}
             style={isCenter ? borderStyle : {}}
         >
             {isCenter && data.level >= PRESTIGE_LEVEL_THRESHOLD && <div className="gem-socket"><div className="gem-stone" style={gemStyle}></div></div>}
@@ -238,7 +245,7 @@ const ReadingSkillCard = ({
             <>
                 {ReactDOM.createPortal(
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/20"
+                        className="battle-portal fixed inset-0 z-50 flex items-center justify-center bg-black/20"
                         onClick={() => {
                             if (selectedAction) {
                                 setSelectedAction(null);
@@ -249,9 +256,9 @@ const ReadingSkillCard = ({
                         }}
                         style={{ zIndex: 50 }}
                     >
-                        <div className="relative flex items-center justify-center pointer-events-none">
+                        <div className="battle-layout relative flex items-center justify-center pointer-events-none">
                             {/* Left - Minigame Card */}
-                            <div className="absolute left-[calc(50%-615px)] flex-shrink-0 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                            <div className="battle-side battle-side-left absolute left-[calc(50%-615px)] flex-shrink-0 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
                                 <div
                                     className="relative w-[300px] bg-[#2b2b2b] border-4 rounded-lg overflow-visible flex flex-col transition-all duration-500 border-stone-700"
                                     style={isCenter ? borderStyle : {}}
@@ -275,6 +282,7 @@ const ReadingSkillCard = ({
                                                         </div>
                                                         <form className="flex w-full gap-2" onSubmit={event => { event.preventDefault(); submitTypedAnswer(); }}>
                                                             <input
+                                                                ref={typedAnswerRef}
                                                                 value={typedAnswer}
                                                                 onChange={event => setTypedAnswer(event.target.value)}
                                                                 placeholder="Type the word"
@@ -356,9 +364,9 @@ const ReadingSkillCard = ({
                             </div>
 
                             {/* Center - Mob Card */}
-                            <div className="flex-shrink-0 absolute left-1/2 pointer-events-auto" style={{ transform: 'translateX(-50%)' }} onClick={(e) => e.stopPropagation()}>
+                            <div className="battle-center absolute left-1/2 pointer-events-auto" style={{ transform: 'translateX(-50%)' }} onClick={(e) => e.stopPropagation()}>
                                 <div
-                                    className={`relative w-[534px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 rounded-lg overflow-hidden flex flex-col ${appliedBorderEffect || 'border-slate-600'}`}
+                                    className={`battle-center-card relative w-[534px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 rounded-lg overflow-hidden flex flex-col ${appliedBorderEffect || 'border-slate-600'}`}
                                     style={{
                                         boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(100,100,100,0.2)',
                                         top: '0px',
@@ -439,7 +447,7 @@ const ReadingSkillCard = ({
                             </div>
 
                             {/* Right - Battle Data Card */}
-                            <div className="absolute left-[calc(50%+315px)] flex-shrink-0 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                            <div className="battle-side battle-side-right absolute left-[calc(50%+315px)] flex-shrink-0 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
                                 <div
                                     className="relative w-[400px] bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-50 border-4 border-amber-800 rounded-lg overflow-hidden"
                                     style={{ boxShadow: '0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(251,191,36,0.3)' }}
