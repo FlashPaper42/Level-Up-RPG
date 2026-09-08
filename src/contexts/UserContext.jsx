@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { loadCloudProfile, saveCloudProfileSettings } from '../utils/cloudProfile';
+import { DEFAULT_HERO_TITLE, sanitizeHeroTitle } from '../constants/cosmetics';
 
 const UserContext = createContext();
 
@@ -24,10 +25,14 @@ export const UserProvider = ({ children }) => {
 
     const [profileTitles, setProfileTitles] = useState(() => {
         try {
-            return localStorage.getItem('heroProfileTitles_v1')
-                ? JSON.parse(localStorage.getItem('heroProfileTitles_v1'))
-                : { 1: 'Apprentice', 2: 'Apprentice', 3: 'Apprentice' };
-        } catch (e) { console.error(e); return { 1: 'Apprentice', 2: 'Apprentice', 3: 'Apprentice' }; }
+            const saved = localStorage.getItem('heroProfileTitles_v1');
+            const parsed = saved ? JSON.parse(saved) : {};
+            return {
+                1: sanitizeHeroTitle(parsed[1]),
+                2: sanitizeHeroTitle(parsed[2]),
+                3: sanitizeHeroTitle(parsed[3])
+            };
+        } catch (e) { console.error(e); return { 1: DEFAULT_HERO_TITLE, 2: DEFAULT_HERO_TITLE, 3: DEFAULT_HERO_TITLE }; }
     });
 
     const [profileNames, setProfileNames] = useState(() => {
@@ -84,7 +89,7 @@ export const UserProvider = ({ children }) => {
     };
 
     const updateProfileTitle = (id, title) => {
-        const safeTitle = String(title || '').trim().slice(0, 32) || 'Apprentice';
+        const safeTitle = sanitizeHeroTitle(title);
         setProfileTitles(prev => ({ ...prev, [id]: safeTitle }));
         localStorage.setItem(`profileTitle_p${id}`, safeTitle);
     };
@@ -138,7 +143,7 @@ export const UserProvider = ({ children }) => {
             setBorderColorInternal(cosmetics.borderColor || '#FFD700');
             setSelectedAvatarInternal(cosmetics.avatar || 'person');
             setProfileBgColorInternal(cosmetics.background || 'linear-gradient(to bottom, #7e22ce, #581c87)');
-            setProfileTitles(prev => ({ ...prev, [currentProfile]: cosmetics.title || prev[currentProfile] || 'Apprentice' }));
+            setProfileTitles(prev => ({ ...prev, [currentProfile]: sanitizeHeroTitle(cosmetics.title || prev[currentProfile]) }));
         }).catch(error => console.error('Failed to load cloud profile settings:', error))
             .finally(() => {
                 if (active) setCloudSettingsLoaded(true);
@@ -160,7 +165,7 @@ export const UserProvider = ({ children }) => {
                     borderColor,
                     avatar: selectedAvatar,
                     background: profileBgColor,
-                    title: profileTitles[currentProfile] || 'Apprentice',
+                    title: sanitizeHeroTitle(profileTitles[currentProfile]),
                 },
             }).catch(error => console.error('Failed to save cloud profile settings:', error));
         }, 300);
@@ -173,7 +178,7 @@ export const UserProvider = ({ children }) => {
         const savedColor = localStorage.getItem(`borderColor_p${currentProfile}`) || '#FFD700';
         const savedAvatar = localStorage.getItem(`profileAvatar_p${currentProfile}`) || 'person';
         const savedBgColor = localStorage.getItem(`profileBgColor_p${currentProfile}`) || 'linear-gradient(to bottom, #7e22ce, #581c87)';
-        const savedTitle = localStorage.getItem(`profileTitle_p${currentProfile}`) || 'Apprentice';
+        const savedTitle = sanitizeHeroTitle(localStorage.getItem(`profileTitle_p${currentProfile}`));
 
         window.setTimeout(() => {
             setSelectedBorderInternal(savedBorder);
@@ -207,7 +212,7 @@ export const UserProvider = ({ children }) => {
     };
 
     const setProfileTitle = (value) => {
-        const safeTitle = String(value || '').trim().slice(0, 32) || 'Apprentice';
+        const safeTitle = sanitizeHeroTitle(value);
         setProfileTitles(prev => ({ ...prev, [currentProfile]: safeTitle }));
         localStorage.setItem(`profileTitle_p${currentProfile}`, safeTitle);
     };

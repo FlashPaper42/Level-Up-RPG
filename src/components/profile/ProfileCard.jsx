@@ -6,8 +6,9 @@ import ParentalVerificationModal from '../ui/ParentalVerificationModal';
 import PinModal from '../ui/PinModal';
 import { THEMES_LIST, SKILL_DATA } from '../../constants/gameData';
 import { getAvatarEmoji } from '../../constants/avatarData';
+import { getAvatarById } from '../../constants/avatarData';
 
-const ProfileCard = ({ id, name, stats, isCurrent, onSwitch, onRename, isParent, onParentVerified, selectedAvatar, selectedBorder, borderColor, profileBgColor, hasPin, onSetPin, onVerifyPin }) => {
+const ProfileCard = ({ id, name, title, stats, isCurrent, onSwitch, onRename, isParent, onParentVerified, selectedAvatar, selectedBorder, borderColor, profileBgColor, hasPin, onSetPin, onVerifyPin }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [tempName, setTempName] = useState(name);
     const [showParentalModal, setShowParentalModal] = useState(false);
@@ -170,7 +171,7 @@ const ProfileCard = ({ id, name, stats, isCurrent, onSwitch, onRename, isParent,
                             <div className="bg-black/50 rounded-lg px-5 py-3 border border-white/10 backdrop-blur-sm">
                                 <div className="group/name flex items-center justify-center gap-2 flex-wrap">
                                     <span className="text-slate-300 text-lg font-bold">P{id},</span>
-                                    <h3 className={`text-2xl font-bold uppercase truncate leading-none ${isCurrent ? 'text-yellow-100 drop-shadow-md' : 'text-white'}`} style={{ fontFamily: 'sans-serif', textShadow: '2px 2px 0 #000' }}>{name},</h3>
+                                    <h3 className={`text-2xl font-bold uppercase truncate leading-none ${isCurrent ? 'text-yellow-100 drop-shadow-md' : 'text-white'}`} style={{ fontFamily: 'sans-serif', textShadow: '2px 2px 0 #000' }}>{getAvatarById(selectedAvatar || 'person').name}</h3>
                                     <Heart className={`fill-red-600 text-red-800 ${isCurrent ? 'animate-pulse' : ''}`} size={24} />
                                     <span className="text-lg text-slate-400 uppercase tracking-wider">LV.</span>
                                     <span className="text-2xl font-bold text-white leading-none">{stats ? stats.totalLevel : 0}</span>
@@ -192,6 +193,7 @@ const ProfileCard = ({ id, name, stats, isCurrent, onSwitch, onRename, isParent,
                                         <Lock size={16} className="text-yellow-500 ml-1" title="This profile is protected" />
                                     )}
                                 </div>
+                                <p className="mt-1 truncate text-xs font-bold uppercase tracking-wider text-yellow-300">{title || 'Apprentice'} · {name}</p>
                             </div>
                         )}
                     </div>

@@ -1,13 +1,13 @@
 import React from 'react';
 import SafeImage from './SafeImage';
+import { getAuraPresentation } from '../../utils/mobDisplayUtils';
 
 /**
  * MobWithAura - Composite component that renders mob and aura as a single element
  * 
- * The aura is rendered as a CSS ::before pseudo-element on the container,
- * and the mob image is centered within the same container using flexbox.
- * This ensures perfect alignment because both elements share the exact same
- * positioning context by design.
+ * The aura is rendered as a few composited CSS layers behind the mob image.
+ * This keeps effects lightweight while ensuring every layer shares the same
+ * positioning context as the mob.
  * 
  * @param {string} mobSrc - Source path for the mob image
  * @param {string} aura - Aura type (rainbow, frost, shadow, lava, gradient, sparkle, plasma, nature)
@@ -35,8 +35,11 @@ const MobWithAura = ({ mobSrc, aura, displayName, size = '100%', isHit = false, 
                 justifyContent: 'center'
             }}
             data-aura={aura}
+            data-aura-variant={getAuraPresentation(aura)}
         >
-            {/* Aura is rendered via CSS ::before pseudo-element in GlobalStyles.jsx */}
+            <span className="mob-aura-layer mob-aura-layer--one" aria-hidden="true" />
+            <span className="mob-aura-layer mob-aura-layer--two" aria-hidden="true" />
+            <span className="mob-aura-sparks" aria-hidden="true" />
             <SafeImage 
                 src={mobSrc} 
                 alt={displayName} 

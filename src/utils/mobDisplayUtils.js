@@ -3,6 +3,21 @@
 // Available aura types
 const AURA_TYPES = ['rainbow', 'frost', 'shadow', 'lava', 'gradient', 'sparkle', 'plasma', 'nature'];
 
+// Presentation variants keep the visual treatment reusable while aura names
+// remain stable in saved progression data.
+export const AURA_PRESENTATION = {
+    rainbow: 'prismatic',
+    frost: 'frost',
+    shadow: 'void',
+    lava: 'flame',
+    gradient: 'shifting',
+    sparkle: 'spark',
+    plasma: 'energy',
+    nature: 'nature'
+};
+
+export const getAuraPresentation = (aura) => AURA_PRESENTATION[aura] || 'energy';
+
 // Aura adjectives mapping
 export const AURA_ADJECTIVES = {
     'frost': 'Frozen',

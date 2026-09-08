@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Cloud, LogIn, LogOut, UserPlus, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-const AuthControls = ({ isBattling = false }) => {
+const AuthControls = ({ isBattling = false, isOverlayOpen = false }) => {
     const { user, configured, isLoading, error, signIn, signUp, signOut } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [mode, setMode] = useState('signIn');
@@ -10,7 +10,7 @@ const AuthControls = ({ isBattling = false }) => {
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
 
-    if (isLoading || isBattling) return null;
+    if (isLoading || isBattling || isOverlayOpen) return null;
 
     const submit = async event => {
         event.preventDefault();
@@ -29,7 +29,7 @@ const AuthControls = ({ isBattling = false }) => {
             <button
                 type="button"
                 onClick={signOut}
-                className={`auth-controls fixed z-[60] flex max-w-[min(13rem,calc(100vw-2rem))] items-center gap-2 rounded border-2 border-green-600 bg-slate-900/90 px-2 py-1 text-sm font-bold text-green-300 shadow-lg ${isBattling ? 'auth-controls-battling' : ''}`}
+                className={`auth-controls fixed z-20 flex max-w-[min(13rem,calc(100vw-2rem))] items-center gap-2 rounded border-2 border-green-600 bg-slate-900/90 px-2 py-1 text-sm font-bold text-green-300 shadow-lg ${isBattling ? 'auth-controls-battling' : ''}`}
                 title="Sign out of cloud save"
             >
                 <Cloud size={16} className="shrink-0" /> <span className="auth-controls-label">Cloud save</span> <LogOut size={16} className="shrink-0" />
@@ -42,7 +42,7 @@ const AuthControls = ({ isBattling = false }) => {
             <button
                 type="button"
                 onClick={() => setIsOpen(true)}
-                className={`auth-controls fixed z-[60] flex max-w-[min(13rem,calc(100vw-2rem))] items-center gap-2 rounded border-2 border-slate-600 bg-slate-900/90 px-2 py-1 text-sm font-bold text-slate-200 shadow-lg ${isBattling ? 'auth-controls-battling' : ''}`}
+                className={`auth-controls fixed z-20 flex max-w-[min(13rem,calc(100vw-2rem))] items-center gap-2 rounded border-2 border-slate-600 bg-slate-900/90 px-2 py-1 text-sm font-bold text-slate-200 shadow-lg ${isBattling ? 'auth-controls-battling' : ''}`}
             >
                 <Cloud size={16} className="shrink-0" /> <span className="auth-controls-label">{configured ? 'Sign in to save online' : 'Playing locally'}</span>
             </button>
