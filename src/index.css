@@ -116,13 +116,13 @@
 }
 
 .skill-carousel-stage {
-  --card-offset: clamp(140px, 21vw, 430px);
-  --carousel-y-shift: clamp(-0.25rem, 0.5dvh, 0.5rem);
+  --card-offset: clamp(120px, 18vw, 360px);
+  --carousel-y-shift: clamp(-1rem, -1dvh, -0.25rem);
   flex: 1 1 auto;
   min-height: 0;
   height: auto;
   margin-top: clamp(0.25rem, 1dvh, 0.75rem);
-  margin-bottom: clamp(0.75rem, 2dvh, 1.5rem);
+  margin-bottom: clamp(5rem, 10dvh, 8rem);
   touch-action: pan-y;
 }
 
@@ -134,22 +134,42 @@
   position: fixed;
   left: clamp(0.75rem, 3vw, 3rem);
   bottom: max(1rem, env(safe-area-inset-bottom));
-  transform: scale(1.12);
+  transform: scale(1.25);
   transform-origin: bottom left;
 }
 
 .auth-controls {
-  top: max(7.25rem, calc(env(safe-area-inset-top) + 6rem));
-  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  right: max(5.5rem, calc(env(safe-area-inset-right) + 4.5rem));
   min-height: 36px;
   line-height: 1;
 }
 
 .top-control {
   position: fixed;
-  min-width: clamp(4rem, 6.5vw, 5.75rem);
-  transform: scale(1.15);
-  transform-origin: top left;
+  top: clamp(1rem, 2.2vw, 2rem);
+  min-width: clamp(4.75rem, 7vw, 7rem);
+  min-height: clamp(4.5rem, 7vw, 6.5rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: none;
+}
+
+.top-left-settings {
+  left: clamp(1rem, 2vw, 2.5rem);
+}
+
+.top-left-cosmetics {
+  left: clamp(6.25rem, 9vw, 9.5rem);
+}
+
+.top-right-menu {
+  right: clamp(1rem, 2vw, 2.5rem);
+}
+
+.top-right-fullscreen {
+  right: clamp(6.25rem, 9vw, 9.5rem);
 }
 
 .low-focus-control {
@@ -191,15 +211,15 @@
 .brand-lockup {
   position: relative;
   width: 100%;
-  height: clamp(9rem, 20dvh, 16rem);
+  height: clamp(8.5rem, 17dvh, 14rem);
   flex: 0 0 auto;
 }
 
 .brand-lockup-logo {
   position: absolute;
   inset: 0 auto auto 50%;
-  width: clamp(16rem, 52vw, 64rem);
-  height: clamp(6rem, 14dvh, 12rem);
+  width: clamp(16rem, 56vw, 68rem);
+  height: clamp(6rem, 15dvh, 12rem);
   transform: translateX(-50%);
   object-fit: contain;
 }
@@ -233,7 +253,7 @@
   }
 
   .skill-carousel-stage {
-    --card-offset: clamp(130px, 23vw, 240px);
+    --card-offset: clamp(110px, 21vw, 250px);
     margin-top: clamp(0.25rem, 1dvh, 0.75rem);
   }
 
@@ -246,18 +266,27 @@
 
 @media (max-width: 700px) {
   .top-control {
-      transform: scale(1);
     transform-origin: top left;
   }
 
   .top-left-settings {
-    left: 0.5rem !important;
-    top: 0.5rem !important;
+    left: 0.75rem !important;
+    top: 0.75rem !important;
   }
 
   .top-left-cosmetics {
-    left: 4rem !important;
-    top: 0.5rem !important;
+    left: 5.75rem !important;
+    top: 0.75rem !important;
+  }
+
+  .top-right-menu {
+    right: 0.75rem !important;
+    top: 0.75rem !important;
+  }
+
+  .top-right-fullscreen {
+    right: 5.75rem !important;
+    top: 0.75rem !important;
   }
 
   .auth-controls {
@@ -267,7 +296,7 @@
   }
 
   .profile-picture-position {
-    transform: scale(1.05);
+    transform: scale(1.12);
   }
 
   .brand-lockup {
@@ -342,7 +371,8 @@
   }
 
   .auth-controls {
-    top: 5.5rem;
+    right: 4.5rem;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
   .brand-lockup-title {
