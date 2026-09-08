@@ -117,7 +117,10 @@
 
 .skill-carousel-stage {
   --card-offset: clamp(140px, 21vw, 430px);
-  height: clamp(360px, 64dvh, 620px);
+  /* Fill the space below the logo so the carousel midpoint is the visual
+     midpoint between the lockup and the bottom of the viewport. */
+  --carousel-y-shift: clamp(20px, 2.5dvh, 28px);
+  height: max(400px, calc(100dvh - clamp(8.5rem, 19dvh, 15rem) - clamp(0.25rem, 1dvh, 1rem)));
   margin-top: clamp(0.75rem, 2.5dvh, 2rem);
   margin-bottom: clamp(0.25rem, 1dvh, 0.75rem);
   touch-action: pan-y;
@@ -219,7 +222,7 @@
 
   .skill-carousel-stage {
     --card-offset: clamp(130px, 23vw, 240px);
-    height: clamp(360px, 62dvh, 590px);
+    height: max(400px, calc(100dvh - clamp(8.5rem, 19dvh, 15rem) - clamp(0.25rem, 1dvh, 1rem)));
     margin-top: clamp(0.5rem, 2dvh, 1.25rem);
   }
 
@@ -311,7 +314,7 @@
   }
 
   .skill-carousel-stage {
-    height: clamp(340px, 58dvh, 540px);
+    height: max(400px, calc(100dvh - clamp(7.5rem, 18dvh, 10rem) - 0.75rem));
     margin-top: 0.75rem;
     margin-bottom: 0.25rem;
   }

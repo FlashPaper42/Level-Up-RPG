@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, Flame, Snowflake, Zap, Skull, Star, Activity, Atom, Droplet, Grid3x3, Gem, Info } from 'lucide-react';
-import SafeImage from '../ui/SafeImage';
+import AvatarCarousel from '../ui/AvatarCarousel';
 import { ACHIEVEMENTS } from '../../constants/achievements';
 import { HERO_TITLE_OPTIONS } from '../../constants/cosmetics';
 
@@ -32,6 +32,10 @@ const CosmeticsDrawer = ({
     setSelectedBorder,
     borderColor,
     setBorderColor,
+    selectedAvatar,
+    setSelectedAvatar,
+    profileBgColor,
+    setProfileBgColor,
     profileTitle = 'Apprentice',
     setProfileTitle,
     unlockedTitles = [],
@@ -39,6 +43,17 @@ const CosmeticsDrawer = ({
     unlockedAchievements = [] // New prop for unlocked achievements
 }) => {
     const [showColorPicker, setShowColorPicker] = useState(false);
+
+    const bgColors = [
+        { name: 'Purple', gradient: 'linear-gradient(to bottom, #7e22ce, #581c87)' },
+        { name: 'Blue', gradient: 'linear-gradient(to bottom, #0369a1, #1e40af)' },
+        { name: 'Red', gradient: 'linear-gradient(to bottom, #b91c1c, #9a3412)' },
+        { name: 'Green', gradient: 'linear-gradient(to bottom, #059669, #15803d)' },
+        { name: 'Pink', gradient: 'linear-gradient(to bottom, #db2777, #be123c)' },
+        { name: 'Orange', gradient: 'linear-gradient(to bottom, #ea580c, #c2410c)' },
+        { name: 'Teal', gradient: 'linear-gradient(to bottom, #0d9488, #115e59)' },
+        { name: 'Indigo', gradient: 'linear-gradient(to bottom, #4f46e5, #3730a3)' }
+    ];
 
     const isBorderUnlocked = (badge) => {
         // Default (locked on yellow) is always unlocked
@@ -62,6 +77,33 @@ const CosmeticsDrawer = ({
                         <Sparkles size={32} /> Border Effects
                     </h2>
                 </div>
+
+                <section className="rounded-lg border-2 border-slate-600 bg-slate-800/50 p-4">
+                    <h3 className="text-xl text-yellow-400 font-bold uppercase tracking-wider mb-3">Avatar</h3>
+                    <AvatarCarousel selectedAvatar={selectedAvatar} setSelectedAvatar={setSelectedAvatar} />
+                    <h3 className="text-xl text-yellow-400 font-bold uppercase tracking-wider mt-5 mb-3">Avatar Color</h3>
+                    <div className="grid grid-cols-4 gap-3">
+                        {bgColors.map(color => (
+                            <button
+                                key={color.name}
+                                onClick={() => setProfileBgColor(color.gradient)}
+                                className={`relative h-14 rounded-lg border-2 transition-all ${profileBgColor === color.gradient
+                                    ? 'border-yellow-400 ring-2 ring-yellow-400/20 scale-105'
+                                    : 'border-slate-600 hover:border-yellow-400/50 hover:scale-105'
+                                }`}
+                                style={{ background: color.gradient }}
+                                title={color.name}
+                            >
+                                {profileBgColor === color.gradient && (
+                                    <span className="absolute inset-0 flex items-center justify-center text-black">
+                                        <span className="bg-yellow-400 text-sm font-bold w-6 h-6 rounded-full flex items-center justify-center">✓</span>
+                                    </span>
+                                )}
+                                <span className="absolute bottom-1 left-0 right-0 text-center text-xs text-white font-bold drop-shadow-lg">{color.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                </section>
 
                 {/* Border Effect Selection - Optimized Grid Layout */}
                 <div>

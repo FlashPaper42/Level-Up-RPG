@@ -15,7 +15,6 @@ import PixelShield from './components/ui/PixelShield';
 import ProfilePicture from './components/ui/ProfilePicture';
 import ResetModal from './components/modals/ResetModal';
 import BugReportModal from './components/modals/BugReportModal';
-import AvatarSelectionModal from './components/modals/AvatarSelectionModal';
 import SettingsDrawer from './components/drawers/SettingsDrawer';
 import CosmeticsDrawer from './components/drawers/CosmeticsDrawer';
 import MenuDrawer from './components/drawers/MenuDrawer';
@@ -115,7 +114,6 @@ const App = () => {
     // Track if a mob turn is currently pending to prevent double execution
     const mobTurnPendingRef = useRef(false);
     const [isBugReportOpen, setIsBugReportOpen] = useState(false);
-    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
     const [damageNumbers, setDamageNumbers] = useState([]);
     const [showLevelRestored, setShowLevelRestored] = useState(false);
@@ -1249,7 +1247,7 @@ const App = () => {
             <GlobalStyles />
             <AuthControls
                 isBattling={Boolean(battlingSkillId)}
-                isOverlayOpen={isMenuOpen || isSettingsOpen || isCosmeticsOpen || isAvatarModalOpen || isResetOpen || isBugReportOpen}
+                isOverlayOpen={isMenuOpen || isSettingsOpen || isCosmeticsOpen || isResetOpen || isBugReportOpen}
             />
             <div className="absolute inset-0 bg-black/30 pointer-events-none z-0"></div>
 
@@ -1288,7 +1286,8 @@ const App = () => {
                         size="large"
                         skillColorStyle={{ background: profileBgColor }}
                         onClickPicture={() => {
-                            setIsAvatarModalOpen(true);
+                            setIsSettingsOpen(false);
+                            setIsCosmeticsOpen(true);
                             playClick();
                         }}
                         onClickLevel={() => {
@@ -1298,8 +1297,8 @@ const App = () => {
                     />
                     <div className="hero-identity pointer-events-none mb-1 max-w-[10rem] rounded-lg border-2 border-yellow-500/50 bg-slate-950/80 px-3 py-2 text-left shadow-lg backdrop-blur-sm">
                         <p className="text-xs font-bold uppercase tracking-widest text-yellow-300">{profileTitles[currentProfile] || 'Apprentice'}</p>
-                        <p className="truncate text-xl font-bold uppercase text-white">{getAvatarById(selectedAvatar).name}</p>
-                        <p className="truncate text-xs uppercase text-slate-300">{profileNames[currentProfile] || `Player ${currentProfile}`}</p>
+                        <p className="truncate text-xl font-bold uppercase text-white">{profileNames[currentProfile] || `Player ${currentProfile}`}</p>
+                        <p className="truncate text-xs uppercase text-slate-300">Avatar: {getAvatarById(selectedAvatar).name}</p>
                     </div>
                 </div>
             )}
@@ -1348,6 +1347,8 @@ const App = () => {
                 unlockedTitles={unlockedTitles}
                 selectedAvatar={selectedAvatar}
                 setSelectedAvatar={setSelectedAvatar}
+                profileBgColor={profileBgColor}
+                setProfileBgColor={setProfileBgColor}
                 unlockedBorders={unlockedBorders}
                 unlockedAchievements={unlockedAchievements}
             />
@@ -1370,9 +1371,7 @@ const App = () => {
                 onSwitchProfile={handleSwitchProfile}
                 profileNames={profileNames}
                 profileTitles={profileTitles}
-                unlockedTitles={unlockedTitles}
                 onRenameProfile={handleRenameProfile}
-                onRenameTitle={updateProfileTitle}
                 getProfileStats={getProfileStats}
                 parentStatus={parentStatus}
                 onParentVerified={handleParentVerified}
@@ -1387,15 +1386,6 @@ const App = () => {
             />
             <ResetModal isOpen={isResetOpen} onClose={() => setIsResetOpen(false)} onConfirm={handleReset} />
             <BugReportModal isOpen={isBugReportOpen} onClose={() => setIsBugReportOpen(false)} />
-            <AvatarSelectionModal
-                isOpen={isAvatarModalOpen}
-                onClose={() => setIsAvatarModalOpen(false)}
-                selectedAvatar={selectedAvatar}
-                setSelectedAvatar={setSelectedAvatar}
-                profileBgColor={profileBgColor}
-                setProfileBgColor={setProfileBgColor}
-            />
-
             {/* Top Right Buttons - Hidden when battling */}
             {!battlingSkillId && (
                 <>
