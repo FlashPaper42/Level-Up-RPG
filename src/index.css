@@ -117,6 +117,9 @@
 
 .skill-carousel-stage {
   --card-offset: clamp(140px, 21vw, 430px);
+  height: clamp(360px, 64dvh, 620px);
+  margin-top: clamp(0.75rem, 2.5dvh, 2rem);
+  margin-bottom: clamp(0.25rem, 1dvh, 0.75rem);
   touch-action: pan-y;
 }
 
@@ -216,12 +219,15 @@
 
   .skill-carousel-stage {
     --card-offset: clamp(130px, 23vw, 240px);
+    height: clamp(360px, 62dvh, 590px);
+    margin-top: clamp(0.5rem, 2dvh, 1.25rem);
   }
 
   .skill-card-shell {
     width: min(380px, 42vw) !important;
     height: min(650px, 70dvh) !important;
   }
+
 }
 
 @media (max-width: 700px) {
@@ -302,6 +308,12 @@
     width: min(360px, 76vw) !important;
     height: min(590px, 66dvh) !important;
     min-height: 340px;
+  }
+
+  .skill-carousel-stage {
+    height: clamp(340px, 58dvh, 540px);
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
   }
 }
 

@@ -114,78 +114,10 @@ const SkillCarousel = ({
         }
     };
 
-    const handlePrev = () => {
-        setSelectedIndex(p => p - 1);
-        playActionCardLeft();
-    };
-
-    const handleNext = () => {
-        setSelectedIndex(p => p + 1);
-        playActionCardRight();
-    };
-
     return (
         <>
-            {/* Left Chevron */}
-            {!battlingSkillId && (
-                <button
-                    onClick={handlePrev}
-                    className="flex absolute left-0 z-30 items-center justify-center h-full w-[clamp(3rem,7vw,5rem)]"
-                    style={{
-                        background: 'linear-gradient(to right, rgba(100, 100, 100, 0.6), transparent)',
-                        padding: '0',
-                        top: 0
-                    }}
-                >
-                    <svg
-                        width="60"
-                        height="450"
-                        viewBox="0 0 60 450"
-                        className="animate-chevron-left"
-                        style={{ opacity: 0.8 }}
-                    >
-                        <path
-                            d="M 50 25 Q 15 225 50 425"
-                            stroke="rgba(150, 150, 150, 0.9)"
-                            strokeWidth="8"
-                            fill="none"
-                            strokeLinecap="round"
-                        />
-                    </svg>
-                </button>
-            )}
-
-            {/* Right Chevron */}
-            {!battlingSkillId && (
-                <button
-                    onClick={handleNext}
-                    className="flex absolute right-0 z-30 items-center justify-center h-full w-[clamp(3rem,7vw,5rem)]"
-                    style={{
-                        background: 'linear-gradient(to left, rgba(100, 100, 100, 0.6), transparent)',
-                        padding: '0',
-                        top: 0
-                    }}
-                >
-                    <svg
-                        width="60"
-                        height="450"
-                        viewBox="0 0 60 450"
-                        className="animate-chevron-right"
-                        style={{ opacity: 0.8 }}
-                    >
-                        <path
-                            d="M 10 25 Q 45 225 10 425"
-                            stroke="rgba(150, 150, 150, 0.9)"
-                            strokeWidth="8"
-                            fill="none"
-                            strokeLinecap="round"
-                        />
-                    </svg>
-                </button>
-            )}
-
             <div
-                className={`skill-carousel-stage relative w-full flex items-center justify-center perspective-1000 h-[clamp(360px,68dvh,650px)] min-h-0 mb-[clamp(1rem,4dvh,3rem)] ${battlingSkillId ? 'z-50' : ''}`}
+                className={`skill-carousel-stage relative w-full flex items-center justify-center perspective-1000 min-h-0 ${battlingSkillId ? 'z-50' : ''}`}
                 style={{ cursor: battlingSkillId ? 'default' : (isDragging ? 'grabbing' : 'grab') }}
                 onMouseDown={(e) => handleDragStart(e.clientX)}
                 onMouseMove={(e) => handleDragMove(e.clientX)}
@@ -199,10 +131,10 @@ const SkillCarousel = ({
                     const isItemBattling = item.offset === 0 && battlingSkillId === item.id;
                     // Calculate curved positioning based on offset
                     const getVerticalOffset = (offset) => {
-                        if (offset === 0) return -55; // Center card lowered by 5px (was -60)
-                        if (Math.abs(offset) === 1) return -30; // Adjacent cards at intermediate height
-                        if (Math.abs(offset) === 2) return 20; // Outer cards at lowest position
-                        return 75; // Hidden positions (±3) - off-screen, continuing the parabolic curve
+                        if (offset === 0) return -20;
+                        if (Math.abs(offset) === 1) return 5;
+                        if (Math.abs(offset) === 2) return 55;
+                        return 110;
                     };
                     const translateY = getVerticalOffset(item.offset);
                     // Add subtle rotation for 3D effect - negative values warp outward

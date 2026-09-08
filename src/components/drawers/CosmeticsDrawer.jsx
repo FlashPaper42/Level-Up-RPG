@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Flame, Snowflake, Zap, Skull, Star, Activity, Atom, Droplet, Grid3x3, Gem, Info } from 'lucide-react';
 import SafeImage from '../ui/SafeImage';
 import { ACHIEVEMENTS } from '../../constants/achievements';
+import { HERO_TITLE_OPTIONS } from '../../constants/cosmetics';
 
 const BORDER_EFFECTS = [
     { id: 'solid', name: 'Default', badge: null, description: 'Eternal golden radiance', icon: Star },
@@ -31,6 +32,9 @@ const CosmeticsDrawer = ({
     setSelectedBorder,
     borderColor,
     setBorderColor,
+    profileTitle = 'Apprentice',
+    setProfileTitle,
+    unlockedTitles = [],
     unlockedBorders,
     unlockedAchievements = [] // New prop for unlocked achievements
 }) => {
@@ -124,6 +128,7 @@ const CosmeticsDrawer = ({
                                                 <div className={`text-xs ${!unlocked ? 'text-slate-600' : 'text-slate-400'}`}>
                                                     {effect.description}
                                                 </div>
+
                                             </div>
                                             {isSelected && (
                                                 <div className="absolute top-1 right-1 bg-yellow-400 text-black text-[9px] font-bold px-1.5 py-0.5 rounded">
@@ -268,6 +273,25 @@ const CosmeticsDrawer = ({
                             );
                         })}
                     </div>
+                </div>
+                <div className="rounded-lg border-2 border-slate-600 bg-slate-800/50 p-4">
+                    <label className="block text-sm font-bold uppercase tracking-wider text-slate-400">
+                        Hero title prefix
+                        <select
+                            value={profileTitle}
+                            onChange={event => setProfileTitle?.(event.target.value)}
+                            className="mt-2 w-full rounded-lg border-2 border-slate-600 bg-slate-900 p-3 text-lg text-white"
+                        >
+                            {HERO_TITLE_OPTIONS.map(title => (
+                                <option key={title} value={title} disabled={!unlockedTitles.includes(title)}>
+                                    {unlockedTitles.includes(title) ? title : `${title} (locked)`}
+                                </option>
+                            ))}
+                        </select>
+                        <span className="mt-1 block text-xs normal-case text-slate-500">
+                            Titles are earned from achievements.
+                        </span>
+                    </label>
                 </div>
             </div>
         </div>

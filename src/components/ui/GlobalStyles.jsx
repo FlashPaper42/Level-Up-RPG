@@ -376,22 +376,6 @@ const GlobalStyles = () => (
         border-color: #50C878;
     }
     
-    /* Chevron Ebb and Flow Animation - Enhanced for curved carousel */
-    @keyframes chevron-float {
-        0%, 100% { transform: translateX(0) translateY(0); opacity: 0.8; }
-        50% { transform: translateX(-4px) translateY(-2px); opacity: 1; }
-    }
-    @keyframes chevron-float-right {
-        0%, 100% { transform: translateX(0) translateY(0); opacity: 0.8; }
-        50% { transform: translateX(4px) translateY(-2px); opacity: 1; }
-    }
-    .animate-chevron-left {
-        animation: chevron-float 2s ease-in-out infinite;
-    }
-    .animate-chevron-right {
-        animation: chevron-float-right 2s ease-in-out infinite;
-    }
-    
     /* Spinning Aura Animation for Battle Mob Display */
     @keyframes spin-aura {
         0% { transform: rotate(0deg) scale(1); }
@@ -916,9 +900,7 @@ const GlobalStyles = () => (
     }
     
     /* Composite MobWithAura Container Styles */
-    /* The aura is rendered as a ::before pseudo-element that fills the container */
-    /* The mob image is centered within the container using flexbox */
-    /* This ensures perfect alignment because both share the same positioning context */
+    /* The base aura glow stays behind the composited layers rendered by MobWithAura. */
     
     .mob-with-aura-container::before {
         content: '';
@@ -1057,6 +1039,113 @@ const GlobalStyles = () => (
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
+    }
+
+    /* Lightweight layered aura presentation. Each layer uses composited opacity/
+       transform animation instead of particle physics or canvas work. */
+    .mob-with-aura-container .mob-aura-layer,
+    .mob-with-aura-container .mob-aura-sparks {
+        position: absolute;
+        inset: -8%;
+        pointer-events: none;
+        z-index: 0;
+        border-radius: 50%;
+        will-change: transform, opacity;
+    }
+    .mob-with-aura-container::before {
+        /* Keep the legacy base glow static; the three small layers below carry
+           the motion without repeatedly animating large box-shadow stacks. */
+        animation: none !important;
+        box-shadow: none !important;
+        opacity: .28;
+        filter: blur(4px);
+    }
+    .mob-with-aura-container .mob-aura-layer--one {
+        background: radial-gradient(circle, var(--aura-core, rgba(255,255,255,.35)) 0 18%, var(--aura-mid, rgba(0,255,255,.22)) 48%, transparent 72%);
+        animation: aura-layer-drift 2.8s ease-in-out infinite;
+    }
+    .mob-with-aura-container .mob-aura-layer--two {
+        inset: -14%;
+        background: radial-gradient(ellipse, transparent 34%, var(--aura-edge, rgba(0,255,255,.24)) 58%, transparent 74%);
+        filter: blur(3px);
+        animation: aura-layer-drift 3.8s ease-in-out infinite reverse;
+    }
+    .mob-with-aura-container .mob-aura-sparks {
+        inset: -20%;
+        opacity: .8;
+        background:
+            radial-gradient(circle at 18% 30%, var(--aura-spark, #fff) 0 1.5%, transparent 2.5%),
+            radial-gradient(circle at 78% 22%, var(--aura-spark, #fff) 0 1%, transparent 2%),
+            radial-gradient(circle at 86% 70%, var(--aura-spark, #fff) 0 1.5%, transparent 2.5%),
+            radial-gradient(circle at 24% 82%, var(--aura-spark, #fff) 0 1%, transparent 2%);
+        animation: aura-spark-flicker 1.4s steps(3, end) infinite;
+    }
+    @keyframes aura-layer-drift {
+        0%, 100% { transform: scale(.94) rotate(-2deg); opacity: .62; }
+        50% { transform: scale(1.04) rotate(2deg); opacity: .92; }
+    }
+    @keyframes aura-spark-flicker {
+        0%, 100% { transform: translate(0, 0); opacity: .25; }
+        35% { transform: translate(3%, -2%); opacity: .9; }
+        70% { transform: translate(-2%, 3%); opacity: .45; }
+    }
+    .mob-with-aura-container[data-aura="frost"] {
+        --aura-core: rgba(255,255,255,.65);
+        --aura-mid: rgba(92,225,255,.34);
+        --aura-edge: rgba(170,240,255,.55);
+        --aura-spark: #dffbff;
+    }
+    .mob-with-aura-container[data-aura="shadow"] {
+        --aura-core: rgba(115,40,180,.34);
+        --aura-mid: rgba(15,5,35,.58);
+        --aura-edge: rgba(95,20,155,.65);
+        --aura-spark: #b48cff;
+    }
+    .mob-with-aura-container[data-aura="lava"] {
+        --aura-core: rgba(255,244,130,.7);
+        --aura-mid: rgba(255,74,0,.45);
+        --aura-edge: rgba(255,25,0,.42);
+        --aura-spark: #ffd166;
+    }
+    .mob-with-aura-container[data-aura="nature"] {
+        --aura-core: rgba(190,255,160,.5);
+        --aura-mid: rgba(30,180,80,.32);
+        --aura-edge: rgba(20,120,60,.42);
+        --aura-spark: #b8ff88;
+    }
+    .mob-with-aura-container[data-aura="plasma"] {
+        --aura-core: rgba(255,255,255,.78);
+        --aura-mid: rgba(0,235,255,.42);
+        --aura-edge: rgba(255,210,0,.48);
+        --aura-spark: #fff36b;
+    }
+    .mob-with-aura-container[data-aura="plasma"] .mob-aura-layer--one {
+        background: conic-gradient(from 20deg, transparent 0 12%, rgba(0,240,255,.75) 14% 16%, transparent 18% 37%, rgba(255,240,80,.8) 39% 41%, transparent 43% 68%, rgba(255,255,255,.8) 70% 72%, transparent 74%);
+        clip-path: polygon(50% 0, 57% 39%, 100% 20%, 63% 50%, 94% 100%, 50% 64%, 6% 100%, 37% 50%, 0 20%, 43% 39%);
+        filter: blur(1px);
+        animation: aura-lightning 1.1s steps(2, end) infinite;
+    }
+    .mob-with-aura-container[data-aura="plasma"] .mob-aura-layer--two {
+        background: radial-gradient(circle, rgba(255,255,255,.38), rgba(0,230,255,.22) 42%, transparent 70%);
+    }
+    .mob-with-aura-container[data-aura="lava"] .mob-aura-layer--one {
+        border-radius: 45% 55% 58% 42%;
+        background: radial-gradient(ellipse at 50% 72%, rgba(255,250,170,.7), rgba(255,78,0,.45) 45%, transparent 72%);
+        animation: aura-flame 1.6s ease-in-out infinite;
+    }
+    @keyframes aura-lightning {
+        0%, 100% { opacity: .2; transform: scale(.9) rotate(-8deg); }
+        38% { opacity: .95; transform: scale(1.08) rotate(4deg); }
+        42% { opacity: .35; }
+        70% { opacity: .82; transform: scale(1) rotate(-3deg); }
+    }
+    @keyframes aura-flame {
+        0%, 100% { transform: scale(.94) translateY(2%); opacity: .65; }
+        50% { transform: scale(1.08) translateY(-3%); opacity: .95; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .mob-with-aura-container .mob-aura-layer,
+        .mob-with-aura-container .mob-aura-sparks { animation: none; }
     }
     
     /* New Achievement-Unlocked Border Effects */

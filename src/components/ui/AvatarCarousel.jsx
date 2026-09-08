@@ -80,6 +80,7 @@ const AvatarCarousel = ({ selectedAvatar, setSelectedAvatar }) => {
                                 <div className="text-5xl select-none">
                                     {avatar.emoji}
                                 </div>
+                                <span className="mt-1 block text-xs font-bold uppercase text-slate-300">{avatar.name}</span>
                                 {isSelected && (
                                     <div className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
                                         ✓

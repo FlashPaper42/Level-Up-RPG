@@ -26,7 +26,8 @@ import AuthControls from './components/auth/AuthControls';
 import { useWebSpeech } from './hooks/useWebSpeech';
 import { usePhantomSystem } from './hooks/usePhantomSystem';
 import { toggleFullscreenSafe } from './utils/platform';
-import { getAvatarEmoji } from './constants/avatarData';
+import { getAvatarEmoji, getAvatarById } from './constants/avatarData';
+import { getUnlockedHeroTitles } from './constants/cosmetics';
 
 // Utils & Constants
 import { getMobForSkill, getEncounterType, calculateDamage, calculateMobHealth, calculateXPToLevel } from './utils/gameUtils';
@@ -231,6 +232,11 @@ const App = () => {
 
         return unlocked;
     }, [stats, skills]);
+
+    const unlockedTitles = React.useMemo(
+        () => getUnlockedHeroTitles(unlockedAchievements),
+        [unlockedAchievements]
+    );
 
     // Update BGM volume
     useEffect(() => {
@@ -1241,7 +1247,10 @@ const App = () => {
     return (
         <div className="min-h-[100dvh] overflow-x-hidden overflow-y-auto relative flex flex-col bg-cover bg-center bg-no-repeat font-sans text-stone-100" style={containerStyle}>
             <GlobalStyles />
-            <AuthControls isBattling={Boolean(battlingSkillId)} />
+            <AuthControls
+                isBattling={Boolean(battlingSkillId)}
+                isOverlayOpen={isMenuOpen || isSettingsOpen || isCosmeticsOpen || isAvatarModalOpen || isResetOpen || isBugReportOpen}
+            />
             <div className="absolute inset-0 bg-black/30 pointer-events-none z-0"></div>
 
             {/* Top Left Buttons - Hidden when battling */}
@@ -1289,8 +1298,8 @@ const App = () => {
                     />
                     <div className="hero-identity pointer-events-none mb-1 max-w-[10rem] rounded-lg border-2 border-yellow-500/50 bg-slate-950/80 px-3 py-2 text-left shadow-lg backdrop-blur-sm">
                         <p className="text-xs font-bold uppercase tracking-widest text-yellow-300">{profileTitles[currentProfile] || 'Apprentice'}</p>
-                        <p className="truncate text-xl font-bold uppercase text-white">{profileNames[currentProfile] || `Player ${currentProfile}`}</p>
-                        <p className="text-xs uppercase text-slate-400">Hero profile</p>
+                        <p className="truncate text-xl font-bold uppercase text-white">{getAvatarById(selectedAvatar).name}</p>
+                        <p className="truncate text-xs uppercase text-slate-300">{profileNames[currentProfile] || `Player ${currentProfile}`}</p>
                     </div>
                 </div>
             )}
@@ -1334,6 +1343,9 @@ const App = () => {
                 setSelectedBorder={handleBorderChange}
                 borderColor={borderColor}
                 setBorderColor={setBorderColor}
+                profileTitle={profileTitles[currentProfile] || 'Apprentice'}
+                setProfileTitle={title => updateProfileTitle(currentProfile, title)}
+                unlockedTitles={unlockedTitles}
                 selectedAvatar={selectedAvatar}
                 setSelectedAvatar={setSelectedAvatar}
                 unlockedBorders={unlockedBorders}
@@ -1358,6 +1370,7 @@ const App = () => {
                 onSwitchProfile={handleSwitchProfile}
                 profileNames={profileNames}
                 profileTitles={profileTitles}
+                unlockedTitles={unlockedTitles}
                 onRenameProfile={handleRenameProfile}
                 onRenameTitle={updateProfileTitle}
                 getProfileStats={getProfileStats}
