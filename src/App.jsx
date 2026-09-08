@@ -25,11 +25,13 @@ import AuthControls from './components/auth/AuthControls';
 import { useWebSpeech } from './hooks/useWebSpeech';
 import { usePhantomSystem } from './hooks/usePhantomSystem';
 import { toggleFullscreenSafe } from './utils/platform';
+import { devLog } from './utils/logger';
 import { getAvatarEmoji, getAvatarById } from './constants/avatarData';
 import { getUnlockedHeroTitles } from './constants/cosmetics';
 
 // Utils & Constants
-import { getMobForSkill, getEncounterType, calculateDamage, calculateMobHealth, calculateXPToLevel } from './utils/gameUtils';
+import { getMobForSkill } from './systems/mobs';
+import { getEncounterType, calculateDamage, calculateMobHealth, calculateXPToLevel } from './systems/progression';
 import {
     calculateMobAction as calculateMobActionFromSystem,
     willHitDefeatMob,
@@ -255,8 +257,8 @@ const App = () => {
     useEffect(() => {
         const handleFullscreenChange = () => {
             const isNowFullscreen = !!document.fullscreenElement;
-            console.log('[Fullscreen] State changed. document.fullscreenElement:', document.fullscreenElement);
-            console.log('[Fullscreen] Setting isFullscreen to:', isNowFullscreen);
+            devLog('[Fullscreen] State changed. document.fullscreenElement:', document.fullscreenElement);
+            devLog('[Fullscreen] Setting isFullscreen to:', isNowFullscreen);
             setIsFullscreen(isNowFullscreen);
         };
 
@@ -304,7 +306,7 @@ const App = () => {
                         }
 
                         const mobAction = { ...mobNextAction.action }; // Clone to prevent mutation
-                        console.log('[Mob Action] Player failed - executing stored action:', mobAction);
+                        devLog('[Mob Action] Player failed - executing stored action:', mobAction);
 
                         // Show mob action animation
                         setMobAttacking({ skillId: battlingSkillId, type: mobAction.type });
@@ -326,7 +328,7 @@ const App = () => {
                                     const current = prev[battlingSkillId];
                                     const currentArmor = current.mobArmor || 0;
                                     const armorCap = current.mobMaxHealth || 60;
-                                    console.log(`[Combat] Mob ARMOR on fail: ${currentArmor} + ${mobAction.value}`);
+                                    devLog(`[Combat] Mob ARMOR on fail: ${currentArmor} + ${mobAction.value}`);
                                     return {
                                         ...prev,
                                         [battlingSkillId]: {
@@ -339,7 +341,7 @@ const App = () => {
                                 setSkills(prev => {
                                     const current = prev[battlingSkillId];
                                     const newHealth = Math.min(current.mobMaxHealth, current.mobHealth + mobAction.value);
-                                    console.log(`[Combat] Mob HEAL on fail: ${current.mobHealth} + ${mobAction.value} = ${newHealth}`);
+                                    devLog(`[Combat] Mob HEAL on fail: ${current.mobHealth} + ${mobAction.value} = ${newHealth}`);
                                     return {
                                         ...prev,
                                         [battlingSkillId]: {
@@ -397,7 +399,7 @@ const App = () => {
                 // Boss fights: heal the boss AND the boss still takes their turn
                 if (encounterType === 'boss') {
                     if (mobTurnPendingRef.current) {
-                        console.log('[Mob Action] Boss turn already pending, skipping');
+                        devLog('[Mob Action] Boss turn already pending, skipping');
                         playFail();
                         return;
                     }
@@ -429,7 +431,7 @@ const App = () => {
                 // For Combat Skills (Reading, etc): Execute mob's stored action on player failure
                 if (skillConfig && checkIsCombatSkill(skillConfig.id) && mobNextAction?.skillId === battlingSkillId) {
                     if (mobTurnPendingRef.current) {
-                        console.log('[Mob Action] Mob turn already pending on wrong answer, skipping');
+                        devLog('[Mob Action] Mob turn already pending on wrong answer, skipping');
                         playFail();
                         return;
                     }
@@ -556,7 +558,7 @@ const App = () => {
                 // Boss represents mastery of current difficulty - defeating it unlocks the next
                 if (encounterType === 'boss' && newDifficulty < 7) {
                     newDifficulty = Math.min(7, newDifficulty + 1);
-                    console.log(`[Boss Defeat] Auto-unlocking difficulty ${newDifficulty}`);
+                    devLog(`[Boss Defeat] Auto-unlocking difficulty ${newDifficulty}`);
                     playNotification();
                 }
 
@@ -765,14 +767,14 @@ const App = () => {
         const executeMobTurn = (currentMobAction) => {
             // Prevent double mob turns
             if (mobTurnPendingRef.current) {
-                console.log('[Mob Action] Mob turn already pending, skipping');
+                devLog('[Mob Action] Mob turn already pending, skipping');
                 return;
             }
             mobTurnPendingRef.current = true;
 
             setTimeout(() => {
                 if (battlingSkillIdRef.current !== skillId) {
-                    console.log('[Mob Action] Battle ended, skipping mob counterattack');
+                    devLog('[Mob Action] Battle ended, skipping mob counterattack');
                     mobTurnPendingRef.current = false;
                     return;
                 }
@@ -843,7 +845,7 @@ const App = () => {
                             const currentArmor = currentSkill.mobArmor || 0;
                             const armorCap = currentSkill.mobMaxHealth || 60;
                             const newArmor = Math.min(armorCap, currentArmor + currentMobAction.value);
-                            console.log(`[Combat] Mob ARMOR: ${currentArmor} + ${currentMobAction.value} = ${newArmor}`);
+                            devLog(`[Combat] Mob ARMOR: ${currentArmor} + ${currentMobAction.value} = ${newArmor}`);
 
                             setPlayerDamageIndicator({
                                 amount: currentMobAction.value,
@@ -862,7 +864,7 @@ const App = () => {
                         setSkills(prevSkills => {
                             const currentSkill = prevSkills[skillId];
                             const newHealth = Math.min(currentSkill.mobMaxHealth, currentSkill.mobHealth + currentMobAction.value);
-                            console.log(`[Combat] Mob HEAL: ${currentSkill.mobHealth} + ${currentMobAction.value} = ${newHealth}`);
+                            devLog(`[Combat] Mob HEAL: ${currentSkill.mobHealth} + ${currentMobAction.value} = ${newHealth}`);
 
                             setPlayerDamageIndicator({
                                 amount: currentMobAction.value,
@@ -920,7 +922,7 @@ const App = () => {
             const skillDifficulty = skillState.difficulty || 1;
             const baseDamage = calculateDamage(skillState.level, skillDifficulty);
             const specialDamage = baseDamage * 3; // SPECIAL deals 3x base damage
-            console.log(`[Combat] SPECIAL attack: baseDamage=${baseDamage}, specialDamage=${specialDamage}`);
+            devLog(`[Combat] SPECIAL attack: baseDamage=${baseDamage}, specialDamage=${specialDamage}`);
 
             if (encounterType === 'boss') {
                 // Execute 3 hits directly using internal logic to bypass debounce
@@ -960,7 +962,7 @@ const App = () => {
             setActionPoints(prev => prev - 2);
             setPlayerHealth(10);
             playHealSound();
-            console.log('[Combat] HEAL action: player healed to full');
+            devLog('[Combat] HEAL action: player healed to full');
 
             // Execute mob turn with stored action
             executeMobTurn(storedMobAction);
@@ -1048,7 +1050,7 @@ const App = () => {
     };
 
     const endBattleLocal = () => {
-        console.log('[Battle] Ending battle, cleaning up speech recognition');
+        devLog('[Battle] Ending battle, cleaning up speech recognition');
         // Reset mob turn pending ref
         mobTurnPendingRef.current = false;
 
@@ -1088,7 +1090,7 @@ const App = () => {
                         }
                     }));
 
-                    console.log(`[Battle] Processed ${newLevel - currentSkill.level} level-up(s) on flee`);
+                    devLog(`[Battle] Processed ${newLevel - currentSkill.level} level-up(s) on flee`);
                     playLevelUp();
                 } else {
                     // Just reset mob armor

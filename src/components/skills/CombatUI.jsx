@@ -16,6 +16,7 @@ import SafeImage from '../ui/SafeImage';
 import PixelShield from '../ui/PixelShield';
 import { AURA_ADJECTIVES } from '../../utils/mobDisplayUtils';
 import { playClick } from '../../utils/soundManager';
+import { devLog } from '../../utils/logger';
 
 // Combat action button component
 const ActionButton = ({
@@ -242,7 +243,7 @@ const CombatUI = ({
     // Challenge content (rendered as children)
     children
 }) => {
-    console.log('[CombatUI] Rendering combat interface');
+    devLog('[CombatUI] Rendering combat interface');
 
     return (
         <div className="flex flex-col h-full gap-3 p-2">

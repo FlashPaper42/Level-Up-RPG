@@ -7,7 +7,7 @@ import ParentalVerificationModal from '../../ui/ParentalVerificationModal';
 import PixelShield from '../../ui/PixelShield';
 import { BASE_ASSETS, FRIENDLY_MOBS, HOSTILE_MOBS, CHEST_BLOCKS, BOSS_MOBS, MINIBOSS_MOBS, DIFFICULTY_IMAGES, DIFFICULTY_CONTENT } from '../../../constants/gameData';
 import { playClick } from '../../../utils/soundManager';
-import { calculateXPToLevel } from '../../../utils/gameUtils';
+import { calculateXPToLevel } from '../../../systems/progression';
 import { AURA_ADJECTIVES } from '../../../utils/mobDisplayUtils';
 import {
     PRESTIGE_LEVEL_THRESHOLD,

@@ -6,9 +6,9 @@
 import { calculateXPToLevel } from './progression'; // Keeping basic math in progression.js for now or move here?
 // basic math like calculateXPToLevel is in progression.js. 
 // We should probably move it here eventually, but for now we import it to avoid circular deps if progression.js imports this.
-// progression.js currently has `calculateXPToLevel`. 
+// progression.js currently has `calculateXPToLevel`.
 
-console.log('[System:Leveling] Module loaded');
+import { devLog } from '../utils/logger';
 
 /**
  * Process XP gain and level ups
@@ -35,7 +35,7 @@ export const processXPGain = (currentState, xpGained, skillConfig) => {
         newXp = newXp % xpToLevel;
         leveledUp = true;
 
-        console.log(`[System:Leveling] Level Up! ${oldLevel} -> ${newLevel} (XP: ${newXp}/${xpToLevel})`);
+        devLog(`[System:Leveling] Level Up! ${oldLevel} -> ${newLevel} (XP: ${newXp}/${xpToLevel})`);
 
         // Check for difficulty increments and badges (cleaning is exempt)
         if (skillConfig.id !== 'cleaning') {
@@ -44,12 +44,12 @@ export const processXPGain = (currentState, xpGained, skillConfig) => {
                     const newTier = Math.floor(lvl / 20);
                     if (newDifficulty < 7) {
                         newDifficulty++;
-                        console.log(`[System:Leveling] Difficulty increased to ${newDifficulty}`);
+                        devLog(`[System:Leveling] Difficulty increased to ${newDifficulty}`);
                     }
                     if (!newBadges.includes(newTier) && newTier <= 7) {
                         newBadges.push(newTier);
                         badgesEarned.push(newTier);
-                        console.log(`[System:Leveling] Badge earned: Tier ${newTier}`);
+                        devLog(`[System:Leveling] Badge earned: Tier ${newTier}`);
                     }
                 }
             }

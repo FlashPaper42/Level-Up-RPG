@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import SkillCardFactory from './SkillCardFactory';
 import { SKILL_DATA, THEME_CONFIG } from '../../constants/gameData.jsx';
-import { getEncounterType, getMobForSkill } from '../../utils/gameUtils';
+import { getEncounterType } from '../../systems/progression';
+import { getMobForSkill } from '../../systems/mobs';
 import { playActionCardLeft, playActionCardRight } from '../../utils/soundManager';
 
 const SkillCarousel = ({

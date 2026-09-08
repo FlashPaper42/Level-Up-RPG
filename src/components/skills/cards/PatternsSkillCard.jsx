@@ -4,7 +4,7 @@ import { Plus, Minus } from 'lucide-react';
 import SafeImage from '../../ui/SafeImage';
 import { BASE_ASSETS, DIFFICULTY_IMAGES, DIFFICULTY_CONTENT } from '../../../constants/gameData';
 import { playClick, getSfxVolume } from '../../../utils/soundManager';
-import { calculateXPToLevel } from '../../../utils/gameUtils';
+import { calculateXPToLevel } from '../../../systems/progression';
 import { calculatePatternXP, calculateXPReward } from '../../../systems/progression';
 import {
     PRESTIGE_LEVEL_THRESHOLD,

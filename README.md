@@ -60,6 +60,11 @@ Deployment metadata in `netlify.toml` and `public/_headers` enables SPA
 fallbacks, MIME sniffing protection, referrer restrictions, and a microphone-
 only permissions policy.
 
+Game calculations and challenge generation live in `src/systems/`; consumers
+should import those modules directly rather than using a compatibility utility.
+Diagnostic messages use the development-only logger in `src/utils/logger.js`
+and are omitted from production builds.
+
 ## Privacy and safety
 
 This is an educational game for children. Parent controls and profile PINs are
