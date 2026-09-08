@@ -1257,15 +1257,13 @@ const App = () => {
                     {/* Button dimensions: p-3 (12px) + icon(48px) + p-3 (12px) + border-2*2 (4px) = 76px + 8px gap = 84px spacing */}
                     <button
                         onClick={() => { setIsMenuOpen(false); setIsCosmeticsOpen(false); setIsSettingsOpen(true); playClick(); }}
-                        className="top-control top-left-settings absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
-                        style={{ top: '24px', left: '24px' }}
+                        className="top-control top-left-settings fixed z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                     >
                         <Settings size={52} className="text-slate-400" />
                     </button>
                     <button
                         onClick={() => { setIsMenuOpen(false); setIsSettingsOpen(false); setIsCosmeticsOpen(true); playClick(); }}
-                        className="top-control top-left-cosmetics absolute z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
-                        style={{ top: '24px', left: 'calc(24px + 76px + 12px)' }}
+                        className="top-control top-left-cosmetics fixed z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                     >
                         <Sparkles size={52} className="text-purple-400" />
                     </button>
@@ -1396,8 +1394,7 @@ const App = () => {
                             setIsFullscreen(newState);
                             playClick();
                         }}
-                        className="top-control fixed z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
-                        style={{ top: '24px', right: 'calc(24px + 76px + 12px)' }}
+                        className="top-control top-right-fullscreen fixed z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                         aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
                         title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
                     >
@@ -1405,8 +1402,7 @@ const App = () => {
                     </button>
                     <button
                         onClick={() => { setIsSettingsOpen(false); setIsCosmeticsOpen(false); setIsMenuOpen(true); playClick(); }}
-                        className="top-control fixed z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
-                        style={{ top: '24px', right: '24px' }}
+                        className="top-control top-right-menu fixed z-40 bg-stone-800/90 text-white p-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg"
                     >
                         <Menu size={48} />
                     </button>
