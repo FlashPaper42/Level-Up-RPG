@@ -137,6 +137,13 @@ const SkillCarousel = ({
                         return 110;
                     };
                     const translateY = getVerticalOffset(item.offset);
+                    const horizontalMultiplier = item.offset === 0
+                        ? 0
+                        : Math.sign(item.offset) * (
+                            Math.abs(item.offset) === 1 ? 1 : (
+                                Math.abs(item.offset) === 2 ? 1.95 : 2.85
+                            )
+                        );
                     // Add subtle rotation for 3D effect - negative values warp outward
                     const rotateX = Math.abs(item.offset) === 3 ? -12 : (Math.abs(item.offset) === 2 ? -8 : (Math.abs(item.offset) === 1 ? -4 : 0));
 
@@ -146,7 +153,7 @@ const SkillCarousel = ({
                             key={item.key}
                             className="absolute transition-all duration-500 ease-out"
                             style={{
-                                transform: `translateX(calc(${item.offset} * var(--card-offset))) translateY(calc(${translateY}px + var(--carousel-y-shift))) rotateX(${rotateX}deg) scale(${item.offset === 0 ? 1.18 : 0.9})`,
+                                transform: `translateX(calc(${horizontalMultiplier} * var(--card-offset))) translateY(calc(${translateY}px + var(--carousel-y-shift))) rotateX(${rotateX}deg) scale(${item.offset === 0 ? 1.18 : 0.9})`,
                                 opacity: item.offset === 0 ? 1 : (Math.abs(item.offset) === 3 ? 0 : (Math.abs(item.offset) === 2 ? 0.3 : 0.6)),
                                 zIndex: isItemBattling ? 50 : (item.offset === 0 ? 20 : 10 - Math.abs(item.offset)),
                                 filter: item.offset === 0 ? 'none' : 'brightness(0.5) blur(1px)',
