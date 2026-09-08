@@ -4,7 +4,7 @@ import { useProgression } from './contexts/ProgressionContext';
 import { useCombat } from './contexts/CombatContext';
 
 import {
-    Menu, Sparkles, Gift, Maximize, Minimize, Settings, Bug
+    Menu, Sparkles, Gift, Maximize, Minimize, Settings, Bug, ClipboardList
 } from 'lucide-react';
 
 // Modules
@@ -65,6 +65,15 @@ const MIC_OFF_TEXT = "Mic Off";
 // Boss healing animation duration (ms)
 const BOSS_HEALING_ANIMATION_DURATION = 600;
 
+// Temporary deployment check UI. Update this list when a hosted change is pushed.
+const CHANGELOG_ENTRIES = [
+    'Redesigned the Reading skill card with one-shot browser speech recognition.',
+    'Added typed-answer fallback for Reading challenges.',
+    'Fixed the Reading microphone error and duplicate combat-turn handling.',
+    'Removed automatic microphone activation when a battle starts.',
+    'Improved browser speech error messages and recognition cleanup.',
+];
+
 const App = () => {
     // Contexts
     const {
@@ -106,6 +115,7 @@ const App = () => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isCosmeticsOpen, setIsCosmeticsOpen] = useState(false);
     const [isResetOpen, setIsResetOpen] = useState(false);
+    const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
     // Guard against double-firing of combat actions
     const processingHitRef = useRef(false);
@@ -1235,7 +1245,48 @@ const App = () => {
                     >
                         <Sparkles size={48} className="text-purple-400" />
                     </button>
+                    <button
+                        onClick={() => { setIsChangelogOpen(true); playClick(); }}
+                        className="absolute z-40 flex items-center gap-2 bg-stone-800/90 text-white px-3 py-3 rounded-lg border-2 border-stone-600 hover:bg-stone-700 transition-all shadow-lg text-lg font-bold"
+                        style={{ top: '24px', left: '200px' }}
+                        aria-label="Open changelog"
+                    >
+                        <ClipboardList size={28} className="text-yellow-400" />
+                        <span>Changelog</span>
+                    </button>
                 </>
+            )}
+
+            {isChangelogOpen && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
+                    onClick={() => setIsChangelogOpen(false)}
+                >
+                    <section
+                        className="w-full max-w-lg rounded-lg border-4 border-yellow-500 bg-slate-900 p-5 text-left shadow-2xl"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="changelog-title"
+                        onClick={event => event.stopPropagation()}
+                    >
+                        <div className="mb-4 flex items-center justify-between border-b-2 border-slate-700 pb-3">
+                            <h2 id="changelog-title" className="text-3xl font-bold uppercase text-yellow-400">
+                                Changelog
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={() => setIsChangelogOpen(false)}
+                                className="rounded border-2 border-slate-600 px-3 py-1 text-xl font-bold text-white hover:bg-slate-700"
+                                aria-label="Close changelog"
+                            >
+                                X
+                            </button>
+                        </div>
+                        <ul className="list-disc space-y-2 pl-6 text-lg text-slate-200">
+                            {CHANGELOG_ENTRIES.map(entry => <li key={entry}>{entry}</li>)}
+                        </ul>
+                    </section>
+                </div>
             )}
 
             {/* Profile Picture Display - Bottom Left */}
