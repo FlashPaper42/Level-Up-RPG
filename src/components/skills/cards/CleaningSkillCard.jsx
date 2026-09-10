@@ -37,6 +37,7 @@ const CleaningSkillCard = ({
     onEndBattle,
     onMathSubmit,
     onChoresCompleted,
+    stats,
     selectedBorder,
     borderColor
 }) => {
@@ -71,12 +72,12 @@ const CleaningSkillCard = ({
         // Grant XP/levels for each completed chore
         const choreCount = completedChores.length;
         if (choreCount > 0) {
-            if (onChoresCompleted) onChoresCompleted(choreCount);
+            if (onChoresCompleted) onChoresCompleted(choreCount, completedChores);
             // Submit multiple wins - one per chore
             for (let i = 0; i < choreCount; i++) {
                 setTimeout(() => {
                     onMathSubmit("WIN", 1, 1);
-                }, i * 100);
+                }, i * 600);
             }
             // Play success sound
             const matchAudio = new Audio(BASE_ASSETS.audio.match);
@@ -160,7 +161,7 @@ const CleaningSkillCard = ({
                         </button>
                         <div className="flex items-center justify-center gap-16 relative max-w-[95vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                             {/* Left Card - Instructions */}
-                            <div className="flex-shrink-0">
+                            <div className="cleaning-battle-side flex-shrink-0">
                                 <div className="relative w-[280px] bg-gradient-to-br from-cyan-900 via-slate-800 to-cyan-900 border-4 border-cyan-600 rounded-lg overflow-hidden" style={{ boxShadow: '0 0 40px rgba(0,150,150,0.5), inset 0 0 30px rgba(100,200,200,0.1)', height: '530px' }}>
                                     <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-cyan-400"></div>
                                     <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-cyan-400"></div>
@@ -190,7 +191,7 @@ const CleaningSkillCard = ({
                             </div>
 
                             {/* Center Card - Chest Preview with Action Button */}
-                            <div className="flex-shrink-0" style={{ transform: 'scale(1.1)' }}>
+                            <div className="cleaning-battle-center flex-shrink-0" style={{ transform: 'scale(1.1)' }}>
                                 <div className="relative w-[350px] bg-gradient-to-br from-amber-900 via-amber-800 to-amber-900 border-4 border-amber-600 rounded-lg overflow-hidden flex flex-col" style={{ boxShadow: '0 0 50px rgba(200,150,50,0.5), inset 0 0 40px rgba(255,200,100,0.1)', height: '550px' }}>
                                     <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-yellow-500"></div>
                                     <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-yellow-500"></div>
@@ -228,7 +229,7 @@ const CleaningSkillCard = ({
                             </div>
 
                             {/* Right Card - Interactive Bounty List */}
-                            <div className="flex-shrink-0">
+                            <div className="cleaning-battle-side flex-shrink-0">
                                 <div className="relative w-[280px] bg-gradient-to-br from-amber-100 via-yellow-50 to-amber-50 border-4 border-amber-800 rounded-lg overflow-hidden" style={{ boxShadow: '0 0 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(251,191,36,0.2)', height: '530px' }}>
                                     <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-700"></div>
                                     <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-700"></div>
@@ -243,6 +244,7 @@ const CleaningSkillCard = ({
                                     <div className="p-3 space-y-2 h-[calc(100%-100px)]">
                                         {CHORE_LIST.map((item, idx) => {
                                             const isCompleted = completedChores.includes(idx);
+                                            const completionCount = stats?.choreCompletions?.[idx] || 0;
                                             return (
                                                 <button
                                                     key={idx}
@@ -259,6 +261,9 @@ const CleaningSkillCard = ({
                                                         {item.chore}
                                                     </span>
                                                     {isCompleted && <span className="text-green-600 text-xl">✓</span>}
+                                                    <span className="rounded-full bg-stone-800 px-1.5 py-0.5 text-xs font-bold text-amber-200" aria-label={`${completionCount} completed`}>
+                                                        {completionCount}
+                                                    </span>
                                                 </button>
                                             );
                                         })}
@@ -271,7 +276,6 @@ const CleaningSkillCard = ({
                             </div>
                         </div>
 
-                        <div className="battle-exit-hint absolute bottom-20 left-1/2 -translate-x-1/2 text-yellow-400 text-2xl font-bold pointer-events-none z-50" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>Click outside to exit</div>
                     </div>,
                     document.body
                 )}
