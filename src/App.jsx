@@ -4,7 +4,7 @@ import { useProgression } from './contexts/ProgressionContext';
 import { useCombat } from './contexts/CombatContext';
 
 import {
-    Menu, Sparkles, Gift, Maximize, Minimize, Settings, Bug
+    Menu, Sparkles, Gift, Maximize, Minimize, Settings, Bug, X
 } from 'lucide-react';
 
 // Modules
@@ -1305,7 +1305,7 @@ const App = () => {
 
             {/* Player Health Display - Centered with Armor Shields overlaying Hearts - hide during memory/patterns/cleaning */}
             {battlingSkillId && battlingSkillId !== 'patterns' && battlingSkillId !== 'memory' && battlingSkillId !== 'cleaning' && (
-                <div className="absolute z-50 flex gap-1.5" style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
+                <div className="battle-player-health absolute z-50 flex gap-1.5" style={{ bottom: '20px', left: '50%', transform: 'translateX(-50%)' }}>
                     {Array(10).fill(0).map((_, i) => {
                         // Hearts always show (filled or empty based on health)
                         const isFilledHeart = i < playerHealth;
@@ -1433,11 +1433,21 @@ const App = () => {
 
             {/* Backdrop overlay when battling - click to exit */}
             {battlingSkillId && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40"
-                    style={{ position: 'fixed', inset: 0, width: '100%', height: '100dvh' }}
-                    onClick={endBattleLocal}
-                />
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/50 z-40"
+                        style={{ position: 'fixed', inset: 0, width: '100%', height: '100dvh' }}
+                        onClick={endBattleLocal}
+                    />
+                    <button
+                        type="button"
+                        aria-label="Exit battle"
+                        onClick={endBattleLocal}
+                        className="battle-exit-button fixed z-[70] rounded-full border-2 border-red-300 bg-red-700 p-2 text-white shadow-lg hover:bg-red-600"
+                    >
+                        <X size={32} />
+                    </button>
+                </>
             )}
             <main className="game-main flex-1 relative flex flex-col items-center justify-start w-full">
                 <div className={`brand-lockup z-10 mt-[clamp(0.25rem,1dvh,1rem)] pointer-events-none opacity-90 ${battlingSkillId ? 'brand-lockup-battling' : ''}`}>
