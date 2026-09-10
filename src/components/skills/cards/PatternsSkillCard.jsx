@@ -412,7 +412,7 @@ const PatternsSkillCard = ({
                             <div className="flex flex-col items-center justify-center flex-1 w-full">
 
                                 <div
-                                    className={`relative flex items-center justify-center ${ringRotation ? 'animate-spin-slow' : ''}`}
+                                    className={`patterns-ring relative flex items-center justify-center ${ringRotation ? 'animate-spin-slow' : ''}`}
                                     style={{
                                         width: 'min(75vh, 600px)',
                                         height: 'min(75vh, 600px)'

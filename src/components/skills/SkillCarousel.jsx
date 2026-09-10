@@ -30,6 +30,7 @@ const SkillCarousel = ({
     playerDamageIndicator,
     onPerfectMemoryGame,
     onChoresCompleted,
+    stats,
     calculateMobAction,
     mobNextAction
 }) => {
@@ -179,7 +180,7 @@ const SkillCarousel = ({
                                 damageNumbers={damageNumbers?.filter(d => d.skillId === item.id) || []}
                                 onStartBattle={() => startBattle(item.id)}
                                 onEndBattle={endBattle}
-                                onMathSubmit={(val, customDamage, customXP) => handleSuccessHit(item.id, val, customDamage, customXP)}
+                                onMathSubmit={(val, customDamage, customXP) => handleSuccessHit(item.id, val !== 'WIN', customDamage, customXP)}
                                 onMicClick={() => toggleMicListener(item.id)}
                                 difficulty={skills[item.id].difficulty || 1}
                                 setDifficulty={(newDiff) => setSkillDifficulty(item.id, newDiff)}
@@ -196,6 +197,7 @@ const SkillCarousel = ({
                                 playerDamageIndicator={playerDamageIndicator}
                                 onPerfectMemoryGame={onPerfectMemoryGame}
                                 onChoresCompleted={onChoresCompleted}
+                                stats={stats}
                                 calculateMobAction={calculateMobAction}
                                 mobNextAction={mobNextAction}
                             />

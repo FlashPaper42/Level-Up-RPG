@@ -428,7 +428,8 @@
   }
 
   .battle-portal .battle-side > div {
-    height: min(820px, calc(100dvh - 8rem)) !important;
+    height: auto !important;
+    min-height: 0 !important;
   }
 
   .battle-portal .battle-center-card {
@@ -446,6 +447,19 @@
 
   .battle-portal .battle-layout {
     transform: scale(1.12);
+  }
+
+  .battle-center-card .mob-image,
+  .battle-center-card .mob-image-scale {
+    transform: scale(1.35);
+  }
+
+  .cleaning-battle-side > div {
+    height: 620px !important;
+  }
+
+  .cleaning-battle-center {
+    transform: scale(1.2) !important;
   }
 }
 
@@ -493,12 +507,20 @@
   }
 
   .battle-portal .battle-side > div {
-    height: calc(100dvh - 1rem) !important;
+    height: auto !important;
+    max-height: calc(100dvh - 5rem) !important;
+    min-height: 0 !important;
   }
 
   .battle-portal .battle-center-card {
     width: 36vw !important;
-    height: calc(100dvh - 2rem) !important;
+    height: min(620px, calc(100dvh - 5rem)) !important;
+  }
+
+  .battle-player-health {
+    left: max(0.5rem, env(safe-area-inset-left)) !important;
+    bottom: max(0.5rem, env(safe-area-inset-bottom)) !important;
+    transform: none !important;
   }
 
   .battle-portal .battle-exit-hint {
@@ -612,13 +634,15 @@
   }
 
   .battle-portal .battle-side > div {
-    height: calc(100dvh - 1rem) !important;
+    height: auto !important;
+    max-height: calc(100dvh - 5rem) !important;
+    min-height: 0 !important;
     font-size: 0.8em;
   }
 
   .battle-portal .battle-center-card {
     width: 36vw !important;
-    height: calc(100dvh - 2rem) !important;
+    height: min(620px, calc(100dvh - 5rem)) !important;
   }
 
   .battle-portal .battle-exit-hint {
@@ -649,6 +673,19 @@
     display: inline-flex;
     transform: scale(0.85);
     transform-origin: bottom right;
+  }
+
+  .patterns-ring {
+    transform: scale(0.72);
+  }
+
+  .cleaning-battle-side > div {
+    height: auto !important;
+    max-height: calc(100dvh - 4rem) !important;
+  }
+
+  .cleaning-battle-center {
+    transform: scale(0.82) !important;
   }
 }
 

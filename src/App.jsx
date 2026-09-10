@@ -695,13 +695,13 @@ const App = () => {
     };
 
     // Public wrapper for voice success (Debounced)
-    const handleSuccessHit = (skillId = battlingSkillId, isWrong = false) => {
+    const handleSuccessHit = (skillId = battlingSkillId, isWrong = false, customDamage = null, customXPMultiplier = null) => {
         // Prevent double-firing (debounce)
         if (processingHitRef.current) return;
         processingHitRef.current = true;
         setTimeout(() => processingHitRef.current = false, 500);
 
-        executeCombatTurn(skillId, isWrong);
+        executeCombatTurn(skillId, isWrong, customDamage, customXPMultiplier);
     };
 
 
@@ -1491,12 +1491,17 @@ const App = () => {
                             perfectMemoryGames: (prev.perfectMemoryGames || 0) + 1
                         }));
                     }}
-                    onChoresCompleted={(count) => {
+                    onChoresCompleted={(count, choreIndices = []) => {
                         setStats(prev => ({
                             ...prev,
-                            totalChoresCompleted: (prev.totalChoresCompleted || 0) + count
+                            totalChoresCompleted: (prev.totalChoresCompleted || 0) + count,
+                            choreCompletions: choreIndices.reduce((counts, index) => ({
+                                ...counts,
+                                [index]: (counts[index] || 0) + 1
+                            }), { ...(prev.choreCompletions || {}) })
                         }));
                     }}
+                    stats={stats}
                 />
             </main>
 

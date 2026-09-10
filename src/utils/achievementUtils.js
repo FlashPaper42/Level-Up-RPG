@@ -34,6 +34,7 @@ export const getDefaultStats = () => ({
     maxPatternStreak: 0,
     fastMemoryGames: 0,
     totalChoresCompleted: 0,
+    choreCompletions: {},
     achievementsUnlocked: []
 });
 
