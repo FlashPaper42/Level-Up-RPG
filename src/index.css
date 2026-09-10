@@ -226,6 +226,13 @@
   height: min(620px, calc(100dvh - 5rem)) !important;
 }
 
+.battle-exit-button {
+  display: none;
+  min-height: 0;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
 .battle-layout {
   width: 100%;
   height: 100%;
@@ -393,8 +400,52 @@
   }
 
   .battle-portal .battle-center-card {
-    width: min(500px, 38vw) !important;
-    height: calc(100dvh - 2rem) !important;
+    width: min(550px, 40vw) !important;
+    height: calc(100dvh - 8rem) !important;
+    top: 0 !important;
+  }
+
+  .battle-player-health {
+    left: max(1rem, env(safe-area-inset-left)) !important;
+    bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+    transform: none !important;
+  }
+
+  .battle-exit-button {
+    display: inline-flex;
+  }
+
+  .battle-portal .battle-exit-hint {
+    display: none;
+  }
+}
+
+/* Large desktop battle composition: use the available viewport instead of
+   leaving the three interactive zones as a small island in the center. */
+@media (min-width: 1800px) and (min-height: 1100px) {
+  .battle-portal .battle-side {
+    width: min(420px, 18vw);
+  }
+
+  .battle-portal .battle-side > div {
+    height: min(820px, calc(100dvh - 8rem)) !important;
+  }
+
+  .battle-portal .battle-center-card {
+    width: min(760px, 30vw) !important;
+    height: min(900px, calc(100dvh - 5rem)) !important;
+  }
+
+  .battle-portal .battle-side-left {
+    left: calc(50% - min(30vw, 760px) / 2 - min(18vw, 420px) - 3rem) !important;
+  }
+
+  .battle-portal .battle-side-right {
+    left: calc(50% + min(30vw, 760px) / 2 + 3rem) !important;
+  }
+
+  .battle-portal .battle-layout {
+    transform: scale(1.12);
   }
 }
 
@@ -433,13 +484,21 @@
     width: 25vw;
   }
 
+  .battle-portal .battle-side-left {
+    left: calc(50% - 18vw - 25vw - 0.75rem) !important;
+  }
+
+  .battle-portal .battle-side-right {
+    left: calc(50% + 18vw + 0.75rem) !important;
+  }
+
   .battle-portal .battle-side > div {
     height: calc(100dvh - 1rem) !important;
   }
 
   .battle-portal .battle-center-card {
-    width: 42vw !important;
-    height: calc(100dvh - 1rem) !important;
+    width: 36vw !important;
+    height: calc(100dvh - 2rem) !important;
   }
 
   .battle-portal .battle-exit-hint {
@@ -541,7 +600,15 @@
   }
 
   .battle-portal .battle-side {
-    width: 28vw;
+    width: 29vw;
+  }
+
+  .battle-portal .battle-side-left {
+    left: calc(50% - 18vw - 29vw - 0.5rem) !important;
+  }
+
+  .battle-portal .battle-side-right {
+    left: calc(50% + 18vw + 0.5rem) !important;
   }
 
   .battle-portal .battle-side > div {
@@ -550,12 +617,38 @@
   }
 
   .battle-portal .battle-center-card {
-    width: 42vw !important;
-    height: calc(100dvh - 1rem) !important;
+    width: 36vw !important;
+    height: calc(100dvh - 2rem) !important;
   }
 
   .battle-portal .battle-exit-hint {
     display: none;
+  }
+
+  .battle-portal .battle-side > div {
+    padding: 0.5rem !important;
+  }
+
+  .battle-portal .battle-side button {
+    font-size: 0.78rem !important;
+    padding: 0.5rem 0.25rem !important;
+  }
+
+  .battle-portal .battle-center-card > div {
+    flex-shrink: 1;
+  }
+
+  .battle-player-health {
+    left: max(0.5rem, env(safe-area-inset-left)) !important;
+    bottom: max(0.5rem, env(safe-area-inset-bottom)) !important;
+    transform: scale(0.7) !important;
+    transform-origin: bottom left;
+  }
+
+  .battle-exit-button {
+    display: inline-flex;
+    transform: scale(0.85);
+    transform-origin: bottom right;
   }
 }
 
