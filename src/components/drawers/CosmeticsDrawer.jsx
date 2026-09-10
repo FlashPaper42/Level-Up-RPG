@@ -71,7 +71,7 @@ const CosmeticsDrawer = ({
             className={`fixed h-full w-[85%] md:w-[60%] bg-[#0f172a]/95 backdrop-blur-xl z-50 border-r-4 border-slate-700 shadow-2xl transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
             style={{ top: 0, left: 0 }}
         >
-            <div className="p-6 h-full flex flex-col justify-start gap-6 overflow-y-auto scrollbar-hide text-slate-200 font-sans">
+            <div className="min-w-0 p-6 h-full flex flex-col justify-start gap-6 overflow-x-hidden overflow-y-auto scrollbar-hide text-slate-200 font-sans">
                 <div className="flex justify-between items-center border-b-2 border-slate-700 pb-4 shrink-0">
                     <h2 className="text-4xl text-yellow-400 font-bold uppercase tracking-widest drop-shadow-md flex items-center gap-3" style={{ fontFamily: '"VT323", monospace' }}>
                         <Sparkles size={32} /> Border Effects

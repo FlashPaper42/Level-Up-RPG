@@ -186,10 +186,44 @@
   transform-origin: bottom right;
 }
 
+.difficulty-stepper {
+  width: clamp(2rem, 3vw, 2.75rem);
+  height: clamp(2rem, 3vw, 2.75rem);
+  min-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.65rem;
+  flex: 0 0 auto;
+}
+
+.cleaning-exit-button {
+  min-height: 0;
+}
+
 .battle-portal {
   overflow: auto;
   padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
     max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+}
+
+.battle-portal .battle-exit-hint {
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  font-size: clamp(0.9rem, 1.5vw, 1.5rem);
+  white-space: nowrap;
+}
+
+.brand-lockup-battling {
+  display: none;
+}
+
+.battle-portal .battle-side > div {
+  width: 100% !important;
+}
+
+.battle-portal .battle-center-card {
+  width: min(534px, 42vw) !important;
+  height: min(620px, calc(100dvh - 5rem)) !important;
 }
 
 .battle-layout {
@@ -329,6 +363,10 @@
     height: clamp(7.25rem, 15dvh, 10.5rem);
   }
 
+  .brand-lockup:not(.brand-lockup-battling) {
+    display: none;
+  }
+
   .brand-lockup-logo {
     height: clamp(5.25rem, 12dvh, 8.5rem);
   }
@@ -344,6 +382,19 @@
     width: min(400px, 28vw) !important;
     height: min(620px, 64dvh) !important;
     min-height: 0;
+  }
+
+  .battle-portal .battle-side {
+    width: min(270px, 24vw);
+  }
+
+  .battle-portal .battle-side > div {
+    height: min(530px, calc(100dvh - 2rem)) !important;
+  }
+
+  .battle-portal .battle-center-card {
+    width: min(500px, 38vw) !important;
+    height: calc(100dvh - 2rem) !important;
   }
 }
 
@@ -372,6 +423,27 @@
     width: min(380px, 48vw) !important;
     height: min(600px, 68dvh) !important;
     min-height: 0;
+  }
+
+  .battle-portal {
+    padding: 0.5rem;
+  }
+
+  .battle-portal .battle-side {
+    width: 25vw;
+  }
+
+  .battle-portal .battle-side > div {
+    height: calc(100dvh - 1rem) !important;
+  }
+
+  .battle-portal .battle-center-card {
+    width: 42vw !important;
+    height: calc(100dvh - 1rem) !important;
+  }
+
+  .battle-portal .battle-exit-hint {
+    display: none;
   }
 }
 
@@ -458,6 +530,33 @@
     margin-top: 3.5rem;
     margin-bottom: 4.5rem;
   }
+
+  .battle-portal {
+    align-items: flex-start;
+    overflow: hidden;
+  }
+
+  .battle-portal .battle-layout {
+    min-height: 100dvh;
+  }
+
+  .battle-portal .battle-side {
+    width: 28vw;
+  }
+
+  .battle-portal .battle-side > div {
+    height: calc(100dvh - 1rem) !important;
+    font-size: 0.8em;
+  }
+
+  .battle-portal .battle-center-card {
+    width: 42vw !important;
+    height: calc(100dvh - 1rem) !important;
+  }
+
+  .battle-portal .battle-exit-hint {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
@@ -497,6 +596,14 @@
   .auth-controls {
     right: 4.25rem;
     max-width: 7rem;
+  }
+
+  .battle-portal .battle-side {
+    width: 31vw;
+  }
+
+  .battle-portal .battle-center-card {
+    width: 42vw !important;
   }
 }
 

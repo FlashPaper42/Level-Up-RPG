@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import ReactDOM from 'react-dom';
+import { X } from 'lucide-react';
 import SafeImage from '../../ui/SafeImage';
 import ParentalVerificationModal from '../../ui/ParentalVerificationModal';
 import { BASE_ASSETS, CHEST_BLOCKS } from '../../../constants/gameData';
@@ -149,6 +150,14 @@ const CleaningSkillCard = ({
             <>
                 {ReactDOM.createPortal(
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={onEndBattle} style={{ zIndex: 50 }}>
+                        <button
+                            type="button"
+                            aria-label="Exit chore board"
+                            onClick={onEndBattle}
+                            className="cleaning-exit-button fixed right-4 top-4 z-[60] rounded-full border-2 border-red-300 bg-red-700 p-2 text-white shadow-lg hover:bg-red-600"
+                        >
+                            <X size={28} />
+                        </button>
                         <div className="flex items-center justify-center gap-16 relative max-w-[95vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                             {/* Left Card - Instructions */}
                             <div className="flex-shrink-0">
@@ -262,7 +271,7 @@ const CleaningSkillCard = ({
                             </div>
                         </div>
 
-                        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-yellow-400 text-2xl font-bold pointer-events-none z-50" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>Click outside to exit</div>
+                        <div className="battle-exit-hint absolute bottom-20 left-1/2 -translate-x-1/2 text-yellow-400 text-2xl font-bold pointer-events-none z-50" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>Click outside to exit</div>
                     </div>,
                     document.body
                 )}
