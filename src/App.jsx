@@ -1440,7 +1440,7 @@ const App = () => {
                 />
             )}
             <main className="game-main flex-1 relative flex flex-col items-center justify-start w-full">
-                <div className="brand-lockup z-10 mt-[clamp(0.25rem,1dvh,1rem)] pointer-events-none opacity-90">
+                <div className={`brand-lockup z-10 mt-[clamp(0.25rem,1dvh,1rem)] pointer-events-none opacity-90 ${battlingSkillId ? 'brand-lockup-battling' : ''}`}>
                     <SafeImage src={currentThemeData.assets.logo} fallbackSrc="https://placehold.co/800x300/333/FFD700?text=LOGO+PLACEHOLDER&font=monsterrat" alt="Game Logo" className="brand-lockup-logo drop-shadow-2xl" />
                     <h1 className="brand-lockup-title text-[clamp(3rem,8vw,9rem)] leading-none text-yellow-400 tracking-widest uppercase drop-shadow-[4px_4px_0_#000]" style={{ textShadow: 'clamp(2px,0.4vw,6px) clamp(2px,0.4vw,6px) 0 #000' }}>Level Up!</h1>
                 </div>

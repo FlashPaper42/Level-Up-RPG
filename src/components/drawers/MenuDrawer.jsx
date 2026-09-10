@@ -57,7 +57,7 @@ const MenuDrawer = ({ isOpen, skills, stats }) => {
             className={`fixed inset-y-0 right-0 h-[100dvh] w-[min(92vw,60rem)] bg-[#1a1a1a]/95 backdrop-blur-md z-50 border-l-4 border-stone-600 shadow-2xl transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
             style={{ top: 0, right: 0 }}
         >
-            <div className="h-full flex flex-col p-[clamp(0.75rem,2vw,1.5rem)]">
+            <div className="h-full min-w-0 flex flex-col overflow-x-hidden p-[clamp(0.75rem,2vw,1.5rem)]">
                 {/* Header */}
                 <div className="shrink-0 border-b-4 border-stone-600 pb-4 mb-4">
                     <h2 className="text-[clamp(2rem,5vw,3rem)] text-yellow-400 font-bold uppercase tracking-widest mb-2 drop-shadow-md">Achievements</h2>

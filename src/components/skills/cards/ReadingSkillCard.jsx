@@ -501,7 +501,7 @@ const ReadingSkillCard = ({
                             </div>
                         </div>
 
-                        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-yellow-400 text-2xl font-bold pointer-events-none z-50" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                        <div className="battle-exit-hint absolute bottom-20 left-1/2 -translate-x-1/2 text-yellow-400 text-2xl font-bold pointer-events-none z-50" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
                             Click outside to flee the battle
                         </div>
                     </div>,
@@ -561,12 +561,12 @@ const ReadingSkillCard = ({
         <div className="relative">
             {unlockedDifficulty > 1 && (
                 <div className="absolute -top-10 left-0 flex items-center gap-2 z-20">
-                    <button onClick={() => setDifficulty(Math.max(1, difficulty - 1))} className="bg-stone-700 text-white rounded p-1 border border-stone-500 hover:bg-stone-600"><Minus size={16} /></button>
+                    <button onClick={() => setDifficulty(Math.max(1, difficulty - 1))} className="difficulty-stepper bg-stone-700 text-white border border-stone-500 hover:bg-stone-600"><Minus size={16} /></button>
                     <div className="relative">
                         <SafeImage src={DIFFICULTY_IMAGES[difficulty] || DIFFICULTY_IMAGES[1]} alt={`Difficulty ${difficulty}`} className="w-8 h-8 object-contain" />
                         <span className="absolute -bottom-1 -right-1 bg-black/90 text-yellow-400 text-xs font-bold px-1 rounded border border-yellow-500/50 min-w-[16px] text-center">{difficulty}</span>
                     </div>
-                    <button onClick={() => setDifficulty(Math.min(unlockedDifficulty, difficulty + 1))} className="bg-stone-700 text-white rounded p-1 border border-stone-500 hover:bg-stone-600"><Plus size={16} /></button>
+                    <button onClick={() => setDifficulty(Math.min(unlockedDifficulty, difficulty + 1))} className="difficulty-stepper bg-stone-700 text-white border border-stone-500 hover:bg-stone-600"><Plus size={16} /></button>
                 </div>
             )}
             {cardContent}
