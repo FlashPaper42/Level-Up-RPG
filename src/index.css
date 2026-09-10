@@ -117,6 +117,8 @@
 
 .skill-carousel-stage {
   --card-offset: clamp(220px, 24vw, 480px);
+  --card-scale-center: 1.18;
+  --card-scale-side: 0.9;
   --carousel-y-shift: clamp(-1rem, -1dvh, -0.25rem);
   flex: 1 1 auto;
   min-height: 0;
@@ -257,15 +259,120 @@
   }
 
   .skill-carousel-stage {
-    --card-offset: clamp(190px, 27vw, 380px);
+    --card-offset: clamp(190px, 20vw, 300px);
+    --card-scale-center: 1.12;
+    --card-scale-side: 0.82;
     margin-top: clamp(0.25rem, 1dvh, 0.75rem);
   }
 
   .skill-card-shell {
-    width: min(380px, 42vw) !important;
-    height: min(650px, 70dvh) !important;
+    width: min(400px, 30vw) !important;
+    height: min(650px, 68dvh) !important;
   }
 
+}
+
+/* Tablet and iPad landscape: prioritize a readable active card and its
+   immediate neighbors instead of forcing the desktop carousel geometry. */
+@media (max-width: 900px) {
+  .brand-lockup {
+    display: none;
+  }
+
+  .skill-carousel-stage {
+    --card-offset: clamp(150px, 20vw, 230px);
+    --card-scale-center: 1.08;
+    --card-scale-side: 0.72;
+    margin-top: clamp(3.5rem, 8dvh, 6rem);
+    margin-bottom: clamp(5rem, 12dvh, 8rem);
+  }
+
+  .carousel-card-offset-2,
+  .carousel-card-offset-3 {
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+
+  .skill-card-shell {
+    width: min(380px, 48vw) !important;
+    height: min(600px, 68dvh) !important;
+    min-height: 0;
+  }
+
+  .hero-identity {
+    max-width: min(9rem, 24vw);
+    padding: 0.5rem;
+  }
+
+  .hero-identity p:nth-child(2) {
+    font-size: 1rem;
+  }
+
+  .top-control {
+    min-width: clamp(4rem, 8vw, 5.5rem);
+    min-height: clamp(4rem, 8vw, 5.5rem);
+  }
+
+  .top-left-cosmetics {
+    left: calc(clamp(0.75rem, 2vw, 1.5rem) + clamp(4rem, 8vw, 5.5rem) + 0.75rem);
+  }
+
+  .top-right-fullscreen {
+    right: calc(clamp(0.75rem, 2vw, 1.5rem) + clamp(4rem, 8vw, 5.5rem) + 0.75rem);
+  }
+}
+
+/* Short desktop displays, including 1080p monitors: preserve the desktop
+   shell while reducing vertical demands before controls can collide. */
+@media (min-width: 901px) and (max-height: 1150px) {
+  .brand-lockup {
+    height: clamp(7.25rem, 15dvh, 10.5rem);
+  }
+
+  .brand-lockup-logo {
+    height: clamp(5.25rem, 12dvh, 8.5rem);
+  }
+
+  .skill-carousel-stage {
+    --card-offset: clamp(210px, 20vw, 360px);
+    --card-scale-center: 1.1;
+    --card-scale-side: 0.82;
+    margin-bottom: clamp(4rem, 8dvh, 6rem);
+  }
+
+  .skill-card-shell {
+    width: min(400px, 28vw) !important;
+    height: min(620px, 64dvh) !important;
+    min-height: 0;
+  }
+}
+
+/* iPad/tablet landscape sits above the width breakpoint but has the same
+   limited vertical space as the compact tablet layout. */
+@media (min-width: 901px) and (max-width: 1200px) and (max-height: 900px) {
+  .brand-lockup {
+    display: none;
+  }
+
+  .skill-carousel-stage {
+    --card-offset: clamp(150px, 20vw, 230px);
+    --card-scale-center: 1.08;
+    --card-scale-side: 0.72;
+    margin-top: clamp(3.5rem, 8dvh, 6rem);
+    margin-bottom: clamp(5rem, 12dvh, 8rem);
+  }
+
+  .carousel-card-offset-2,
+  .carousel-card-offset-3 {
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+
+  .skill-card-shell {
+    width: min(380px, 48vw) !important;
+    height: min(600px, 68dvh) !important;
+    min-height: 0;
+  }
 }
 
 @media (max-width: 700px) {
@@ -304,19 +411,6 @@
     transform: scale(1.2);
   }
 
-  .brand-lockup {
-    height: clamp(7.5rem, 18dvh, 10rem);
-  }
-
-  .brand-lockup-logo {
-    width: min(86vw, 32rem);
-  }
-
-  .brand-lockup-title {
-    top: 58%;
-    font-size: clamp(2.75rem, 13vw, 5rem);
-  }
-
   .auth-controls-label {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -353,14 +447,16 @@
   }
 
   .skill-card-shell {
-    width: min(380px, 78vw) !important;
-    height: min(590px, 66dvh) !important;
-    min-height: 340px;
+    width: min(390px, 66vw) !important;
+    height: min(590px, 70dvh) !important;
   }
 
   .skill-carousel-stage {
-    margin-top: 0.25rem;
-    margin-bottom: 0.75rem;
+    --card-offset: clamp(135px, 23vw, 190px);
+    --card-scale-center: 1.04;
+    --card-scale-side: 0.62;
+    margin-top: 3.5rem;
+    margin-bottom: 4.5rem;
   }
 }
 
@@ -380,8 +476,27 @@
     bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
-  .brand-lockup-title {
-    top: 60%;
+  .skill-carousel-stage {
+    --card-offset: 42vw;
+    --card-scale-side: 0.5;
+  }
+
+  .skill-card-shell {
+    width: min(390px, 78vw) !important;
+    height: min(560px, 66dvh) !important;
+  }
+
+  .profile-picture-position {
+    transform: scale(1.05);
+  }
+
+  .hero-identity {
+    display: none;
+  }
+
+  .auth-controls {
+    right: 4.25rem;
+    max-width: 7rem;
   }
 }
 

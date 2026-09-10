@@ -152,9 +152,9 @@ const SkillCarousel = ({
                     return (
                         <div
                             key={item.key}
-                            className="absolute transition-all duration-500 ease-out"
+                            className={`carousel-card carousel-card-offset-${Math.abs(item.offset)} absolute transition-all duration-500 ease-out`}
                             style={{
-                                transform: `translateX(calc(${horizontalMultiplier} * var(--card-offset))) translateY(calc(${translateY}px + var(--carousel-y-shift))) rotateX(${rotateX}deg) scale(${item.offset === 0 ? 1.18 : 0.9})`,
+                                transform: `translateX(calc(${horizontalMultiplier} * var(--card-offset))) translateY(calc(${translateY}px + var(--carousel-y-shift))) rotateX(${rotateX}deg) scale(${item.offset === 0 ? 'var(--card-scale-center)' : 'var(--card-scale-side)'})`,
                                 opacity: item.offset === 0 ? 1 : (Math.abs(item.offset) === 3 ? 0 : (Math.abs(item.offset) === 2 ? 0.3 : 0.6)),
                                 zIndex: isItemBattling ? 50 : (item.offset === 0 ? 20 : 10 - Math.abs(item.offset)),
                                 filter: item.offset === 0 ? 'none' : 'brightness(0.5) blur(1px)',
